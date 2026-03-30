@@ -13,13 +13,8 @@ classDiagram
 		#String nameItem
 		#String descriptionItem
 		#double startingPrice
-		#double curPrice
-		#Date startTime
-		#Date endTime
 		+printInfo()* void
 		+getStartingPrice() double
-		%% Ket thuc dau gia
-		+outPut() void
 	}
 	class Electronics{
 		-String brand
@@ -41,6 +36,7 @@ classDiagram
 		-String passWord
 		#String email
 		+login(String pass) boolean
+		+logout() void
 	}
 	class Bidder{
 		-double balance
@@ -59,6 +55,11 @@ classDiagram
 		+add(Item item) void
 		+remove(Item item) void
 		+change(Item item) void
+	}
+	class Admin{
+		-int roleLevel
+		+cancelAuction(String auctionId) void
+		+banUser(String userId) void
 	}
 	
 	%% Business Logic
@@ -91,11 +92,14 @@ classDiagram
 	
 	Users <|-- Bidder
 	Users <|-- Seller
+	Users <|-- Admin
 	
 	Item <|-- Electronics
 	Item <|-- Art
 	Item <|-- Vehicle
 	
+	%% Moi quan he ket hop
 	Seller "1" --> "*" Auction: create an auction
+	%% Moi quan he cau thanh
 	Auction "1" *-- "1" Item: contains product
 ```
