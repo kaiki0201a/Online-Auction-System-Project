@@ -3,23 +3,23 @@ import java.util.ArrayList;
 import java.util.List;
 public class Bidder extends User{
     private double balance; 
-    private List<String> jAuction; // Danh sách id các phiên đấu giá đá tham gia
+    private List<String> transactionHistory; // Danh sách id các phiên đấu giá đá tham gia
     public Bidder(String userName, String passWord, String email,double balance){
         super(userName, passWord, email);
         this.balance = balance;
-        this.jAuction = new ArrayList<>();
+        this.transactionHistory = new ArrayList<>();
     }
-    public double getbalance(){
+    public double getBalance(){
         return this.balance;
     }
-    public void setbalance(double balance){
+    public void setBalance(double balance){
         this.balance = balance;
     }
     public List<String> getJoinedAuctions(){
-        return jAuction;
+        return transactionHistory;
     }
-    public void setJoinedAuctions(List<String> jAuction){
-        this.jAuction = jAuction;
+    public void setJoinedAuctions(List<String> transactionHistory){
+        this.transactionHistory = transactionHistory;
     }
     public void getBidderInfo(){
         System.out.println("========== BIDDER DASHBOARD ==========");
@@ -30,8 +30,8 @@ public class Bidder extends User{
     }
     public boolean placeBid(Auction auction, double amount)
     {
-        if(amount > this.getbalance()){
-            System.out.println("Số dư không đủ! Bạn còn : " + this.getbalance());
+        if(amount > this.getBalance()){
+            System.out.println("Số dư không đủ! Bạn còn : " + this.getBalance());
             return false;
         }
         boolean isSuccess = auction.placeBid(this,amount);
@@ -41,7 +41,7 @@ public class Bidder extends User{
         return isSuccess;
     }
     public void setupAutoBid(Auction auction,double maxBid, double increment){
-        if(maxBid > this.getbalance()){
+        if(maxBid > this.getBalance()){
             System.out.println("Lỗi : Với số dư của bạn chỉ có thể cài Auto Bid với mức tối đa là :" +this.balance);
             return;
         }
