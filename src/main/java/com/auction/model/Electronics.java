@@ -11,7 +11,7 @@ public class Electronics extends Item {
     }
 
     @Override
-    public void getInfo() {
+    public void printInfo() {
         System.out.println("Tên sản phẩm: " + nameItem);
         System.out.println("Mô tả: " + descriptionItem);
         System.out.println("Giá khởi điểm: " + startingPrice);
