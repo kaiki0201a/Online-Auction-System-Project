@@ -1,9 +1,11 @@
 package com.auction.model;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.auction.model.User;
 public class Bidder extends User{
     private double balance; 
-    private List<String> transactionHistory; // Danh sách id các phiên đấu giá đá tham gia
+    private List<BidTransaction> transactionHistory; // Danh sách id các phiên đấu giá đá tham gia
     public Bidder(String userName, String passWord, String email,double balance){
         super(userName, passWord, email);
         this.balance = balance;
@@ -15,11 +17,11 @@ public class Bidder extends User{
     public void setBalance(double balance){
         this.balance = balance;
     }
-    public List<String> getJoinedAuctions(){
+    public List<BidTransaction> getTransactionHistory(){
         return transactionHistory;
     }
-    public void setJoinedAuctions(List<String> transactionHistory){
-        this.transactionHistory = transactionHistory;
+    public void addTransaction(BidTransaction transaction) {
+        this.transactionHistory.add(transaction);
     }
     public void getBidderInfo(){
         System.out.println("========== BIDDER DASHBOARD ==========");
