@@ -16,7 +16,7 @@ public abstract class Item extends Entity{
 
     // Method
     // Hàm lấy thông tin
-    public abstract void getInfo();
+    public abstract void printInfo();
 
     // Getter & Setter
     public String getNameItem() {
