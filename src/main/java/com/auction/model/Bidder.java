@@ -1,8 +1,6 @@
 package com.auction.model;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.auction.model.User;
 public class Bidder extends User{
     private double balance; 
     private List<BidTransaction> transactionHistory; // Danh sách id các phiên đấu giá đá tham gia
@@ -36,9 +34,11 @@ public class Bidder extends User{
             System.out.println("Số dư không đủ! Bạn còn : " + this.getBalance());
             return false;
         }
-        boolean isSuccess = auction.placeBid(this,amount);
+        BidTransaction newTransaction = new BidTransaction(auction,this,amount);
+        boolean isSuccess = auction.processBid(newTransaction);
         if(isSuccess){
             System.out.println("Bidder "+this.getUserName()+" đã đấu giá thành công " + amount + "vào phiên " + auction.getAuctionId());
+            this.addTransaction(newTransaction);
         }
         return isSuccess;
     }
