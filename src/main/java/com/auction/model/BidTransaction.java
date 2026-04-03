@@ -1,14 +1,20 @@
 package com.auction.model;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 public class BidTransaction {
+    private Auction auction;
     private Bidder bidder;
     private double bidAmount;
     private LocalDateTime timestamp;
 
-    public BidTransaction(Bidder bidder,double bidAmount){
+    public BidTransaction(Auction auction,Bidder bidder,double bidAmount){
+        this.auction = auction;
         this.bidder = bidder;
         this.bidAmount = bidAmount;
         this.timestamp = LocalDateTime.now();
+    }
+    public Auction getAuction(){ 
+        return this.auction;
     }
 
     public Bidder getBidder(){
@@ -21,5 +27,17 @@ public class BidTransaction {
 
     public LocalDateTime getTimestamp(){
         return timestamp;
+    }
+    
+    @Override
+    public String toString(){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        String formattedTime = timestamp.format(formatter);
+        return String.format("[%s] %s đã đặt $%.2f vào phiên đấu giá %s",
+                formattedTime,
+                bidder.getUserName(), 
+                bidAmount, 
+                auction.getAuctionId());
+         
     }
 }
