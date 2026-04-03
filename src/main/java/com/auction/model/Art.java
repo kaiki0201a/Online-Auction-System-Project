@@ -13,7 +13,6 @@ public class Art extends Item {
     // Overriding Item, return item's information
     @Override
     public void printInfo() {
-            System.out.println("--- Thông tin Tác phẩm Nghệ thuật ---");
             System.out.println("Tên tác phẩm: " + this.nameItem);
             System.out.println("Mô tả: " + this.descriptionItem);
             System.out.println("Giá khởi điểm: $" + this.startingPrice);
