@@ -35,6 +35,7 @@ classDiagram
 		#String userName
 		-String passWord
 		#String email
+		-boolean isBanned
 		+login(String pass) boolean
 		+logout() void
 	}
