@@ -33,9 +33,13 @@ public class Auction extends Entity {
     }
 
 
-    // ĐẶT GIÁ
+    // XỬ LÝ ĐẶT GIÁ
 
-    public boolean placeBid(Bidder bidder, double bidAmount) {
+    public boolean processBid(BidTransaction transaction) {
+        // Trích xuất thông tin từ tờ biên lai để kiểm tra
+        Bidder bidder = transaction.getBidder();
+        double bidAmount = transaction.getBidAmount();
+
         // Kiểm tra trạng thái
         if (this.status != AuctionStatus.RUNNING) {
             System.out.println("Lỗi: Phiên đấu giá hiện không diễn ra.");
@@ -49,19 +53,19 @@ public class Auction extends Entity {
             return false;
         }
 
-        // Chống gian lận: Người bán không được tự đặt giá
+        // 3. Chống gian lận: Người bán không được tự đặt giá
         if (bidder.getId().equals(this.seller.getId())) {
             System.out.println("Lỗi gian lận: Người bán không được phép tự đặt giá!");
             return false;
         }
 
-        // Kiểm tra giá đặt
+        // 4. Kiểm tra giá đặt
         if (bidAmount <= this.currentHighestBid) {
             System.out.println("Lỗi: Giá đặt phải lớn hơn " + this.currentHighestBid);
             return false;
         }
 
-        // Kiểm tra số dư tài khoản
+        // 5. Kiểm tra số dư tài khoản
         if (bidAmount > bidder.getBalance()) {
             System.out.println("Lỗi: Số dư không đủ!");
             return false;
@@ -71,12 +75,9 @@ public class Auction extends Entity {
         this.currentHighestBid = bidAmount;
         this.highestBidder = bidder;
 
-        // Lưu lịch sử
-        BidTransaction transaction = new BidTransaction(this, bidder, bidAmount);
+        // Lưu lại lịch sử
         this.bidHistory.add(transaction);
-        bidder.addTransaction(transaction);
 
-        System.out.println(transaction.toString());
         return true;
     }
 
@@ -100,6 +101,16 @@ public class Auction extends Entity {
 
     public void closeAuction() {
         // TODO: Cần viết thân hàm đổi trạng thái sang FINISHED
+    }
+
+    //KQ
+
+    public void determineWinner() {
+        if (this.highestBidder != null) {
+            System.out.println("Người chiến thắng: " + this.highestBidder.getUserName() + " với mức giá: " + this.currentHighestBid);
+        } else {
+            System.out.println("Không có ai tham gia trả giá cho phiên đấu giá này.");
+        }
     }
 
     // GETTERS
