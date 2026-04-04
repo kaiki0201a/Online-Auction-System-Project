@@ -72,10 +72,14 @@ classDiagram
 		-LocalDateTime endTime
 		-LocalDateTime startTime
 		-AuctionStatus status
+		-List<BidTransaction> bidHistory;
 		%% Đảm bảo an toàn luồng
 		+processBid(BidTransaction bid) boolean
 		+extendTime(int seconds) void
 		-determineWinner() void
+		+startAuction() void
+		+closeAuction() void
+		+cancelAuction(String reason) void
 	}
 	%% Lưu trữ một lượt đặt giá
 	class BidTransaction{
