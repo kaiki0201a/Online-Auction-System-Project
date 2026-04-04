@@ -1,8 +1,8 @@
 package com.auction.model;
 
 public class Vehicle extends Item{
-    String engineType;
-    double mileage;
+    private String engineType;
+    private double mileage;
     public Vehicle(String nameItem, String descriptionItem, double startingPrice, String engineType, double mileage) {
         super(nameItem, descriptionItem, startingPrice);
         this.engineType = engineType;
