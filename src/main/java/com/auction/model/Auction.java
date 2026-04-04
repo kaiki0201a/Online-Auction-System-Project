@@ -1,13 +1,11 @@
 package com.auction.model;
 
-import com.auction.exception.AuctionClosedException;
-import com.auction.exception.InvalidBidException;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Auction extends Entity {
+
     private Item item;
     private Seller seller;
     private double currentHighestBid;
@@ -19,93 +17,100 @@ public class Auction extends Entity {
 
     private List<BidTransaction> bidHistory;
 
-    // Constructor
+
+    // CONSTRUCTOR
+
     public Auction(Item item, Seller seller, LocalDateTime startTime, LocalDateTime endTime) {
-        super(); // Khởi tạo id UUID từ Entity
+        super(); // Gọi Entity để sinh ID
         this.item = item;
         this.seller = seller;
         this.startTime = startTime;
         this.endTime = endTime;
 
-        // Giá cao nhất ban đầu chính là giá khởi điểm của Item
         this.currentHighestBid = item.getStartingPrice();
-        this.status = AuctionStatus.OPEN; // Trạng thái mặc định
+        this.status = AuctionStatus.OPEN;
         this.bidHistory = new ArrayList<>();
     }
 
-    /**
-     * Đặt giá mới.
-     * Sử dụng 'synchronized' để đảm bảo an toàn khi đấu giá đồng thời (tránh lost update).
-     */
-    public synchronized void placeBid(Bidder bidder, double bidAmount) throws AuctionClosedException, InvalidBidException {
-        // Kiểm tra trạng thái phiên đấu giá
 
+    // ĐẶT GIÁ
+
+    public boolean placeBid(Bidder bidder, double bidAmount) {
+        // Kiểm tra trạng thái
         if (this.status != AuctionStatus.RUNNING) {
-            throw new AuctionClosedException("Phiên đấu giá hiện không diễn ra (Trạng thái: " + this.status + ").");
+            System.out.println("Lỗi: Phiên đấu giá hiện không diễn ra.");
+            return false;
         }
 
-        // Kiểm tra tính hợp lệ của giá đặt
+        // Kiểm tra thời gian
+        if (LocalDateTime.now().isAfter(this.endTime)) {
+            this.status = AuctionStatus.FINISHED;
+            System.out.println("Lỗi: Phiên đấu giá đã kết thúc.");
+            return false;
+        }
+
+        // Chống gian lận: Người bán không được tự đặt giá
+        if (bidder.getId().equals(this.seller.getId())) {
+            System.out.println("Lỗi gian lận: Người bán không được phép tự đặt giá!");
+            return false;
+        }
+
+        // Kiểm tra giá đặt
         if (bidAmount <= this.currentHighestBid) {
-            throw new InvalidBidException("Giá đặt (" + bidAmount + ") phải lớn hơn giá hiện tại (" + this.currentHighestBid + ").");
+            System.out.println("Lỗi: Giá đặt phải lớn hơn " + this.currentHighestBid);
+            return false;
         }
 
-        // Cập nhật dữ liệu người dẫn đầu
+        // Kiểm tra số dư tài khoản
+        if (bidAmount > bidder.getBalance()) {
+            System.out.println("Lỗi: Số dư không đủ!");
+            return false;
+        }
+
+        // Cập nhật người dẫn đầu
         this.currentHighestBid = bidAmount;
         this.highestBidder = bidder;
 
-        // Khởi tạo đối tượng BidTransaction
+        // Lưu lịch sử
         BidTransaction transaction = new BidTransaction(this, bidder, bidAmount);
-
-        // Thêm vào lịch sử
         this.bidHistory.add(transaction);
+        bidder.addTransaction(transaction);
 
         System.out.println(transaction.toString());
+        return true;
+    }
 
+    // QUẢN LÝ THÔNG TIN & PHÂN QUYỀN
+
+    public boolean updateAuctionDetails(User requestor, Item newItem, LocalDateTime newStart, LocalDateTime newEnd) {
+        // TODO: Cần viết thân hàm xử lý phân quyền (Admin/Owner)
+        return false;
+    }
+
+    public boolean cancelAuction(User requestor, String reason) {
+        // TODO: Cần viết thân hàm xử lý đặc quyền hủy phiên đấu giá
+        return false;
     }
 
     // QUẢN LÝ TRẠNG THÁI
 
     public void startAuction() {
-        if (this.status == AuctionStatus.OPEN) {
-            this.status = AuctionStatus.RUNNING;
-            System.out.println("Phiên đấu giá [" + this.getId() + "] đã BẮT ĐẦU.");
-        }
+        // TODO: Cần viết thân hàm đổi trạng thái sang RUNNING
     }
 
     public void closeAuction() {
-        if (this.status == AuctionStatus.RUNNING) {
-            this.status = AuctionStatus.FINISHED;
-            System.out.println("Phiên đấu giá [" + this.getId() + "] đã KẾT THÚC.");
-            if (highestBidder != null) {
-                System.out.println("--> Người chiến thắng: " + highestBidder.getUserName() + " với giá " + currentHighestBid);
-            } else {
-                System.out.println("--> Không có ai tham gia trả giá.");
-            }
-        }
+        // TODO: Cần viết thân hàm đổi trạng thái sang FINISHED
     }
 
-    // GETTERS & SETTERS
+    // GETTERS
+
+    public String getAuctionId() { return this.getId(); }
     public Item getItem() { return item; }
-    public void setItem(Item item) { this.item = item; }
-
     public Seller getSeller() { return seller; }
-    public void setSeller(Seller seller) { this.seller = seller; }
-
     public double getCurrentHighestBid() { return currentHighestBid; }
-    public void setCurrentHighestBid(double currentHighestBid) { this.currentHighestBid = currentHighestBid; }
-
     public Bidder getHighestBidder() { return highestBidder; }
-    public void setHighestBidder(Bidder highestBidder) { this.highestBidder = highestBidder; }
-
     public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
-
     public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
-
     public AuctionStatus getStatus() { return status; }
-    public void setStatus(AuctionStatus status) { this.status = status; }
-
     public List<BidTransaction> getBidHistory() { return bidHistory; }
-    public void setBidHistory(List<BidTransaction> bidHistory) { this.bidHistory = bidHistory; }
 }
