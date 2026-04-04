@@ -4,6 +4,7 @@ import java.util.List;
 
 public class Seller extends User{
     private float rating;
+
     private List<Item> inventory;   // Kho hàng lưu trữ các món hàng của người bán quản lý
     // Constructor
     public Seller(String userName, String passWord, String email) {

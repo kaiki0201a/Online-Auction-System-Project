@@ -57,7 +57,7 @@ classDiagram
 		+updateItem(Item item) void
 	}
 	class Admin{
-		-int roleLevel
+		-String roleLevel
 		+cancelAuction(String auctionId) void
 		+banUser(String userId) void
 	}
