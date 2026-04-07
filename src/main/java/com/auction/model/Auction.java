@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Auction extends Entity {
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
 
     private Item item;
     private Seller seller;

@@ -2,6 +2,9 @@ package com.auction.model;
 import java.util.ArrayList;
 import java.util.List;
 public class Bidder extends User{
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
+
     private double balance; 
     private List<BidTransaction> transactionHistory; // Danh sách id các phiên đấu giá đá tham gia
     public Bidder(String userName, String passWord, String email,double balance){

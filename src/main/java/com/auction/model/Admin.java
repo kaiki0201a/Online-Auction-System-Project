@@ -1,6 +1,9 @@
 package com.auction.model;
 
 public class Admin extends User{
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
+
     //Fields
     // Admin có thể chia cấp bậc( ví dụ: SUPER_ADMIN, MODERATION)
     private String roleLevel;

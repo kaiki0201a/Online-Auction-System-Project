@@ -1,6 +1,9 @@
 package com.auction.model;
 
 public class Vehicle extends Item{
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
+
     private String engineType;
     private double mileage;
     public Vehicle(String nameItem, String descriptionItem, double startingPrice, String engineType, double mileage) {
