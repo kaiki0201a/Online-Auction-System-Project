@@ -35,6 +35,7 @@ classDiagram
 		#String userName
 		-String passWord
 		#String email
+		-boolean isBanned
 		+login(String pass) boolean
 		+logout() void
 	}
@@ -57,7 +58,7 @@ classDiagram
 		+updateItem(Item item) void
 	}
 	class Admin{
-		-int roleLevel
+		-String roleLevel
 		+cancelAuction(String auctionId) void
 		+banUser(String userId) void
 	}
@@ -71,10 +72,14 @@ classDiagram
 		-LocalDateTime endTime
 		-LocalDateTime startTime
 		-AuctionStatus status
+		-List<BidTransaction> bidHistory;
 		%% Đảm bảo an toàn luồng
 		+processBid(BidTransaction bid) boolean
 		+extendTime(int seconds) void
 		-determineWinner() void
+		+startAuction() void
+		+closeAuction() void
+		+cancelAuction(String reason) void
 	}
 	%% Lưu trữ một lượt đặt giá
 	class BidTransaction{

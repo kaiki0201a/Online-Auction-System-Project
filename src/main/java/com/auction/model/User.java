@@ -4,6 +4,7 @@ public abstract class User extends Entity{
     // Fields
     protected String userName, email;
     private String passWord;
+    private boolean isBanned;
 
     // Constructor
     public User(String userName, String passWord, String email){
@@ -31,6 +32,14 @@ public abstract class User extends Entity{
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public boolean isBanned() {
+        return isBanned;
+    }
+
+    public void setBanned(boolean banned) {
+        isBanned = banned;
     }
 
     public String getEmail() {
