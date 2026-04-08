@@ -1,4 +1,7 @@
 package com.auction.model;
+import com.auction.model.Auction;
+import com.auction.model.Bidder;
+import com.auction.model.User;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

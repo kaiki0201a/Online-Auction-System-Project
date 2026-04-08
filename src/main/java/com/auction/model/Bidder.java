@@ -1,6 +1,10 @@
 package com.auction.model;
-import java.util.ArrayList;
+import com.auction.model.Auction;
+import com.auction.model.BidTransaction;
+import com.auction.model.User;
 
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class Bidder extends User{

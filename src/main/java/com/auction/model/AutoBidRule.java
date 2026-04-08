@@ -1,5 +1,5 @@
 package com.auction.model;
-
+import com.auction.model.*;
 public class AutoBidRule {
     private Bidder bidder;
     private double maxBid;
