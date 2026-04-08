@@ -4,8 +4,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Auction extends Entity {
+import main.java.com.auction.model.BidTransaction;
+import main.java.com.auction.model.Bidder;
 
+public class Auction extends Entity {
+    private List<AutoBidRule> autoBidRules;
     private Item item;
     private Seller seller;
     private double currentHighestBid;
@@ -30,6 +33,7 @@ public class Auction extends Entity {
         this.currentHighestBid = item.getStartingPrice();
         this.status = AuctionStatus.OPEN;
         this.bidHistory = new ArrayList<>();
+        this.autoBidRules = new ArrayList<>();
     }
 
 
@@ -111,6 +115,16 @@ public class Auction extends Entity {
         } else {
             System.out.println("Không có ai tham gia trả giá cho phiên đấu giá này.");
         }
+    }
+    // QUẢN LÝ AUTO-BID (Đấu giá tự động)
+    public boolean registerAutoBid(Bidder bidder, double maxBid, double increment) {
+        if(this.status == AuctionStatus.FINISHED){
+            return false;
+        }
+        AutoBidRule newRule = newAutoBidRUle(bidder,maxBid,increment);
+        this.autoBidRules.add(newRule);
+    
+        return true; 
     }
 
     // GETTERS

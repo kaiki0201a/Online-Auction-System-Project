@@ -1,6 +1,8 @@
 package com.auction.model;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
 public class BidTransaction {
     private Auction auction;
     private Bidder bidder;

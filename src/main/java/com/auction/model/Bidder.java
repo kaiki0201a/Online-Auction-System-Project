@@ -1,6 +1,8 @@
 package com.auction.model;
 import java.util.ArrayList;
+
 import java.util.List;
+
 public class Bidder extends User{
     private double balance; 
     private List<BidTransaction> transactionHistory; // Danh sách id các phiên đấu giá đá tham gia
@@ -37,7 +39,7 @@ public class Bidder extends User{
         BidTransaction newTransaction = new BidTransaction(auction,this,amount);
         boolean isSuccess = auction.processBid(newTransaction);
         if(isSuccess){
-            System.out.println("Bidder "+this.getUserName()+" đã đấu giá thành công " + amount + "vào phiên " + auction.getAuctionId());
+            System.out.println("Bidder "+this.getUserName()+" đã đấu giá thành công " + amount + " vào phiên " + auction.getAuctionId());
             this.addTransaction(newTransaction);
         }
         return isSuccess;
@@ -47,8 +49,14 @@ public class Bidder extends User{
             System.out.println("Lỗi : Với số dư của bạn chỉ có thể cài Auto Bid với mức tối đa là :" +this.balance);
             return;
         }
-        System.out.println("Thành công: " + this.getUserName() + " đã cài đặt Auto Bid thành công cho phiên giao dịch: " + auction.getAuctionId());
-        System.out.println("Trả giá tự động lên tối đa: "+ maxBid +" với bước nhảy: "+ increment);
-    }
+        boolean isRegistered = auction.registerAutobid(this,maxBid,increment);
+        if(isRegistered){
+            System.out.println("Thành công: " + this.getUserName() + " đã cài đặt Auto Bid thành công cho phiên giao dịch: " + auction.getAuctionId());
+            System.out.println("Trả giá tự động lên tối đa: "+ maxBid +" với bước nhảy: "+ increment);
+            }
+        else{
+            System.out.println("Thất bại: Không thể cài đặt Auto-Bid (Phiên đấu giá có thể đã kết thúc). ");
+        }
+        }
     
 }
