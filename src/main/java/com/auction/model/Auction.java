@@ -1,5 +1,8 @@
 package com.auction.model;
 
+import com.auction.exception.InvalidBidException;
+import com.auction.exception.AuctionClosedException;
+import com.auction.exception.InsufficientBalanceException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,40 +40,43 @@ public class Auction extends Entity {
 
     // XỬ LÝ ĐẶT GIÁ
 
-    public boolean processBid(BidTransaction transaction) {
+    public void processBid(BidTransaction transaction) throws InvalidBidException, AuctionClosedException, InsufficientBalanceException {
         // Trích xuất thông tin từ tờ biên lai để kiểm tra
         Bidder bidder = transaction.getBidder();
         double bidAmount = transaction.getBidAmount();
 
         // Kiểm tra trạng thái
         if (this.status != AuctionStatus.RUNNING) {
-            System.out.println("Lỗi: Phiên đấu giá hiện không diễn ra.");
-            return false;
+            throw new AuctionClosedException("Lỗi: Phiên đấu giá hiện không diễn ra (Trạng thái: " + this.status + ").");
         }
 
         // Kiểm tra thời gian
         if (LocalDateTime.now().isAfter(this.endTime)) {
             this.status = AuctionStatus.FINISHED;
-            System.out.println("Lỗi: Phiên đấu giá đã kết thúc.");
-            return false;
+            throw new AuctionClosedException("Lỗi: Phiên đấu giá đã kết thúc vào lúc " + this.endTime);
         }
 
         // 3. Chống gian lận: Người bán không được tự đặt giá
         if (bidder.getId().equals(this.seller.getId())) {
-            System.out.println("Lỗi gian lận: Người bán không được phép tự đặt giá!");
-            return false;
+            // Dùng InvalidBidException để báo lỗi này luôn cho tiện
+            throw new InvalidBidException("Lỗi gian lận: Người bán không được phép tự đặt giá cho sản phẩm của mình!");
         }
 
         // 4. Kiểm tra giá đặt
         if (bidAmount <= this.currentHighestBid) {
-            System.out.println("Lỗi: Giá đặt phải lớn hơn " + this.currentHighestBid);
-            return false;
+            throw new InvalidBidException(
+                    "Lỗi: Giá đặt ($" + bidAmount + ") phải lớn hơn mức giá cao nhất hiện tại ($" + this.currentHighestBid + ").",
+                    this.currentHighestBid,
+                    bidAmount
+            );
         }
-
         // 5. Kiểm tra số dư tài khoản
         if (bidAmount > bidder.getBalance()) {
-            System.out.println("Lỗi: Số dư không đủ!");
-            return false;
+            throw new InsufficientBalanceException(
+                    "Lỗi: Số dư không đủ để thực hiện giao dịch này!",
+                    bidder.getBalance(),
+                    bidAmount
+            );
         }
 
         // Cập nhật người dẫn đầu
@@ -79,8 +85,6 @@ public class Auction extends Entity {
 
         // Lưu lại lịch sử
         this.bidHistory.add(transaction);
-
-        return true;
     }
 
     // QUẢN LÝ THÔNG TIN & PHÂN QUYỀN

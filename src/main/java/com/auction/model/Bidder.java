@@ -1,6 +1,9 @@
 package com.auction.model;
 import java.util.ArrayList;
 import java.util.List;
+import com.auction.exception.InvalidBidException;
+import com.auction.exception.AuctionClosedException;
+import com.auction.exception.InsufficientBalanceException;
 public class Bidder extends User{
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
@@ -31,24 +34,29 @@ public class Bidder extends User{
         System.out.println("Số dư hiện tại: $" + this.balance);
         System.out.println("======================================");
     }
-    public boolean placeBid(Auction auction, double amount)
+    public void placeBid(Auction auction, double amount) throws InsufficientBalanceException, AuctionClosedException, InvalidBidException
     {
         if(amount > this.getBalance()){
-            System.out.println("Số dư không đủ! Bạn còn : " + this.getBalance());
-            return false;
+            throw new InsufficientBalanceException(
+                    "Số dư không đủ! Bạn còn: $" + this.getBalance(),
+                    this.getBalance(),
+                    amount
+            );
         }
         BidTransaction newTransaction = new BidTransaction(auction,this,amount);
-        boolean isSuccess = auction.processBid(newTransaction);
-        if(isSuccess){
-            System.out.println("Bidder "+this.getUserName()+" đã đấu giá thành công " + amount + "vào phiên " + auction.getAuctionId());
-            this.addTransaction(newTransaction);
-        }
-        return isSuccess;
+        auction.processBid(newTransaction);
+        System.out.println("Bidder " + this.getUserName() + " đã đấu giá thành công " + amount + " vào phiên " + auction.getAuctionId());
+        this.addTransaction(newTransaction);
     }
-    public void setupAutoBid(Auction auction,double maxBid, double increment){
-        if(maxBid > this.getBalance()){
-            System.out.println("Lỗi : Với số dư của bạn chỉ có thể cài Auto Bid với mức tối đa là :" +this.balance);
-            return;
+    public void setupAutoBid(Auction auction, double maxBid, double increment)
+            throws InsufficientBalanceException {
+
+        if (maxBid > this.getBalance()){
+            throw new InsufficientBalanceException(
+                    "Lỗi cài đặt Auto-Bid: Số dư của bạn chỉ có thể cài mức tối đa là $" + this.balance,
+                    this.balance,
+                    maxBid
+            );
         }
         System.out.println("Thành công: " + this.getUserName() + " đã cài đặt Auto Bid thành công cho phiên giao dịch: " + auction.getAuctionId());
         System.out.println("Trả giá tự động lên tối đa: "+ maxBid +" với bước nhảy: "+ increment);
