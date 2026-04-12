@@ -1,6 +1,9 @@
 package com.auction.model;
 
 public class Electronics extends Item {
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
+
     private String brand;
     private int warrantyMonths;
 

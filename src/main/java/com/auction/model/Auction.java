@@ -1,11 +1,6 @@
 package com.auction.model;
 
 import com.auction.exception.InvalidBidException;
-
-import main.java.com.auction.model.AutoBidRule;
-import main.java.com.auction.model.BidTransaction;
-import main.java.com.auction.model.Bidder;
-
 import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
 import java.time.LocalDateTime;

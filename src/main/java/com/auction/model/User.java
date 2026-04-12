@@ -1,6 +1,9 @@
 package com.auction.model;
 
 public abstract class User extends Entity{
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
+
     // Fields
     protected String userName, email;
     private String passWord;

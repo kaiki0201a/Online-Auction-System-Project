@@ -1,6 +1,9 @@
 package com.auction.model;
 
 public class Art extends Item {
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
+
     // Fields
     protected String artist;
     protected int creationYear;

@@ -3,6 +3,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Seller extends User{
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
+
     private float rating;
 
     private List<Item> inventory;   // Kho hàng lưu trữ các món hàng của người bán quản lý

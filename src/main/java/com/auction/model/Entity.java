@@ -1,5 +1,6 @@
 package com.auction.model;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
@@ -7,6 +8,9 @@ import java.util.UUID;
  * Giúp đảm bảo mọi thực thể đều có một mã ID duy nhất ngay khi được tạo ra.
  */
 public abstract class Entity {
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
+
     protected String id;
 
     public Entity() {
