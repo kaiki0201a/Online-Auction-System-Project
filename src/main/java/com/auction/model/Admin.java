@@ -18,7 +18,7 @@ public class Admin extends User{
     public void cancelAuction(Auction auction, String reason) {
         //1. Huỷ đấu giá khi đấu giá chưa kết thúc
         if (auction.getStatus() == AuctionStatus.OPEN || auction.getStatus() == AuctionStatus.RUNNING) {
-            auction.setStatus(AuctionStatus.CANCELLED);
+            auction.setStatus(AuctionStatus.CANCELED);
             System.out.println("!!! Admin [" + this.getUserName() + "] ĐÃ HUỶ phiên đấu giá " + auction.getId());
             System.out.println("Lý do vi phạm: " + reason);
         } else {
