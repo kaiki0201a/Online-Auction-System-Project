@@ -1,12 +1,12 @@
 package com.auction.model;
-import com.auction.model.Auction;
-import com.auction.model.Bidder;
-import com.auction.model.User;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.io.Serializable;
 
-public class BidTransaction {
+public class BidTransaction implements Serializable{
+    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
+    private static final long serialVersionUID = 1L;
+    
     private Auction auction;
     private Bidder bidder;
     private double bidAmount;
