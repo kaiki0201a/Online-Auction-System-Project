@@ -11,6 +11,7 @@ public class Auction extends Entity {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
+    private List<AutoBidRule> autoBidRules;
     private Item item;
     private Seller seller;
     private double currentHighestBid;
@@ -35,12 +36,13 @@ public class Auction extends Entity {
         this.currentHighestBid = item.getStartingPrice();
         this.status = AuctionStatus.OPEN;
         this.bidHistory = new ArrayList<>();
+        this.autoBidRules = new ArrayList<>();
     }
 
 
     // XỬ LÝ ĐẶT GIÁ
 
-    public void processBid(BidTransaction transaction) throws InvalidBidException, AuctionClosedException, InsufficientBalanceException {
+    public synchronized void processBid(BidTransaction transaction) throws InvalidBidException, AuctionClosedException, InsufficientBalanceException {
         // Trích xuất thông tin từ tờ biên lai để kiểm tra
         Bidder bidder = transaction.getBidder();
         double bidAmount = transaction.getBidAmount();
@@ -118,7 +120,15 @@ public class Auction extends Entity {
             System.out.println("Không có ai tham gia trả giá cho phiên đấu giá này.");
         }
     }
+    public synchronized boolean registerAutoBid(Bidder bidder, double maxBid, double increment) {
+        if(this.status == AuctionStatus.FINISHED){
+            return false;
+        }
+        AutoBidRule newRule = new AutoBidRule(bidder,maxBid,increment);
+        this.autoBidRules.add(newRule);
+        return true; 
 
+    }
     // GETTERS
 
     public String getAuctionId() { return this.getId(); }

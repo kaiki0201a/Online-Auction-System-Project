@@ -1,4 +1,9 @@
 package com.auction.model;
+import com.auction.model.Auction;
+import com.auction.model.BidTransaction;
+import com.auction.model.User;
+
+
 import java.util.ArrayList;
 import java.util.List;
 import com.auction.exception.InvalidBidException;
@@ -49,7 +54,7 @@ public class Bidder extends User{
         this.addTransaction(newTransaction);
     }
     public void setupAutoBid(Auction auction, double maxBid, double increment)
-            throws InsufficientBalanceException {
+            throws InsufficientBalanceException, AuctionClosedException {
 
         if (maxBid > this.getBalance()){
             throw new InsufficientBalanceException(
@@ -58,8 +63,9 @@ public class Bidder extends User{
                     maxBid
             );
         }
-        System.out.println("Thành công: " + this.getUserName() + " đã cài đặt Auto Bid thành công cho phiên giao dịch: " + auction.getAuctionId());
-        System.out.println("Trả giá tự động lên tối đa: "+ maxBid +" với bước nhảy: "+ increment);
+        auction.registerAutoBid(this, maxBid, increment);
+        System.out.println("Thành công: " + this.getUserName() + " đã cài đặt Auto Bid cho phiên: " + auction.getAuctionId());
+        System.out.println("Trả giá tự động lên tối đa: $" + maxBid + " với bước nhảy: $" + increment);
     }
     
 }
