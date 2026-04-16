@@ -3,6 +3,8 @@ package com.auction.model;
 import com.auction.exception.InvalidBidException;
 import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
+import com.auction.service.AutoBidService; // BỔ SUNG: Import con robot vào
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +25,7 @@ public class Auction extends Entity {
 
     private List<BidTransaction> bidHistory;
 
-
     // CONSTRUCTOR
-
     public Auction(Item item, Seller seller, LocalDateTime startTime, LocalDateTime endTime) {
         super(); // Gọi Entity để sinh ID
         this.item = item;
@@ -39,10 +39,8 @@ public class Auction extends Entity {
         this.autoBidRules = new ArrayList<>();
     }
 
-
-    // XỬ LÝ ĐẶT GIÁ
-
-    public synchronized void processBid(BidTransaction transaction) throws InvalidBidException, AuctionClosedException, InsufficientBalanceException {
+    // XỬ LÝ ĐẶT GIÁ (BỔ SUNG: Truyền thêm AutoBidService vào hàm)
+    public synchronized void processBid(BidTransaction transaction, AutoBidService robot) throws InvalidBidException, AuctionClosedException, InsufficientBalanceException {
         // Trích xuất thông tin từ tờ biên lai để kiểm tra
         Bidder bidder = transaction.getBidder();
         double bidAmount = transaction.getBidAmount();
@@ -60,7 +58,6 @@ public class Auction extends Entity {
 
         // 3. Chống gian lận: Người bán không được tự đặt giá
         if (bidder.getId().equals(this.seller.getId())) {
-            // Dùng InvalidBidException để báo lỗi này luôn cho tiện
             throw new InvalidBidException("Lỗi gian lận: Người bán không được phép tự đặt giá cho sản phẩm của mình!");
         }
 
@@ -72,6 +69,7 @@ public class Auction extends Entity {
                     bidAmount
             );
         }
+
         // 5. Kiểm tra số dư tài khoản
         if (bidAmount > bidder.getBalance()) {
             throw new InsufficientBalanceException(
@@ -87,10 +85,15 @@ public class Auction extends Entity {
 
         // Lưu lại lịch sử
         this.bidHistory.add(transaction);
+
+        // BỔ SUNG: Bấm chuông gọi Robot dậy kiểm tra giá mới
+        if (robot != null) {
+            robot.notifyNewBidEvent();
+        }
     }
+    // Đã xóa 1 dấu '}' bị dư ở đây trong code cũ của bạn
 
     // QUẢN LÝ THÔNG TIN & PHÂN QUYỀN
-
     public boolean updateAuctionDetails(User requestor, Item newItem, LocalDateTime newStart, LocalDateTime newEnd) {
         // TODO: Cần viết thân hàm xử lý phân quyền (Admin/Owner)
         return false;
@@ -102,7 +105,6 @@ public class Auction extends Entity {
     }
 
     // QUẢN LÝ TRẠNG THÁI
-
     public void startAuction() {
         // TODO: Cần viết thân hàm đổi trạng thái sang RUNNING
     }
@@ -111,8 +113,7 @@ public class Auction extends Entity {
         // TODO: Cần viết thân hàm đổi trạng thái sang FINISHED
     }
 
-    //KQ
-
+    // KQ
     public void determineWinner() {
         if (this.highestBidder != null) {
             System.out.println("Người chiến thắng: " + this.highestBidder.getUserName() + " với mức giá: " + this.currentHighestBid);
@@ -120,17 +121,18 @@ public class Auction extends Entity {
             System.out.println("Không có ai tham gia trả giá cho phiên đấu giá này.");
         }
     }
+
     public synchronized boolean registerAutoBid(Bidder bidder, double maxBid, double increment) {
-        if(this.status == AuctionStatus.FINISHED){
+        if (this.status == AuctionStatus.FINISHED) {
             return false;
         }
-        AutoBidRule newRule = new AutoBidRule(bidder,maxBid,increment);
+        // BỔ SUNG: Thêm chữ 'this' vào để truyền phiên đấu giá hiện tại vào Rule
+        AutoBidRule newRule = new AutoBidRule(bidder, this, maxBid, increment);
         this.autoBidRules.add(newRule);
-        return true; 
-
+        return true;
     }
-    // GETTERS
 
+    // GETTERS
     public String getAuctionId() { return this.getId(); }
     public Item getItem() { return item; }
     public Seller getSeller() { return seller; }

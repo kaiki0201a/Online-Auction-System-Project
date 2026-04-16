@@ -9,6 +9,8 @@ import java.util.List;
 import com.auction.exception.InvalidBidException;
 import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
+import com.auction.service.*;
+
 public class Bidder extends User{
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
@@ -39,7 +41,7 @@ public class Bidder extends User{
         System.out.println("Số dư hiện tại: $" + this.balance);
         System.out.println("======================================");
     }
-    public void placeBid(Auction auction, double amount) throws InsufficientBalanceException, AuctionClosedException, InvalidBidException
+    public void placeBid(Auction auction, double amount, AutoBidService robot) throws InsufficientBalanceException, AuctionClosedException, InvalidBidException
     {
         if(amount > this.getBalance()){
             throw new InsufficientBalanceException(
@@ -49,7 +51,7 @@ public class Bidder extends User{
             );
         }
         BidTransaction newTransaction = new BidTransaction(auction,this,amount);
-        auction.processBid(newTransaction);
+        auction.processBid(newTransaction, robot);
         System.out.println("Bidder " + this.getUserName() + " đã đấu giá thành công " + amount + " vào phiên " + auction.getAuctionId());
         this.addTransaction(newTransaction);
     }

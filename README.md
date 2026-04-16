@@ -81,6 +81,30 @@ classDiagram
 		+closeAuction() void
 		+cancelAuction(String reason) void
 	}
+	
+	%% Tầng Service & Đa luồng (MỚI BỔ SUNG)
+	class AutoBidRule {
+		<<DTO>>
+		-Bidder bidder
+		-Auction auction
+		-double maxBid
+		-double increment
+		+getBidder() Bidder
+		+getAuction() Auction
+		+getMaxBid() double
+		+getIncrement() double
+	}
+	
+	class AutoBidService {
+		<<Runnable Thread>>
+		-List~AutoBidRule~ rules
+		-Object lock
+		-boolean hasNewBidEvent
+		+registerRule(AutoBidRule rule) void
+		+notifyNewBidEvent() void
+		+run() void
+		-processRules() void
+	}
 	%% Lưu trữ một lượt đặt giá
 	class BidTransaction{
 		%% Giao dich duoc tao ra
@@ -132,4 +156,9 @@ classDiagram
 	%% Su phu thuoc cua cac Service
 	PaymentService ..> Bidder : deducts
 	AutoBidService ..> Auction : monitors
+	%% Mối quan hệ hệ thống Auto-Bid (MỚI)
+	AutoBidService "1" *-- "*" AutoBidRule : manages rules
+	AutoBidRule --> Bidder : applies to
+	AutoBidRule --> Auction : limits within
+	Auction ..> AutoBidService : triggers notification
 ```
