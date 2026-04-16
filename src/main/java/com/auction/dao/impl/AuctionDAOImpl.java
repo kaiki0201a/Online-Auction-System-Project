@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AuctionDAOImpl implements IAuctionDAO {
+    public AuctionDAOImpl() {
+        loadDataFromFile();
+    }
     private Map<String, Auction> database = new ConcurrentHashMap<>();
     @Override
     public boolean save(Auction obj){
@@ -20,6 +23,9 @@ public class AuctionDAOImpl implements IAuctionDAO {
             return true;
         }
         return false;
+    }
+    private void loadDataFromFile() {
+
     }
     @Override
     public boolean update(Auction obj){
