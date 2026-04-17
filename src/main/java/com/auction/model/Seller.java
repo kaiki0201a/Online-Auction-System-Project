@@ -1,6 +1,7 @@
 package com.auction.model;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Serializable;
 
 public class Seller extends User{
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này

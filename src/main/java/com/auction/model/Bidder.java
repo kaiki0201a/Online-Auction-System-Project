@@ -2,7 +2,7 @@ package com.auction.model;
 import com.auction.model.Auction;
 import com.auction.model.BidTransaction;
 import com.auction.model.User;
-
+import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.List;

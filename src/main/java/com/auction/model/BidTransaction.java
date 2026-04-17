@@ -2,6 +2,7 @@ package com.auction.model;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.io.Serializable;
+import java.io.Serializable;
 
 public class BidTransaction implements Serializable{
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này

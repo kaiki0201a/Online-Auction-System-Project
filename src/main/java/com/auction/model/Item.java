@@ -1,4 +1,5 @@
 package com.auction.model;
+import java.io.Serializable;
 
 public abstract class Item extends Entity{
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này

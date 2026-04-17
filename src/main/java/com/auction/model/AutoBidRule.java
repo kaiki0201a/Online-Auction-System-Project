@@ -1,4 +1,5 @@
 package com.auction.model;
+import java.io.Serializable;
 import com.auction.model.*;
 public class AutoBidRule {
     private Bidder bidder;

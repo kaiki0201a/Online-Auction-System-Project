@@ -6,8 +6,9 @@ import com.auction.exception.InsufficientBalanceException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Serializable;
 
-public class Auction extends Entity {
+public class Auction extends Entity implements Serializable{
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
