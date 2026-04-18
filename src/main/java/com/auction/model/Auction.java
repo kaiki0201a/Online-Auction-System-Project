@@ -104,11 +104,29 @@ public class Auction extends Entity {
     // QUẢN LÝ TRẠNG THÁI
 
     public void startAuction() {
-        // TODO: Cần viết thân hàm đổi trạng thái sang RUNNING
+        if (this.status == AuctionStatus.OPEN) {
+            this.status = AuctionStatus.RUNNING;
+            System.out.println("Phiên đấu giá [" + this.getId() + "] đã bắt đầu.");
+
+            // Khởi tạo luồng đếm ngược
+            AuctionTimer timerTask = new AuctionTimer(this);
+            Thread backgroundThread = new Thread(timerTask);
+
+            // Khởi chạy luồng chạy ngầm để không chặn luồng chính của User
+            backgroundThread.start();
+        } else {
+            System.out.println("Không thể bắt đầu. Phiên đấu giá không ở trạng thái OPEN.");
+        }
     }
 
     public void closeAuction() {
-        // TODO: Cần viết thân hàm đổi trạng thái sang FINISHED
+        if (this.status == AuctionStatus.RUNNING) {
+            this.status = AuctionStatus.FINISHED;
+            System.out.println("Phiên đấu giá [" + this.getId() + "] đã kết thúc.");
+
+            // Gọi hàm in kết quả
+            this.determineWinner();
+        }
     }
 
     //KQ
