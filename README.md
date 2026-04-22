@@ -187,9 +187,9 @@ classDiagram
 | | Viết tài liệu README, phân công việc & Nhật ký thay đổi | Cả nhóm |
 | | Thiết kế giao diện FXML: Màn hình Login & Danh sách đấu giá | Tương lai |
 | **9. Interface Dao** | Thiết kế interface dao | Điệp|
-| **10. AuctionStatus ** | Thiết kế Auction Status | Huy |
-| **11. AuctionDaoImpl ** | Thiết kế AuctionDaoImpl | Hoàng |
-| **12. ConcurrencyTest ** | Thiết kế ConcurrencyTest | Điệp |
+| **10. AuctionStatus** | Thiết kế Auction Status | Huy |
+| **11. AuctionDaoImpl** | Thiết kế AuctionDaoImpl | Hoàng |
+| **12. ConcurrencyTest** | Thiết kế ConcurrencyTest | Điệp |
 
 ---
 
