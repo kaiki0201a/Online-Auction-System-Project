@@ -189,7 +189,7 @@ classDiagram
 | **9. Interface Dao** | Thiết kế interface dao | Điệp|
 | **10. AuctionStatus** | Thiết kế Auction Status | Huy |
 | **11. AuctionDaoImpl** | Thiết kế AuctionDaoImpl | Hoàng |
-| **12. ConcurrencyTest** | Thiết kế ConcurrencyTest | Điệp |
+| **12. ConcurrencyTest** | Thiết kế ConcurrencyTest | Hoàng |
 
 ---
 
