@@ -16,11 +16,11 @@ public class Art extends Item {
     // Overriding Item, return item's information
     @Override
     public void printInfo() {
-            System.out.println("Tên tác phẩm: " + this.nameItem);
-            System.out.println("Mô tả: " + this.descriptionItem);
-            System.out.println("Giá khởi điểm: $" + this.startingPrice);
-            System.out.println("Nghệ sĩ sáng tác: " + this.artist);
-            System.out.println("Năm sáng tác: " + this.creationYear);
+            System.out.println("Tên tác phẩm: " + this.getNameItem());
+            System.out.println("Mô tả: " + this.getDescriptionItem());
+            System.out.println("Giá khởi điểm: $" + this.getStartingPrice());
+            System.out.println("Nghệ sĩ sáng tác: " + this.getArtist());
+            System.out.println("Năm sáng tác: " + this.getCreationYear());
     }
     // Getter and Setter
     public String getArtist() {

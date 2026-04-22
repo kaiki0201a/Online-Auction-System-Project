@@ -16,19 +16,18 @@ public class Admin extends User{
 
     // Method 1: Huỷ một phiên đấu giá vi phạm
     public void cancelAuction(Auction auction, String reason) {
+        boolean success = auction.cancelAuction(this, reason);
         //1. Huỷ đấu giá khi đấu giá chưa kết thúc
-        if (auction.getStatus() == AuctionStatus.OPEN || auction.getStatus() == AuctionStatus.RUNNING) {
-            auction.setStatus(AuctionStatus.CANCELED);
-            System.out.println("!!! Admin [" + this.getUserName() + "] ĐÃ HUỶ phiên đấu giá " + auction.getId());
-            System.out.println("Lý do vi phạm: " + reason);
+        if (success) {
+            System.out.println("!!! Admin [" + this.getUserName() + "] ĐÃ HUỶ phiên đấu giá " + auction.getAuctionId());
         } else {
-            System.out.println("Không thể huỷ phiên đấu giá vì đang ở trạng thái: " + auction.getStatus());
+            System.out.println("Admin không thể huỷ phiên đấu giá này.");
         }
     }
     // Method 2: Khoá tài khoản người dùng vi phạm
     public void banUser(User user, String reason){
         // TODO: Cần thêm thuộc tính 'boolean isBanned" vào lớp cha User
-        user.setBanned(false);
+        user.setBanned(true);
         System.out.println("!!! Admin [" + this.getUserName() + "] đã BAN tài khoản: " + user.getUserName());
         System.out.println("Lý do: " + reason);
     }

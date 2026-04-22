@@ -9,7 +9,9 @@ import java.util.List;
 import com.auction.exception.InvalidBidException;
 import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
-public class Bidder extends User{
+import com.auction.utils.AuctionObserver;
+
+public class Bidder extends User implements AuctionObserver {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
@@ -66,6 +68,13 @@ public class Bidder extends User{
         auction.registerAutoBid(this, maxBid, increment);
         System.out.println("Thành công: " + this.getUserName() + " đã cài đặt Auto Bid cho phiên: " + auction.getAuctionId());
         System.out.println("Trả giá tự động lên tối đa: $" + maxBid + " với bước nhảy: $" + increment);
+    }
+
+    @Override
+    public void update(String message) {
+        // Tạm thời in ra màn hình.
+        // Sau này ở Tuần 9 (Client-Server), hàm này sẽ dùng Socket đẩy text về màn hình của người dùng.
+        System.out.println("[Thông báo tới " + this.getUserName() + "]: " + message);
     }
     
 }
