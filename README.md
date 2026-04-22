@@ -1,4 +1,6 @@
 # Online-Auction-System-Project
+
+## 1. Sơ đồ thiết kế lớp UML
 ```mermaid
 classDiagram
     %% Base Entity
@@ -153,3 +155,42 @@ classDiagram
     Bidder ..> Auction : interacts
  
 ```
+## 2. Bảng phân công công việc
+
+
+| Module | Công việc / Class / Method cụ thể | Thành viên thực hiện | Trạng thái |
+| :--- | :--- | :--- | :---: |
+| **1. Cơ sở hạ tầng** | Cấu hình Maven `pom.xml` & Quản lý thư viện (JUnit, JavaFX) | Hiếu | 
+| | Thiết kế lớp trừu tượng `Entity` và cơ chế sinh ID tự động | Hiếu | 
+| **2. Thực thể Người dùng** | Lớp `User` (Base) & thuộc tính xác thực (Username, Password) | Hiếu | 
+| | Phân quyền `Admin` (Role) và `Seller` (Rating, Inventory) | Hiếu | 
+| | Logic tài khoản `Bidder`: Quản lý `balance` & `placeBid` | Hoàng | 
+| **3. Thực thể Sản phẩm** | Lớp trừu tượng `Item` & các thuộc tính chung (StartingPrice) | Hiếu | 
+| | Đặc thù sản phẩm: `Art` (Artist, Year) & `Electronics` (Brand) | Huy + Điệp | 
+| | Đặc thù sản phẩm: `Vehicle` (EngineType, Mileage) | Huy | 
+| **4. Design Patterns** | Singleton: `AuctionManager` (getInstance & quản lý List) | Hiếu | 
+| | Factory: Interface `ItemFactory` & lớp `ArtFactory` | Hiếu | 
+| | Factory: `ElectronicsFactory` & `VehicleFactory` (Xử lý Map) | Hiếu | 
+| | Observer: Interface `AuctionObserver` & phương thức `update()` | Hiếu | 
+| **5. Logic Đấu giá Core** | `Auction`: Quản lý `AuctionStatus` & Trạng thái thời gian | Điệp + Huy | 
+| | `Auction`: Cơ chế thông báo `notifyObservers` (Real-time) | Hiếu | 
+| | `Auction`: Refactor hàm `validateBid` (Kiểm tra điều kiện lỗi) | Hoàng | 
+| | `Auction`: Hàm `processBid` (Đảm bảo an toàn đa luồng) | Hoàng | 
+| | `BidTransaction`: Lưu trữ lịch sử giao dịch & Timestamp | Hoàng | 
+| **6. Xử lý Ngoại lệ** | Thiết kế cây kế thừa `AuctionException` (Base class) | Huy | 
+| | Cài đặt `InvalidBidException` & `InsufficientBalanceException` | Huy | 
+| | Cài đặt `AuctionClosedException` & `AuthenticationException` | Huy | 
+| **7. Kiểm thử (Unit Test)** | JUnit: Khởi tạo dữ liệu mẫu (@BeforeEach) & Test đặt giá hợp lệ | Hiếu |
+| | JUnit: Test bắt lỗi giá thầu thấp & Lỗi người bán tự đặt giá | Hiếu |
+| | JUnit: Test bắt lỗi đặt giá khi phiên đã đóng/kết thúc | Hiếu |
+| **8. Tài liệu & UI** | Thiết kế sơ đồ lớp UML (Patterns & Relationships) | Hiếu |
+| | Viết tài liệu README, phân công việc & Nhật ký thay đổi | Cả nhóm |
+| | Thiết kế giao diện FXML: Màn hình Login & Danh sách đấu giá | Tương lai |
+| **9. Interface Dao** | Thiết kế interface dao | Điệp|
+| **10. AuctionStatus ** | Thiết kế Auction Status | Huy |
+| **11. AuctionDaoImpl ** | Thiết kế AuctionDaoImpl | Hoàng |
+| **12. ConcurrencyTest ** | Thiết kế ConcurrencyTest | Điệp |
+
+---
+
+
