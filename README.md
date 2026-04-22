@@ -103,6 +103,15 @@ classDiagram
     class ElectronicsFactory { +createItem(...) Item }
     class VehicleFactory { +createItem(...) Item }
 
+    %% Enums
+    class AuctionStatus{
+       <<Enum>>
+       +OPEN
+       +RUNNING
+       +FINISHED
+       +CANCELED
+    }
+
     %% Exceptions
     class AuctionException { <<Exception>> }
     class InvalidBidException { }
@@ -133,8 +142,10 @@ classDiagram
     AuctionException <|-- InsufficientBalanceException
 
     Auction "1" *-- "1" Item
+    Auction "1" --> "1" AuctionStatus : has status
     Auction "1" o-- "*" AuctionObserver : notifies
     AuctionManager "1" o-- "*" Auction : manages
     Seller ..> AuctionManager : requests creation
     Bidder ..> Auction : interacts
+ 
 ```
