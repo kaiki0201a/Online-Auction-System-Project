@@ -59,6 +59,9 @@ classDiagram
        -List~Item~ inventory
        +createAuction(Item item, LocalDateTime start, LocalDateTime end) void
        +addItem(Item item) void
+       +removeItem(Item item) void
+       +updateItem(Item item) void
+       
     }
     
     class Admin{
