@@ -1,135 +1,140 @@
 # Online-Auction-System-Project
 ```mermaid
 classDiagram
-	%% Base, Item
-	class Entity{
-		<<Abstract>>
-		#String id
-		+getId() String
-		+setId() void
-	}
-	class Item{
-		<<Abstract>>
-		#String nameItem
-		#String descriptionItem
-		#double startingPrice
-		+printInfo()* void
-		+getStartingPrice() double
-	}
-	class Electronics{
-		-String brand
-		+warrantyYear() void
-	}
-	class Art{
-		-String artist
-		-int creationYear
-	}
-	class Vehicle{
-		-String engineType
-		%% So km da di
-		-double mileage
-	}
-	%% Users
-	class User{
-		<<Abstract>>
-		#String userName
-		-String passWord
-		#String email
-		-boolean isBanned
-		+login(String pass) boolean
-		+logout() void
-	}
-	class Bidder{
-		-double balance
-		%% PT de nguoi dung thao tac tren giao dien
-		+placeBid(Auction auction, double amount) boolean
-		
-		%% Thiet lap dau gia tu dong
-		+setupAutoBid(double maxBid, double increment) void
-	}
-	
-	class Seller{
-		%% Diem uy tin
-		-float rating
-		%%PT cong khai dau gia
-		+createAuction(Item item)
-		+addItem(Item item) void
-		+removeItem(Item item) void
-		+updateItem(Item item) void
-	}
-	class Admin{
-		-String roleLevel
-		+cancelAuction(String auctionId) void
-		+banUser(String userId) void
-	}
-	
-	%% Business Logic
-	class Auction{
-		-Item item
-		-Seller seller
-		-double currentHighesBid
-		-Bidder winningBidder
-		-LocalDateTime endTime
-		-LocalDateTime startTime
-		-AuctionStatus status
-		-List<BidTransaction> bidHistory;
-		%% Đảm bảo an toàn luồng
-		+processBid(BidTransaction bid) boolean
-		+extendTime(int seconds) void
-		-determineWinner() void
-		+startAuction() void
-		+closeAuction() void
-		+cancelAuction(String reason) void
-	}
-	%% Lưu trữ một lượt đặt giá
-	class BidTransaction{
-		%% Giao dich duoc tao ra
-		-Bidder bidder
-		-double bidAmount
-		%% Thoi diem dat gia
-		-LocalDateTime timestamp
-		+isValid(double currentHighest) boolean
-	}
-	%% Services (conceptual)
-	class AutoBidService {
-		+evaluateAutoBids(String auctionId) void
-	}
-	class PaymentService {
-		+charge(String bidderId, double amount) boolean
-		+releaseToSeller(String auctionId) void
-	}
-	
-	%% Enums
-	class AuctionStatus{
-		<<Enum>>
-		+DRAFT
-		+RUNNING
-		+EXTENDED
-		+ENDED
-		+CANCELLED
-	}
-	
-	%% The hien moi quan he
-	Entity <|-- User
-	Entity <|-- Item
-	
-	User <|-- Bidder
-	User <|-- Seller
-	User <|-- Admin
-	
-	Item <|-- Electronics
-	Item <|-- Art
-	Item <|-- Vehicle
-	
-	%% Moi quan he ket hop
-	Seller "1" --> "*" Auction: create an auction
-	Bidder "1" --> "*" BidTransaction: places
-	%% Moi quan he cau thanh
-	Auction "1" *-- "1" Item: contains product
-	Auction "1" *-- "*" BidTransaction: records history
-	%% Sự phụ thuộc
-	Auction --> AuctionStatus: current status
-	%% Su phu thuoc cua cac Service
-	PaymentService ..> Bidder : deducts
-	AutoBidService ..> Auction : monitors
+    %% Base Entity
+    class Entity{
+       <<Abstract>>
+       #String id
+       +getId() String
+    }
+
+    %% Items Hierarchy
+    class Item{
+       <<Abstract>>
+       -String nameItem
+       -String descriptionItem
+       -double startingPrice
+       +printInfo()* void
+    }
+    class Electronics{
+       -String brand
+       -int warrantyMonths
+    }
+    class Art{
+       -String artist
+       -int creationYear
+    }
+    class Vehicle{
+       -String engineType
+       -double mileage
+    }
+
+    %% Users Hierarchy
+    class User{
+       <<Abstract>>
+       -String userName
+       -String passWord
+       -String email
+       -boolean isBanned
+       +login(String pass) boolean
+       +logout() void
+    }
+    
+    %% Observer Interface
+    class AuctionObserver {
+        <<Interface>>
+        +update(String message) void
+    }
+
+    class Bidder{
+       -double balance
+       -List~BidTransaction~ transactionHistory
+       +placeBid(Auction auction, double amount) void
+       +setupAutoBid(Auction auction, double maxBid, double increment) void
+       +update(String message) void
+    }
+    
+    class Seller{
+       -float rating
+       -List~Item~ inventory
+       +createAuction(Item item, LocalDateTime start, LocalDateTime end) void
+       +addItem(Item item) void
+    }
+    
+    class Admin{
+       -String roleLevel
+       +cancelAuction(Auction auction, String reason) void
+       +banUser(User user, String reason) void
+    }
+
+    %% Business Logic
+    class Auction{
+       -Item item
+       -Seller seller
+       -double currentHighestBid
+       -Bidder highestBidder
+       -LocalDateTime startTime
+       -LocalDateTime endTime
+       -AuctionStatus status
+       -List~AuctionObserver~ observers
+       -List~BidTransaction~ bidHistory
+       +processBid(BidTransaction transaction) void
+       -validateBid(BidTransaction transaction) void
+       +addObserver(AuctionObserver observer) void
+       +notifyObservers(String message) void
+       +startAuction() void
+       +closeAuction() void
+    }
+
+    %% Design Patterns & Utils
+    class AuctionManager {
+       <<Singleton>>
+       -static AuctionManager instance
+       -List~Auction~ activeAuctions
+       +static getInstance() AuctionManager
+       +createAuction(Item item, Seller seller, LocalDateTime start, LocalDateTime end) Auction
+    }
+
+    class ItemFactory {
+        <<Interface>>
+        +createItem(String name, String desc, double price, Map~String, Object~ attrs) Item
+    }
+    class ArtFactory { +createItem(...) Item }
+    class ElectronicsFactory { +createItem(...) Item }
+    class VehicleFactory { +createItem(...) Item }
+
+    %% Exceptions
+    class AuctionException { <<Exception>> }
+    class InvalidBidException { }
+    class AuctionClosedException { }
+    class InsufficientBalanceException { }
+
+    %% Relationships
+    Entity <|-- User
+    Entity <|-- Item
+    Entity <|-- Auction
+
+    User <|-- Bidder
+    User <|-- Seller
+    User <|-- Admin
+    
+    AuctionObserver <|.. Bidder : implements
+    
+    Item <|-- Electronics
+    Item <|-- Art
+    Item <|-- Vehicle
+
+    ItemFactory <|.. ArtFactory
+    ItemFactory <|.. ElectronicsFactory
+    ItemFactory <|.. VehicleFactory
+
+    AuctionException <|-- InvalidBidException
+    AuctionException <|-- AuctionClosedException
+    AuctionException <|-- InsufficientBalanceException
+
+    Auction "1" *-- "1" Item
+    Auction "1" o-- "*" AuctionObserver : notifies
+    AuctionManager "1" o-- "*" Auction : manages
+    Seller ..> AuctionManager : requests creation
+    Bidder ..> Auction : interacts
 ```
