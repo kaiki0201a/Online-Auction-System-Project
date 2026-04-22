@@ -5,8 +5,8 @@ public abstract class Item extends Entity{
     private static final long serialVersionUID = 1L;
 
     // Fields
-    protected String nameItem, descriptionItem;
-    protected double startingPrice;
+    private String nameItem, descriptionItem;
+    private double startingPrice;
 
     // Constructor
 

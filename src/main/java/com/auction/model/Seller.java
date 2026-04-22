@@ -1,4 +1,7 @@
 package com.auction.model;
+import com.auction.utils.AuctionManager;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,9 +21,10 @@ public class Seller extends User{
 
     // Các chứng năng, nghiệp vụ
 
-    public void createAuction(Item item) {
-        System.out.println("Người bán " + this.userName + " đang tạo phiên đấu giá cho sản phẩm: " + item.getNameItem());
+    public void createAuction(Item item, LocalDateTime start, LocalDateTime end) {
+        System.out.println("Người bán " + this.getUserName() + " đang tạo phiên đấu giá cho sản phẩm: " + item.getNameItem());
         // Logic tạo đối tượng Auction sẽ được thêm sau khi Auction được làm...
+        AuctionManager.getInstance().createAuction(item, this, start, end);
     }
 
     public void addItem(Item item) {

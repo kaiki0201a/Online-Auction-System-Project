@@ -14,11 +14,11 @@ public class Vehicle extends Item{
 
     @Override
     public void printInfo() {
-        System.out.println("Tên sản phẩm: " + nameItem);
-        System.out.println("Mô tả: " + descriptionItem);
-        System.out.println("Giá khởi điểm: " + startingPrice);
-        System.out.println("Loại Engine: " + engineType);
-        System.out.println("Số dặm đã di chuyển: " + mileage);
+        System.out.println("Tên sản phẩm: " + this.getNameItem());
+        System.out.println("Mô tả: " + this.getDescriptionItem());
+        System.out.println("Giá khởi điểm: " + this.getStartingPrice());
+        System.out.println("Loại Engine: " + this.getEngineType());
+        System.out.println("Số dặm đã di chuyển: " + this.getMileage());
     }
 
     public String getEngineType() {
@@ -36,4 +36,5 @@ public class Vehicle extends Item{
     public void setMileage(double mileage) {
         this.mileage = mileage;
     }
+
 }
