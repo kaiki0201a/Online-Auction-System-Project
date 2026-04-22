@@ -110,6 +110,7 @@ classDiagram
        +RUNNING
        +FINISHED
        +CANCELED
+       +PAID
     }
 
     %% Exceptions
