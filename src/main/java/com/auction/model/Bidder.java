@@ -1,4 +1,5 @@
 package com.auction.model;
+import com.auction.exception.AuctionException;
 import com.auction.model.Auction;
 import com.auction.model.BidTransaction;
 import com.auction.model.User;
@@ -41,8 +42,7 @@ public class Bidder extends User implements AuctionObserver {
         System.out.println("Số dư hiện tại: $" + this.balance);
         System.out.println("======================================");
     }
-    public void placeBid(Auction auction, double amount) throws InsufficientBalanceException, AuctionClosedException, InvalidBidException
-    {
+    public void placeBid(Auction auction, double amount) throws AuctionException {
         if(amount > this.getBalance()){
             throw new InsufficientBalanceException(
                     "Số dư không đủ! Bạn còn: $" + this.getBalance(),
