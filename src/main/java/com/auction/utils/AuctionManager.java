@@ -12,7 +12,7 @@ import java.util.List;
 public class AuctionManager {
     // 1. Biến static lưu trữ ĐÚNG MỘT instance duy nhất
     private static AuctionManager instance;
-
+    
     // Danh sách trung tâm chứa tất cả các phiên đấu giá
     private List<Auction> activeAuctions;
 
