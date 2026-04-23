@@ -6,6 +6,7 @@ import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
 import com.auction.utils.AuctionObserver;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ public class Auction extends Entity {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
+    // Chứa tất cả thông tin của một phiên đấu giá
     private List<AutoBidRule> autoBidRules;
     private Item item;
     private Seller seller;
@@ -58,6 +60,12 @@ public class Auction extends Entity {
 
         // 3. Thông báo (DIP - phụ thuộc vào Interface Observer)
         notifyObservers("🔥 Giá mới: $" + currentHighestBid + " bởi " + highestBidder.getUserName());
+
+        // Nếu đặt giá khi phiên còn dưới 1 phút, tự động cộng thêm 2 phút
+        if (Duration.between(LocalDateTime.now(), this.endTime).toMinutes() < 1) {
+            this.endTime = this.endTime.plusMinutes(2);
+            notifyObservers("⏰ Phiên đấu giá đã được tự động gia hạn thêm 2 phút để đảm bảo công bằng!");
+        }
     }
 
     // Hàm hỗ trợ để làm sạch code (Clean Code)
@@ -91,7 +99,6 @@ public class Auction extends Entity {
         }
     }
     // QUẢN LÝ THÔNG TIN & PHÂN QUYỀN
-
     public synchronized boolean updateAuctionDetails(User requestor, Item newItem, LocalDateTime newStart, LocalDateTime newEnd) {
         // Chỉ cho phép sửa khi phiên đấu giá chưa bắt đầu (đang OPEN)
         if (this.status != AuctionStatus.OPEN || this.status == AuctionStatus.FINISHED) {
