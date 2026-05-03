@@ -1,6 +1,5 @@
-package com.auction.test;
+package com.auction.model;
 
-import com.auction.model.*;
 import com.auction.exception.*;
 import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
@@ -39,7 +38,7 @@ public class ConcurrencyTest {
                     auction.processBid(transaction);
                     System.out.println("✅ " + bidder.getUserName() + " đặt " + bidAmount + " thành công!");
 
-                } catch (InvalidBidException | InsufficientBalanceException | AuctionClosedException e) {
+                } catch (AuctionException e) {
                     // Những người chậm chân sẽ bị văng lỗi InvalidBidException (Giá quá thấp)
                     System.out.println("❌ " + "Bidder_" + index + " trượt: " + e.getMessage());
                 } catch (InterruptedException e) {
