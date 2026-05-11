@@ -3,7 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="20.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.UserProfileController">
+<VBox spacing="20.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
     <padding><Insets bottom="30.0" left="30.0" right="30.0" top="30.0" /></padding>
 
     <Label styleClass="title-label" text="THÔNG TIN TÀI KHOẢN" />
@@ -15,7 +15,7 @@
         </VBox>
         <VBox spacing="10">
             <Label text="Số dư khả dụng:" />
-            <Label fx:id="lblBalance" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;" text="0 VNĐ" />
+            <Label fx:id="lblBalance" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;" text="\$..." />
         </VBox>
     </HBox>
 
