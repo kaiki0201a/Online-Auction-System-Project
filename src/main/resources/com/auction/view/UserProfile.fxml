@@ -15,7 +15,7 @@
         </VBox>
         <VBox spacing="10">
             <Label text="Số dư khả dụng:" />
-            <Label fx:id="lblBalance" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;" text="0 VNĐ" />
+            <Label fx:id="lblBalance" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;" text="\$0.0" />
         </VBox>
     </HBox>
 

@@ -13,7 +13,7 @@
         <Label fx:id="lblSellerName" style="-fx-font-weight: bold;" text="..." GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
         <Label text="Giá cao nhất hiện tại:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-        <Label fx:id="lblCurrentPrice" style="-fx-text-fill: #e74c3c; -fx-font-size: 18px; -fx-font-weight: bold;" text="0 VNĐ" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        <Label fx:id="lblCurrentPrice" style="-fx-text-fill: #e74c3c; -fx-font-size: 18px; -fx-font-weight: bold;" text="\$0.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
         <Label text="Thời gian còn lại:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
         <Label fx:id="lblTimeLeft" text="..." GridPane.columnIndex="1" GridPane.rowIndex="2"/>
@@ -24,7 +24,7 @@
     <VBox spacing="10">
         <Label text="Khu vực trả giá:" style="-fx-font-weight: bold;"/>
         <HBox spacing="10">
-            <TextField fx:id="txtBidAmount" promptText="Nhập số tiền..." />
+            <TextField fx:id="txtBidAmount" promptText="Nhập số tiền ($)..." />
             <Button fx:id="btnPlaceBid" text="Đặt Giá Ngay" styleClass="custom-button"/>
         </HBox>
         <Label fx:id="lblMessage" styleClass="error-label" text="" />
