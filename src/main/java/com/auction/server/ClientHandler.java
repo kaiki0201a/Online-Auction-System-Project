@@ -93,7 +93,7 @@ public class ClientHandler implements Runnable {
                     ServerApp.getAuctionDAO().update(auction);
 
                     // Broadcasting: Thông báo toàn cục cho tất cả client về giá mới
-                    ServerApp.broadcast(new Response(ActionType.UPDATE_AUCTION, "Giá mới: $" + bidData.getBidAmount() + " bởi " + bidData.getUsername(), null));
+                    ServerApp.broadcast(new Response(StatusType.SUCCESS, "Giá mới: $" + bidData.getBidAmount() + " bởi " + bidData.getUsername(), null));
 
                     return new Response(StatusType.SUCCESS, "Đặt giá thành công!", null);
                 } catch (AuctionException e) {
