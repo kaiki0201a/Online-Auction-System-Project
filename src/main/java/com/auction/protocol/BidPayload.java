@@ -4,18 +4,18 @@ import java.io.Serializable;
 public class BidPayload implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private int itemId;
+    private String auctionId;
     private String username;
     private double bidAmount;
 
-    public BidPayload(int itemId, String username, double bidAmount) {
-        this.itemId = itemId;
+    public BidPayload(String auctionId, String username, double bidAmount) {
+        this.auctionId = auctionId;
         this.username = username;
         this.bidAmount = bidAmount;
     }
 
-    public int getItemId() {
-        return itemId;
+    public String getAuctionId() {
+        return auctionId;
     }
 
     public String getUsername() {

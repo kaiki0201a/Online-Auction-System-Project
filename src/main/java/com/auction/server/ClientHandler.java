@@ -1,10 +1,14 @@
 package com.auction.server; // Hoặc com.auction.server.network
 
+import com.auction.exception.AuctionException;
+import com.auction.model.Auction;
+import com.auction.model.Bidder;
 import com.auction.protocol.ActionType;
 import com.auction.protocol.Request;
 import com.auction.protocol.Response;
 import com.auction.protocol.StatusType;
-import com.auction.protocol.BidPayload; // Ví dụ payload
+import com.auction.protocol.BidPayload;
+import com.auction.utils.AuctionManager;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -38,8 +42,7 @@ public class ClientHandler implements Runnable {
                     Response response = processRequest(request);
 
                     // Gửi câu trả lời về cho Client
-                    out.writeObject(response);
-                    out.flush();
+                    sendResponse(response);
 
                 } catch (ClassNotFoundException e) {
                     System.err.println("⚠️ Không hiểu gói tin từ Client.");
@@ -53,21 +56,55 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    // Gửi phản hồi một cách an toàn (hỗ trợ broadcast)
+    public synchronized void sendResponse(Response response) {
+        if (out != null) {
+            try {
+                out.writeObject(response);
+                out.flush();
+            } catch (IOException e) {
+                System.err.println("❌ Lỗi khi gửi dữ liệu cho client: " + e.getMessage());
+            }
+        }
+    }
+
     // Hàm não bộ: Xử lý các loại Request khác nhau
     private Response processRequest(Request request) {
         ActionType action = request.getAction();
 
         switch (action) {
             case PLACE_BID:
-                // Ép kiểu (cast) payload về đúng loại BidPayload
-                BidPayload bidData = (BidPayload) request.getPayload();
-                System.out.println("Nhận được Bid: User " + bidData.getUsername() + " đặt " + bidData.getBidAmount() + "$ cho sản phẩm " + bidData.getItemId());
+                try {
+                    BidPayload bidData = (BidPayload) request.getPayload();
+                    System.out.println("Nhận được Bid: User " + bidData.getUsername() + " đặt " + bidData.getBidAmount() + "$ cho sản phẩm " + bidData.getAuctionId());
 
-                // TODO: Chỗ này sau này bạn sẽ gọi tới AuctionManager (logic nghiệp vụ)
-                // để kiểm tra xem giá này có hợp lệ không (có lớn hơn giá cao nhất hiện tại không)
+                    Auction auction = AuctionManager.getInstance().getAuctionById(bidData.getAuctionId());
+                    if (auction == null) {
+                        return new Response(StatusType.ERROR, "Phiên đấu giá không tồn tại.", null);
+                    }
 
-                // Tạm thời trả về SUCCESS luôn để test
-                return new Response(StatusType.SUCCESS, "Đặt giá thành công!", null);
+                    // Tạo Bidder tạm thời (Do chưa có hệ thống Auth hoàn chỉnh)
+                    Bidder dummyBidder = new Bidder(bidData.getUsername(), "123", bidData.getUsername() + "@mail.com", 999999.0);
+                    
+                    // Xử lý nghiệp vụ thực tế
+                    dummyBidder.placeBid(auction, bidData.getBidAmount());
+
+                    // Tự động lưu trạng thái xuống file
+                    ServerApp.getAuctionDAO().update(auction);
+
+                    // Broadcasting: Thông báo toàn cục cho tất cả client về giá mới
+                    ServerApp.broadcast(new Response(ActionType.UPDATE_AUCTION, "Giá mới: $" + bidData.getBidAmount() + " bởi " + bidData.getUsername(), null));
+
+                    return new Response(StatusType.SUCCESS, "Đặt giá thành công!", null);
+                } catch (AuctionException e) {
+                    return new Response(StatusType.ERROR, e.getMessage(), null);
+                } catch (Exception e) {
+                    return new Response(StatusType.ERROR, "Lỗi hệ thống: " + e.getMessage(), null);
+                }
+
+            case GET_AUCTION_LIST:
+                // Lấy toàn bộ danh sách phiên đấu giá hiện có
+                return new Response(StatusType.SUCCESS, "Danh sách phiên đấu giá", AuctionManager.getInstance().getAllAuctions());
 
             case LOGIN:
                 // Tương tự xử lý login...
@@ -80,6 +117,7 @@ public class ClientHandler implements Runnable {
 
     private void closeConnections() {
         try {
+            ServerApp.removeClient(this); // Báo cho Server biết đã ngắt kết nối
             if (in != null) in.close();
             if (out != null) out.close();
             if (socket != null) socket.close();

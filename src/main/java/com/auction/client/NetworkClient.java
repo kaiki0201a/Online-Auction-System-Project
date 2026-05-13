@@ -1,5 +1,6 @@
 package com.auction.client; // Hoặc com.auction.client.network tùy bạn chia
 
+import com.auction.protocol.ActionType;
 import com.auction.protocol.Request;
 import com.auction.protocol.Response;
 
@@ -7,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.function.Consumer;
 
 public class NetworkClient {
     // 1. Áp dụng Singleton Pattern
@@ -16,6 +18,9 @@ public class NetworkClient {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
+    // Callback dùng để đẩy dữ liệu về giao diện (Controller)
+    private Consumer<Response> onResponseReceived;
+
     // Private constructor để không ai được new NetworkClient() bừa bãi
     private NetworkClient() {}
 
@@ -24,6 +29,11 @@ public class NetworkClient {
             instance = new NetworkClient();
         }
         return instance;
+    }
+
+    // Cho phép Controller đăng ký hàm nhận dữ liệu
+    public void setOnResponseReceived(Consumer<Response> callback) {
+        this.onResponseReceived = callback;
     }
 
     // 2. Hàm kết nối tới Server
@@ -61,6 +71,12 @@ public class NetworkClient {
         }
     }
 
+    // API móc (hook) nhanh cho giao diện
+    public void login(String username, String password) {
+        // Giả sử gửi String, sau này có thể tạo LoginPayload riêng
+        sendRequest(new Request(ActionType.LOGIN, username + "|" + password));
+    }
+
     // 5. Luồng chạy ngầm lắng nghe Server
     private void startListening() {
         Thread listenThread = new Thread(() -> {
@@ -71,9 +87,14 @@ public class NetworkClient {
 
                     System.out.println("Nhận được tin từ Server: " + response.getMessage());
 
-                    // TODO: Sau này làm UI (JavaFX), bạn BẮT BUỘC phải dùng Platform.runLater() ở đây
-                    // để đẩy dữ liệu từ luồng mạng sang luồng giao diện.
-                    // Ví dụ: Platform.runLater(() -> controller.updateUI(response));
+                    // Đẩy dữ liệu về Giao diện (Thành viên B) nếu đã đăng ký callback
+                    if (onResponseReceived != null) {
+                        /* TODO: KHI TÍCH HỢP JAVAFX, BẠN BẮT BUỘC PHẢI MỞ COMMENT DÒNG DƯỚI
+                         * VÀ IMPORT javafx.application.Platform;
+                         * Platform.runLater(() -> onResponseReceived.accept(response));
+                         */
+                        onResponseReceived.accept(response);
+                    }
 
                 } catch (Exception e) {
                     System.out.println("⚠️ Mất kết nối tới Server.");
