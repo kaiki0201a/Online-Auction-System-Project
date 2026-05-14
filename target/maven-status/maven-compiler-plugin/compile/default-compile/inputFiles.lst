@@ -23,6 +23,9 @@
 /home/hoangtl2/Online-Auction-System-Project/src/main/java/com/auction/model/Seller.java
 /home/hoangtl2/Online-Auction-System-Project/src/main/java/com/auction/model/User.java
 /home/hoangtl2/Online-Auction-System-Project/src/main/java/com/auction/model/Vehicle.java
+/home/hoangtl2/Online-Auction-System-Project/src/main/java/com/auction/ui/PriceChartApp.java
+/home/hoangtl2/Online-Auction-System-Project/src/main/java/com/auction/ui/PriceChartController.java
+/home/hoangtl2/Online-Auction-System-Project/src/main/java/com/auction/ui/PriceChartHelper.java
 /home/hoangtl2/Online-Auction-System-Project/src/main/java/com/auction/utils/ArtFactory.java
 /home/hoangtl2/Online-Auction-System-Project/src/main/java/com/auction/utils/AuctionManager.java
 /home/hoangtl2/Online-Auction-System-Project/src/main/java/com/auction/utils/AuctionObserver.java

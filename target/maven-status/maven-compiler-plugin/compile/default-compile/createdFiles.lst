@@ -1,6 +1,8 @@
 com/auction/model/Seller.class
 com/auction/model/Auction.class
+com/auction/ui/PriceChartHelper.class
 com/auction/model/AuctionStatus.class
+com/auction/ui/PriceChartApp.class
 com/auction/dao/IAuctionDAO.class
 com/auction/utils/AuctionManager.class
 com/auction/exception/AuctionException.class
@@ -20,6 +22,7 @@ com/auction/model/Vehicle.class
 com/auction/model/Electronics.class
 com/auction/model/Art.class
 com/auction/exception/AuthenticationException.class
+com/auction/ui/PriceChartController.class
 com/auction/controller/AuctionController.class
 com/auction/exception/InsufficientBalanceException.class
 com/auction/utils/ArtFactory.class
