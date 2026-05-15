@@ -73,13 +73,17 @@ public class App extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-    
+
     private void navigateTo(javafx.scene.Node view) {
         UIUtils.showLoadingSpinner(rootNode, () -> {
             contentArea.getChildren().clear();
             contentArea.getChildren().add(view);
             UIUtils.applyFadeIn(view);
         });
+    }
+
+    public static int add(int a, int b) {
+        return a + b;
     }
 
     public static void main(String[] args) {
