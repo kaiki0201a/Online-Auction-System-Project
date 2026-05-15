@@ -5,6 +5,7 @@ import com.auction.model.Bidder;
 import com.auction.model.BidTransaction;
 import com.auction.exception.AuctionException;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert;
 
@@ -12,6 +13,7 @@ public class AuctionDetailController implements com.auction.utils.AuctionObserve
     @FXML private TextField txtBidAmount; // Ô nhập số tiền
     @FXML private javafx.scene.control.Label lblProductName;
     @FXML private javafx.scene.control.Label lblCurrentPrice;
+    @FXML private Label lblSellerName, lblTimeLeft;
 
     // Hai biến này cực kỳ quan trọng để truyền vào Constructor của bạn
     private Auction currentAuction;
