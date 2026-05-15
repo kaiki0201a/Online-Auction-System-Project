@@ -9,7 +9,7 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         // Nạp giao diện Login từ resources
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/LoginView.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/Login.fxml"));
         stage.setScene(new Scene(loader.load()));
         stage.setTitle("Hệ thống Đấu giá");
         stage.show();

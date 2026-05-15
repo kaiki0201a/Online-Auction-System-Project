@@ -1,5 +1,6 @@
 package com.auction.client; // Hoặc com.auction.client.network tùy bạn chia
 
+import com.auction.controller.*;
 import com.auction.protocol.ActionType;
 import com.auction.protocol.Request;
 import com.auction.protocol.Response;
@@ -22,7 +23,8 @@ public class NetworkClient {
     private Consumer<Response> onResponseReceived;
 
     // Private constructor để không ai được new NetworkClient() bừa bãi
-    private NetworkClient() {}
+    private NetworkClient() {
+    }
 
     public static NetworkClient getInstance() {
         if (instance == null) {
@@ -82,27 +84,22 @@ public class NetworkClient {
         Thread listenThread = new Thread(() -> {
             while (socket != null && !socket.isClosed()) {
                 try {
-                    // Code sẽ đứng im ở dòng này chờ đến khi Server gửi Response về
+                    // Đợi nhận gói tin từ Server
                     Response response = (Response) in.readObject();
 
-                    System.out.println("Nhận được tin từ Server: " + response.getMessage());
-
-                    // Đẩy dữ liệu về Giao diện (Thành viên B) nếu đã đăng ký callback
-                    if (onResponseReceived != null) {
-                        /* TODO: KHI TÍCH HỢP JAVAFX, BẠN BẮT BUỘC PHẢI MỞ COMMENT DÒNG DƯỚI
-                         * VÀ IMPORT javafx.application.Platform;
-                         * Platform.runLater(() -> onResponseReceived.accept(response));
-                         */
-                        onResponseReceived.accept(response);
-                    }
-
+                    // CẦU NỐI UI: Đẩy dữ liệu về luồng JavaFX
+                    javafx.application.Platform.runLater(() -> {
+                        if (onResponseReceived != null) {
+                            onResponseReceived.accept(response);
+                        }
+                    });
                 } catch (Exception e) {
                     System.out.println("⚠️ Mất kết nối tới Server.");
-                    break; // Thoát vòng lặp khi mất kết nối
+                    break;
                 }
             }
         });
-        listenThread.setDaemon(true); // Để luồng tự chết khi tắt ứng dụng
+        listenThread.setDaemon(true);
         listenThread.start();
     }
 
