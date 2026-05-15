@@ -55,7 +55,7 @@ public class Auction extends Entity {
 
         // 1. Tách logic kiểm tra ra một hàm riêng (SRP)
         validateBid(transaction);
-        // Kich hoạt anti-sniping để xem có cần gia hạn thời gian không 
+        // Kich hoạt anti-sniping để xem có cần gia hạn thời gian không
         applyAntiSniping();
         // 2. Cập nhật dữ liệu
         this.currentHighestBid = transaction.getBidAmount();
@@ -115,7 +115,7 @@ public class Auction extends Entity {
         // Vòng lặp do-while đảm bảo nếu có 2 đại gia cùng cài Auto-bid, họ sẽ đập nhau đến khi 1 người hết tiền hoặc chạm Max Bid
         do {
             hasNewAction = false;
-            
+
             for (AutoBidRule rule : this.autoBidRules) {
                 // Nếu luật đã tắt hoặc người này ĐANG LÀ người dẫn đầu thì bỏ qua
                 if (!rule.isActive() || (this.highestBidder != null && rule.getBidder().getId().equals(this.highestBidder.getId()))) {
@@ -129,7 +129,7 @@ public class Auction extends Entity {
                     try {
                         BidTransaction autoTx = new BidTransaction(this, rule.getBidder(), targetPrice);
                         // Tận dụng hàm validateBid để kiểm tra xem đại gia này còn đủ tiền trong ví không
-                        validateBid(autoTx); 
+                        validateBid(autoTx);
 
                         // Tiến hành chốt đơn tự động
                         this.currentHighestBid = targetPrice;
@@ -142,7 +142,7 @@ public class Auction extends Entity {
 
                         hasNewAction = true;
                         break; // Thoát vòng lặp for để do-while quét lại từ đầu với giá cao nhất mới
-                        
+
                     } catch (AuctionException e) {
                         System.out.println("⚠️ [AUTO-BID TẮT] Hủy lệnh của " + rule.getBidder().getUserName() + " vì: " + e.getMessage());
                         rule.setActive(false);
@@ -154,7 +154,7 @@ public class Auction extends Entity {
             }
         } while (hasNewAction);
     }
-    
+
     // QUẢN LÝ THÔNG TIN & PHÂN QUYỀN
 
     public synchronized boolean updateAuctionDetails(User requestor, Item newItem, LocalDateTime newStart, LocalDateTime newEnd) {

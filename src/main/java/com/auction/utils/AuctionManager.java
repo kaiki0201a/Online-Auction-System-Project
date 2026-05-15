@@ -25,7 +25,7 @@ public class AuctionManager {
     // (Thêm 'synchronized' để an toàn khi đa luồng ở Tuần 7)
     // Double check
     public static AuctionManager getInstance() {
-// Kiểm tra lần 1: Nếu có rồi thì trả về luôn, KHÔNG cần xếp hàng (không bị block)
+    // Kiểm tra lần 1: Nếu có rồi thì trả về luôn, KHÔNG cần xếp hàng (không bị block)
         if (instance == null) {
             // Chỉ khóa class lại khi instance thực sự chưa được tạo
             synchronized (AuctionManager.class) {

@@ -19,11 +19,13 @@ public class Bidder extends User implements AuctionObserver {
 
     private double balance; 
     private List<BidTransaction> transactionHistory; // Danh sách id các phiên đấu giá đá tham gia
+
     public Bidder(String userName, String passWord, String email,double balance){
         super(userName, passWord, email);
         this.balance = balance;
         this.transactionHistory = new CopyOnWriteArrayList<>();
     }
+
     public double getBalance(){
         return this.balance;
     }
@@ -36,6 +38,7 @@ public class Bidder extends User implements AuctionObserver {
     public void addTransaction(BidTransaction transaction) {
         this.transactionHistory.add(transaction);
     }
+
     public void getBidderInfo(){
         System.out.println("========== BIDDER DASHBOARD ==========");
         System.out.println("Xin chào, " + this.getUserName());
@@ -43,6 +46,7 @@ public class Bidder extends User implements AuctionObserver {
         System.out.println("Số dư hiện tại: $" + this.balance);
         System.out.println("======================================");
     }
+
     public void placeBid(Auction auction, double amount) throws AuctionException {
         if(amount > this.getBalance()){
             throw new InsufficientBalanceException(
