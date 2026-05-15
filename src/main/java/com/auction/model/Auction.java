@@ -6,7 +6,6 @@ import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
 import com.auction.utils.AuctionObserver;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,14 +15,10 @@ public class Auction extends Entity {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
-<<<<<<< HEAD
-    // Chứa tất cả thông tin của một phiên đấu giá
-=======
     // --- CÁC HẰNG SỐ CHO ANTI-SNIPING ---
     private static final int SNIPE_THRESHOLD_MINUTES = 5; // Nếu đặt giá trong 5 phút cuối
     private static final int EXTENSION_MINUTES = 10;      // Thì gia hạn thêm 10 phút
 
->>>>>>> a2bd4d076ca3e9083948dd03d31035c37afb341e
     private List<AutoBidRule> autoBidRules;
     private Item item;
     private Seller seller;
@@ -60,7 +55,7 @@ public class Auction extends Entity {
 
         // 1. Tách logic kiểm tra ra một hàm riêng (SRP)
         validateBid(transaction);
-        // Kich hoạt anti-sniping để xem có cần gia hạn thời gian không 
+        // Kich hoạt anti-sniping để xem có cần gia hạn thời gian không
         applyAntiSniping();
         // 2. Cập nhật dữ liệu
         this.currentHighestBid = transaction.getBidAmount();
@@ -69,17 +64,8 @@ public class Auction extends Entity {
 
         // 3. Thông báo (DIP - phụ thuộc vào Interface Observer)
         notifyObservers("🔥 Giá mới: $" + currentHighestBid + " bởi " + highestBidder.getUserName());
-<<<<<<< HEAD
-
-        // Nếu đặt giá khi phiên còn dưới 1 phút, tự động cộng thêm 2 phút
-        if (Duration.between(LocalDateTime.now(), this.endTime).toMinutes() < 1) {
-            this.endTime = this.endTime.plusMinutes(2);
-            notifyObservers("⏰ Phiên đấu giá đã được tự động gia hạn thêm 2 phút để đảm bảo công bằng!");
-        }
-=======
         //Trigger gọi auto bid xem robot có ai muốn đặt giá không
         triggerAutoBids();
->>>>>>> a2bd4d076ca3e9083948dd03d31035c37afb341e
     }
 
     // Hàm hỗ trợ để làm sạch code (Clean Code)
@@ -129,7 +115,7 @@ public class Auction extends Entity {
         // Vòng lặp do-while đảm bảo nếu có 2 đại gia cùng cài Auto-bid, họ sẽ đập nhau đến khi 1 người hết tiền hoặc chạm Max Bid
         do {
             hasNewAction = false;
-            
+
             for (AutoBidRule rule : this.autoBidRules) {
                 // Nếu luật đã tắt hoặc người này ĐANG LÀ người dẫn đầu thì bỏ qua
                 if (!rule.isActive() || (this.highestBidder != null && rule.getBidder().getId().equals(this.highestBidder.getId()))) {
@@ -143,7 +129,7 @@ public class Auction extends Entity {
                     try {
                         BidTransaction autoTx = new BidTransaction(this, rule.getBidder(), targetPrice);
                         // Tận dụng hàm validateBid để kiểm tra xem đại gia này còn đủ tiền trong ví không
-                        validateBid(autoTx); 
+                        validateBid(autoTx);
 
                         // Tiến hành chốt đơn tự động
                         this.currentHighestBid = targetPrice;
@@ -156,7 +142,7 @@ public class Auction extends Entity {
 
                         hasNewAction = true;
                         break; // Thoát vòng lặp for để do-while quét lại từ đầu với giá cao nhất mới
-                        
+
                     } catch (AuctionException e) {
                         System.out.println("⚠️ [AUTO-BID TẮT] Hủy lệnh của " + rule.getBidder().getUserName() + " vì: " + e.getMessage());
                         rule.setActive(false);
@@ -168,8 +154,9 @@ public class Auction extends Entity {
             }
         } while (hasNewAction);
     }
-    
+
     // QUẢN LÝ THÔNG TIN & PHÂN QUYỀN
+
     public synchronized boolean updateAuctionDetails(User requestor, Item newItem, LocalDateTime newStart, LocalDateTime newEnd) {
         // Chỉ cho phép sửa khi phiên đấu giá chưa bắt đầu (đang OPEN)
         if (this.status != AuctionStatus.OPEN || this.status == AuctionStatus.FINISHED) {
