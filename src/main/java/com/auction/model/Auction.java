@@ -6,12 +6,13 @@ import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
 import com.auction.utils.AuctionObserver;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class Auction extends Entity {
+public class Auction extends Entity implements Serializable {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 

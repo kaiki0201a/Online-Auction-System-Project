@@ -5,6 +5,7 @@ import com.auction.model.BidTransaction;
 import com.auction.model.User;
 
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import com.auction.exception.InvalidBidException;

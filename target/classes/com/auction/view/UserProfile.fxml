@@ -3,7 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="20.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+<VBox spacing="20.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.UserProfileController">
     <padding><Insets bottom="30.0" left="30.0" right="30.0" top="30.0" /></padding>
 
     <Label styleClass="title-label" text="THÔNG TIN TÀI KHOẢN" />
@@ -15,7 +15,7 @@
         </VBox>
         <VBox spacing="10">
             <Label text="Số dư khả dụng:" />
-            <Label fx:id="lblBalance" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;" text="\$..." />
+            <Label fx:id="lblBalance" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;" text="\$0.0" />
         </VBox>
     </HBox>
 
@@ -28,5 +28,4 @@
         </columns>
     </TableView>
 
-    <Button fx:id="btnLogout" text="Đăng Xuất" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
-</VBox>
+    <Button fx:id="btnLogout" onAction="#onLogoutClick" text="Đăng Xuất" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/></VBox>

@@ -1,6 +1,8 @@
 package com.auction.controller; // Dòng này luôn ở đầu file
 
 // Khu vực 1: Import các thư viện cần thiết
+import com.auction.client.NetworkClient;
+import com.auction.protocol.StatusType;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
@@ -25,35 +27,35 @@ public class LoginController {
         String username = txtUsername.getText();
         String password = txtPassword.getText();
 
-        // Giả lập logic kiểm tra (sau này sẽ gọi bạn C)
-        if (username.equals("admin") && password.equals("123")) {
-            try {
-                // Nếu đúng, gọi hàm chuyển sang màn hình Dashboard
-                navigateToDashboard(event);
-            } catch (IOException e) {
-                showError("Lỗi hệ thống", "Không thể tải màn hình Dashboard.");
+        // Đăng ký "tai nghe" để đợi Server trả lời
+        NetworkClient.getInstance().setOnResponseReceived(response -> {
+            if (response.getStatus() == StatusType.SUCCESS) {
+                try {
+                    // BÂY GIỜ ĐOẠN NÀY SẼ KHÔNG BỊ NULL NỮA
+                    com.auction.model.User userFromServer = (com.auction.model.User) response.getData();
+                    navigateToDashboard(event, userFromServer);
+                } catch (IOException e) {
+                    showError("Lỗi", "Lỗi nạp giao diện Dashboard.");
+                }
+            } else {
+                showError("Thất bại", response.getMessage());
             }
-        } else {
-            // Nếu sai, hiện thông báo lỗi
-            showError("Đăng nhập thất bại", "Tài khoản hoặc mật khẩu không đúng!");
-        }
+        });
+
+        // Gọi hàm gửi yêu cầu đăng nhập
+        NetworkClient.getInstance().login(username, password);
     }
 
     // Khu vực 4: Hàm bổ trợ - Chuyển màn hình (Navigation)
-    private void navigateToDashboard(ActionEvent event) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/DashboardView.fxml"));
-        Parent root = loader.load(); // Phải load trước khi lấy Controller
-
-        // BƯỚC QUAN TRỌNG: Lấy DashboardController và truyền User sang
+    private void navigateToDashboard(ActionEvent event, com.auction.model.User user) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/Dashboard.fxml"));
+        Parent root = loader.load();
         DashboardController dashboardController = loader.getController();
 
-        // Giả lập tạo một đối tượng Bidder (Vì login admin/123 thành công)
-        com.auction.model.Bidder mockUser = new com.auction.model.Bidder(txtUsername.getText(), "", "admin@test.com", 5000.0);
-        dashboardController.setUser(mockUser);
+        dashboardController.setUser(user); // Truyền User thật
 
         Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
         stage.setScene(new Scene(root));
-        stage.show();
     }
 
     // Khu vực 5: Hàm bổ trợ - Hiện thông báo (Alert)
