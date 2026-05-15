@@ -11,6 +11,7 @@ import com.auction.exception.InvalidBidException;
 import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
 import com.auction.utils.AuctionObserver;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Bidder extends User implements AuctionObserver {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
@@ -22,7 +23,7 @@ public class Bidder extends User implements AuctionObserver {
     public Bidder(String userName, String passWord, String email,double balance){
         super(userName, passWord, email);
         this.balance = balance;
-        this.transactionHistory = new ArrayList<>();
+        this.transactionHistory = new CopyOnWriteArrayList<>();
     }
 
     public double getBalance(){
