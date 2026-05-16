@@ -83,7 +83,7 @@ public class Bidder extends User implements AuctionObserver {
         System.out.println("[Thông báo tới " + this.getUserName() + "]: " + message);
     }
     @Override
-    public void onNewBidPlaced(Bidtransaction transaction){
+    public void onNewBidPlaced(BidTransaction transaction){
         //Hello hàm này thêm vào để tránh lỗi khi up lên github
     }
     
