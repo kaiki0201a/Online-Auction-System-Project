@@ -6,19 +6,19 @@ import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
 import com.auction.utils.AuctionObserver;
 
+import java.util.concurrent.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Auction extends Entity implements Serializable {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
     // --- CÁC HẰNG SỐ CHO ANTI-SNIPING ---
-    private static final int SNIPE_THRESHOLD_SECONDS = 30; // Nếu đặt giá trong 5 phút cuối
-    private static final int EXTENSION_SECONDS = 60;      // Thì gia hạn thêm 10 phút
+    private static final int SNIPE_THRESHOLD_SECONDS = 30;
+    private static final int EXTENSION_SECONDS = 60;  
 
     private List<AutoBidRule> autoBidRules;
     private Item item;
@@ -33,8 +33,7 @@ public class Auction extends Entity implements Serializable {
     private List<BidTransaction> bidHistory;
     // THÊM MỚI: Danh sách những người đang xem phiên đấu giá này
     private List<AuctionObserver> observers;
-
-    // CONSTRUCTOR
+    private transient ExecutorService notificationPool = Executors.newCachedThreadPool();    // CONSTRUCTOR
 
     public Auction(Item item, Seller seller, LocalDateTime startTime, LocalDateTime endTime) {
         super(); // Gọi Entity để sinh ID
@@ -336,18 +335,27 @@ private void triggerAutoBids() {
     }
 
     // 3. Hàm cầm loa thông báo cho tất cả mọi người
-    private synchronized void notifyObservers(String message) {
+    private void notifyObservers(String message) {
         for (AuctionObserver obs : observers) {
-            obs.update(message);
+            CompletableFuture.runAsync(() -> {
+                obs.update(message);
+            }, notificationPool);
         }
     }
-    private synchronized void notifyObservers(BidTransaction tx){
-        for(AuctionObserver obs : observers){
-            obs.onNewBidPlaced(tx);
+
+    private void notifyObservers(BidTransaction tx) {
+        for (AuctionObserver obs : observers) {
+            CompletableFuture.runAsync(() -> {
+                obs.onNewBidPlaced(tx);
+            }, notificationPool);
         }
     }
     // GETTERS
-
+    // HÀM NÀY VÀO TRONG CLASS AUCTION ĐỂ CHỐT BUG TRANSIENT 
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+        in.defaultReadObject(); // Đọc các dữ liệu bình thường từ file
+        this.notificationPool = Executors.newCachedThreadPool(); // Khởi tạo lại Thread Pool mới sau khi hồi sinh đối tượng
+    }
     public String getAuctionId() { return this.getId(); }
     public Item getItem() { return item; }
     public Seller getSeller() { return seller; }
