@@ -83,14 +83,15 @@ public class ClientHandler implements Runnable {
                         return new Response(StatusType.ERROR, "Phiên đấu giá không tồn tại.", null);
                     }
 
-                    // Tạo Bidder tạm thời (Do chưa có hệ thống Auth hoàn chỉnh)
                     Bidder dummyBidder = new Bidder(bidData.getUsername(), "123", bidData.getUsername() + "@mail.com", 999999.0);
-                    
-                    // Xử lý nghiệp vụ thực tế
                     dummyBidder.placeBid(auction, bidData.getBidAmount());
 
-                    // Tự động lưu trạng thái xuống file
+                    // Cập nhật DAO và lưu dữ liệu xuống file cứng
                     ServerApp.getAuctionDAO().update(auction);
+                    com.auction.utils.FileStorageUtil.saveDataToFile(
+                            com.auction.utils.AuctionManager.getInstance().getAllAuctions(),
+                            "auction_data.dat"
+                    );
 
                     // Broadcasting: Thông báo toàn cục cho tất cả client về giá mới
                     ServerApp.broadcast(new Response(StatusType.SUCCESS, "UPDATE_AUCTION", auction));
