@@ -24,14 +24,14 @@
 
     <Separator />
 
-    <LineChart fx:id="priceChart" title="Biểu đồ biến động giá Real-time" prefHeight="250">
+    <LineChart fx:id="priceChart" title="📈 Biến Động Giá Real-time" prefHeight="320" animated="false">
         <xAxis>
-            <CategoryAxis fx:id="xAxis" label="Thời gian / Người đặt" />
+            <CategoryAxis fx:id="xAxis" label="Thời gian" side="BOTTOM" />
         </xAxis>
         <yAxis>
-            <NumberAxis fx:id="yAxis" label="Mức giá ($)" />
+            <NumberAxis fx:id="yAxis" label="Mức giá ($)" autoRanging="true" side="LEFT" />
         </yAxis>
-        </LineChart>
+    </LineChart>
     <VBox spacing="10">
         <Label text="Khu vực trả giá:" style="-fx-font-weight: bold;"/>
         <HBox spacing="10">
