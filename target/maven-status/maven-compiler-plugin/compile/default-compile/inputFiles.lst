@@ -8,13 +8,13 @@ C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Proj
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\model\Entity.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\dao\impl\AuctionDAOImpl.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\exception\InvalidBidException.java
+C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\controller\AdminController.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\model\Admin.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\dao\IGenericDAO.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\dao\IAuctionDAO.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\model\Item.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\model\Vehicle.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\utils\ElectronicsFactory.java
-C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\view\AdminView.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\model\Art.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\model\AutoBidRule.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\utils\FileStorageUtil.java
@@ -27,8 +27,8 @@ C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Proj
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\utils\AuctionObserver.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\Main.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\utils\UIUtils.java
+C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\controller\AddProductController.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\view\MainView.java
-C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\view\SellerView.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\exception\AuctionClosedException.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\exception\AuctionException.java
 C:\Users\Admin\Documents\JavaProjects\Auction_Project\Online-Auction-System-Project\src\main\java\com\auction\utils\NotificationUtil.java

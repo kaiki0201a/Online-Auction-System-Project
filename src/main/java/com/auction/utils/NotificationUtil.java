@@ -2,63 +2,65 @@ package com.auction.utils;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
-import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
+import javafx.stage.Popup;
+import javafx.stage.Window;
 import javafx.util.Duration;
 
 public class NotificationUtil {
-    
-    public static void showToast(String message, StackPane root, String type) {
-        if (root == null) return;
 
+    // 1. Thay 'StackPane root' bằng 'Node anchorNode'. Cấm tiệt việc ép kiểu!
+    public static void showToast(String message, Node anchorNode, String type) {
+        if (anchorNode == null || anchorNode.getScene() == null) return;
+
+        // Lấy Window hiện tại từ Node
+        Window window = anchorNode.getScene().getWindow();
+
+        // 2. Sử dụng Popup làm Overlay độc lập
+        Popup popup = new Popup();
         Label toastLabel = new Label(message);
-        
-        String baseStyle = "-fx-text-fill: white; -fx-padding: 15px; -fx-background-radius: 5px; -fx-font-size: 14px; -fx-font-weight: bold; " +
-                           "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5);";
-        if ("error".equals(type)) {
-            toastLabel.setStyle(baseStyle + "-fx-background-color: #f44336;"); // Red
-        } else if ("success".equals(type)) {
-            toastLabel.setStyle(baseStyle + "-fx-background-color: #4CAF50;"); // Green
-        } else if ("warning".equals(type)) {
-            toastLabel.setStyle(baseStyle + "-fx-background-color: #ff9800;"); // Orange
-        } else {
-            toastLabel.setStyle(baseStyle + "-fx-background-color: #333333;"); // Default dark
-        }
-        
-        toastLabel.setOpacity(0);
-        
-        StackPane.setAlignment(toastLabel, Pos.BOTTOM_RIGHT);
-        StackPane.setMargin(toastLabel, new javafx.geometry.Insets(0, 20, 20, 0));
-        
-        root.getChildren().add(toastLabel);
 
-        // Fade in
-        Timeline fadeInTimeline = new Timeline();
-        KeyFrame fadeInKey1 = new KeyFrame(Duration.millis(0), new KeyValue(toastLabel.opacityProperty(), 0));
-        KeyFrame fadeInKey2 = new KeyFrame(Duration.millis(300), new KeyValue(toastLabel.opacityProperty(), 1));
-        fadeInTimeline.getKeyFrames().addAll(fadeInKey1, fadeInKey2);
-        
-        // Fade out
-        Timeline fadeOutTimeline = new Timeline();
-        KeyFrame fadeOutKey1 = new KeyFrame(Duration.millis(0), new KeyValue(toastLabel.opacityProperty(), 1));
-        KeyFrame fadeOutKey2 = new KeyFrame(Duration.millis(500), new KeyValue(toastLabel.opacityProperty(), 0));
-        fadeOutTimeline.getKeyFrames().addAll(fadeOutKey1, fadeOutKey2);
-        
-        fadeOutTimeline.setOnFinished((e) -> root.getChildren().remove(toastLabel));
-        
-        fadeInTimeline.setOnFinished((e) -> {
-            new Thread(() -> {
-                try {
-                    Thread.sleep(3000); // Show for 3 seconds
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-                javafx.application.Platform.runLater(fadeOutTimeline::play);
-            }).start();
+        // 3. XÓA TOÀN BỘ CSS CỨNG. Chuyển sang dùng styleClass
+        toastLabel.getStyleClass().add("toast");
+        if (type != null) {
+            toastLabel.getStyleClass().add("toast-" + type);
+        } else {
+            toastLabel.getStyleClass().add("toast-default");
+        }
+
+        toastLabel.setOpacity(0);
+        popup.getContent().add(toastLabel);
+
+        // Tính toán vị trí hiển thị (Góc dưới bên phải màn hình App)
+        popup.setOnShown(e -> {
+            popup.setX(window.getX() + window.getWidth() - popup.getWidth() - 20);
+            popup.setY(window.getY() + window.getHeight() - popup.getHeight() - 20);
         });
 
-        fadeInTimeline.play();
+        // Hiển thị Popup
+        popup.show(window);
+
+        // Hiệu ứng Fade in
+        Timeline fadeIn = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(toastLabel.opacityProperty(), 0)),
+                new KeyFrame(Duration.millis(300), new KeyValue(toastLabel.opacityProperty(), 1))
+        );
+
+        // Hiệu ứng Fade out
+        Timeline fadeOut = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(toastLabel.opacityProperty(), 1)),
+                new KeyFrame(Duration.millis(500), new KeyValue(toastLabel.opacityProperty(), 0))
+        );
+        fadeOut.setOnFinished(e -> popup.hide());
+
+        // 4. Dùng PauseTransition chuẩn của JavaFX thay vì Thread.sleep()
+        PauseTransition delay = new PauseTransition(Duration.seconds(3));
+        delay.setOnFinished(e -> fadeOut.play());
+
+        fadeIn.setOnFinished(e -> delay.play());
+        fadeIn.play();
     }
 }

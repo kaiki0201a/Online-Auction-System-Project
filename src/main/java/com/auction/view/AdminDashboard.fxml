@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane fx:id="rootPane" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+           stylesheets="@styles.css"
+           fx:controller="com.auction.controller.AdminController">
+
+    <BorderPane>
+        <padding>
+            <Insets top="20" right="20" bottom="20" left="20"/>
+        </padding>
+
+        <top>
+            <Label text="Admin Dashboard" styleClass="header-title">
+                <BorderPane.margin>
+                    <Insets bottom="20"/>
+                </BorderPane.margin>
+            </Label>
+        </top>
+
+        <center>
+            <TabPane>
+                <Tab text="Quản lý người dùng" closable="false">
+                    <VBox spacing="10">
+                        <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+
+                        <TableView fx:id="userTable" columnResizePolicy="CONSTRAINED_RESIZE_POLICY">
+                            <columns>
+                                <TableColumn fx:id="userNameCol" text="Tên người dùng"/>
+                                <TableColumn fx:id="userStatusCol" text="Trạng thái"/>
+                                <TableColumn fx:id="userActionCol" text="Hành động"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+
+                <Tab text="Phiên đấu giá đang diễn ra" closable="false">
+                    <VBox spacing="10">
+                        <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+
+                        <TableView fx:id="auctionTable" columnResizePolicy="CONSTRAINED_RESIZE_POLICY">
+                            <columns>
+                                <TableColumn fx:id="auctionItemCol" text="Sản phẩm"/>
+                                <TableColumn fx:id="auctionBidCol" text="Giá hiện tại"/>
+                                <TableColumn fx:id="auctionActionCol" text="Can thiệp"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+            </TabPane>
+        </center>
+    </BorderPane>
+</StackPane>
