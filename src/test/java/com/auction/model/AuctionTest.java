@@ -95,23 +95,30 @@ public class AuctionTest {
             auction.processBid(lateTransaction);
         });
     }
-    // Test tính năng nâng cao 
+    // TEST 5: ANTI-SNIPING TỰ ĐỘNG GIA HẠN THỜI GIAN
     @Test
-    @DisplayName("Test 5: Anti-Sniping tự động gia hạn thêm 10 phút phút chót")
-    public void testAntiSnipingExtendsTime() throws AuctionException {
-        // Ghi đè lại phiên đấu giá: Chỉ còn 2 phút nữa là kết thúc
+    @DisplayName("Test 5: Anti-Sniping tự động gia hạn thêm 60 giây khi bid ở phút chót")
+    public void testAntiSnipingExtendsTime() throws Exception {
+        // 1. Chuẩn bị (Arrange): Ép thời gian kết thúc của phiên đấu giá về còn đúng 15 giây nữa (Nằm trong khung 30s)
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime endingSoon = now.plusMinutes(2); 
-        auction = new Auction(item, seller, now.minusHours(1), endingSoon);
-        auction.setStatus(AuctionStatus.RUNNING);
+        LocalDateTime shortEndTime = now.plusSeconds(15); 
+        
+        // Tạo một phiên đấu giá đặc biệt sắp kết thúc
+        Auction urgentAuction = new Auction(item, seller, now.minusMinutes(10), shortEndTime);
+        urgentAuction.setStatus(AuctionStatus.RUNNING);
 
-        // Đặt giá phút chót
-        BidTransaction snipingTx = new BidTransaction(auction, bidder1, 200.0);
-        auction.processBid(snipingTx);
+        // 2. Hành động (Act): Tung lệnh đặt giá vào giây chót
+        BidTransaction quickTx = new BidTransaction(urgentAuction, bidder1, 200.0);
+        urgentAuction.processBid(quickTx);
 
-        // Kiểm tra: Thời gian kết thúc MỚI phải là: Thời gian cũ (endingSoon) + 10 phút
-        LocalDateTime expectedNewEndTime = endingSoon.plusMinutes(10);
-        assertEquals(expectedNewEndTime, auction.getEndTime(), "Lỗi: Anti-Sniping không gia hạn đúng 10 phút!");
+        // 3. Kiểm tra (Assert): Đảm bảo thời gian kết thúc ban đầu (shortEndTime) phải được cộng đúng 60 giây
+        LocalDateTime expectedNewEndTime = shortEndTime.plusSeconds(60);
+        
+        assertEquals(
+            expectedNewEndTime, 
+            urgentAuction.getEndTime(), 
+            "Lỗi: Anti-Sniping phải gia hạn đúng 60 giây khi bid ở 30s cuối!"
+        );
     }
     @Test
     @DisplayName("Test 6: Robot Auto-Bid tự động đè giá giành lại Top 1")

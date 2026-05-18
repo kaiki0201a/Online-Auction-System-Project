@@ -82,5 +82,9 @@ public class Bidder extends User implements AuctionObserver {
         // Sau này ở Tuần 9 (Client-Server), hàm này sẽ dùng Socket đẩy text về màn hình của người dùng.
         System.out.println("[Thông báo tới " + this.getUserName() + "]: " + message);
     }
+    @Override
+    public void onNewBidPlaced(BidTransaction transaction){
+        //Hello hàm này thêm vào để tránh lỗi khi up lên github
+    }
     
 }
