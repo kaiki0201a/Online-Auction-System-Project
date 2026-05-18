@@ -11,6 +11,7 @@ import com.auction.protocol.BidPayload;
 import com.auction.utils.AuctionManager;
 import com.auction.utils.UserManager;
 import com.auction.model.User;
+import com.auction.protocol.AuctionListUpdate;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
