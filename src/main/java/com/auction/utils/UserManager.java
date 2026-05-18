@@ -1,7 +1,12 @@
 package com.auction.utils;
 
+import com.auction.model.Admin;
 import com.auction.model.Bidder;
+import com.auction.model.Seller;
 import com.auction.model.User;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,9 +16,10 @@ public class UserManager {
 
     private UserManager() {
         // Khởi tạo một số tài khoản có sẵn tiền để test (Thay thế cho DB thật nếu chưa làm)
-        users.put("hieu", new Bidder("hieu", "123", "hieu@gmail.com", 50000.0));
-        users.put("bidder1", new Bidder("bidder1", "123", "bidder1@gmail.com", 50000.0));
-        users.put("bidder2", new Bidder("bidder2", "123", "bidder2@gmail.com", 30000.0));
+        // ĐÃ FIX: Đồng nhất tên key và username bên trong Object để lúc hiển thị lên bảng không bị lệch
+        users.put("bidder", new Bidder("bidder", "123", "bidder@gmail.com", 50000.0));
+        users.put("admin", new Admin("admin", "123", "admin@gmail.com", "admin_code"));
+        users.put("seller", new Seller("seller", "123", "seller@gmail.com"));
     }
 
     public static UserManager getInstance() {
@@ -45,5 +51,10 @@ public class UserManager {
 
     public User getUser(String username) {
         return users.get(username);
+    }
+
+    // THÊM MỚI: Hàm lấy toàn bộ danh sách người dùng cho Admin
+    public List<User> getAllUsers() {
+        return new ArrayList<>(users.values());
     }
 }

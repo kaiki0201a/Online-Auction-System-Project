@@ -6,80 +6,114 @@ import com.auction.model.Bidder;
 import com.auction.model.BidTransaction;
 import com.auction.protocol.ActionType;
 import com.auction.protocol.Request;
+import com.auction.utils.PriceChartHelper;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Alert;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.util.Duration;
 
-// 🛠️ IMPORT HELPER VÀO ĐÂY
-import com.auction.utils.PriceChartHelper;
-
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class AuctionDetailController {
-    @FXML private TextField txtBidAmount; 
-    @FXML private Label lblProductName;
-    @FXML private Label lblCurrentPrice;
-    @FXML private Label lblSellerName, lblTimeLeft;
-    @FXML private Label lblMessage;
-
+    @FXML private TextField txtBidAmount;
+    @FXML private Label lblProductName, lblCurrentPrice, lblSellerName, lblTimeLeft, lblMessage;
     @FXML private LineChart<String, Number> priceChart;
+
     private XYChart.Series<String, Number> priceSeries;
-    
     private Auction currentAuction;
     private Bidder currentUser;
+    private Timeline countdownTimeline;
 
     public void setAuctionData(Auction auction, Bidder user) {
         this.currentAuction = auction;
         this.currentUser = user;
 
-        updateUI();
-
-        // 🚀 CODE MỚI 1: GỌI HELPER ĐỂ VẼ LẠI TOÀN BỘ LỊCH SỬ TỪ ĐẦU (NẾU CÓ)
-        // Helper này đã có sẵn lớp giáp chống Null Pointer cực kỳ an toàn!
+        // 1. Khởi tạo biểu đồ lịch sử từ bạn D
         this.priceSeries = PriceChartHelper.buildHistoricalChart(priceChart, currentAuction.getBidHistory());
 
-        // LẮNG NGHE TỪ SERVER 
-        NetworkClient.getInstance().setOnResponseReceived(response -> {
-            javafx.application.Platform.runLater(() -> {
+        // 2. Kích hoạt đồng hồ đếm ngược Real-time
+        startCountdown();
+        updateUI();
 
+        // 3. LẮNG NGHE BROADCAST TỪ SERVER
+        NetworkClient.getInstance().setOnResponseReceived(response -> {
+            Platform.runLater(() -> {
+                // Khi có bất kỳ ai đặt giá, Server sẽ gửi Response này tới mọi người
                 if ("UPDATE_AUCTION".equals(response.getMessage()) && response.getData() instanceof Auction) {
                     Auction updatedAuction = (Auction) response.getData();
 
                     if (updatedAuction.getAuctionId().equals(this.currentAuction.getAuctionId())) {
+
+                        // Kiểm tra Anti-sniping: Nếu thời gian kết thúc bị lùi lại
+                        if (updatedAuction.getEndTime().isAfter(this.currentAuction.getEndTime())) {
+                            lblMessage.setText("🛡️ Hệ thống vừa gia hạn thêm thời gian đấu giá!");
+                            lblMessage.setStyle("-fx-text-fill: #f39c12; -fx-font-weight: bold;");
+                        }
+
                         this.currentAuction = updatedAuction;
                         updateUI();
 
-                        // 🚀 CODE MỚI 2: TÌM GIAO DỊCH MỚI NHẤT VÀ NHỜ HELPER VẼ LÊN BIỂU ĐỒ REAL-TIME
+                        // Vẽ thêm điểm mới lên biểu đồ (Logic của bạn D)
                         List<BidTransaction> history = updatedAuction.getBidHistory();
                         if (history != null && !history.isEmpty()) {
-                            BidTransaction latestTx = history.get(history.size() - 1); // Lấy cục dữ liệu mới nhất
+                            BidTransaction latestTx = history.get(history.size() - 1);
                             PriceChartHelper.updateChartRealTime(priceSeries, latestTx);
                         }
 
-                        if (!updatedAuction.getHighestBidder().getUserName().equals(this.currentUser.getUserName())) {
-                            lblMessage.setText("🔥 Báo động: Ai đó vừa trả giá cao hơn bạn!");
-                            lblMessage.setStyle("-fx-text-fill: red;");
+                        // Cảnh báo nếu mình không còn là người dẫn đầu
+                        if (updatedAuction.getHighestBidder() != null &&
+                                !updatedAuction.getHighestBidder().getUserName().equals(this.currentUser.getUserName())) {
+                            lblMessage.setText("🔥 Cảnh báo: Ai đó vừa trả giá cao hơn bạn!");
+                            lblMessage.setStyle("-fx-text-fill: #e74c3c;");
                         }
                     }
-                } else if ("Đặt giá thành công!".equals(response.getMessage())) {
-                    lblMessage.setText("✅ " + response.getMessage());
-                    lblMessage.setStyle("-fx-text-fill: green;");
-                    txtBidAmount.clear();
-                } else if (response.getStatus() == com.auction.protocol.StatusType.ERROR) {
+                }
+                else if ("Đặt giá thành công!".equals(response.getMessage())) {
+                    lblMessage.setText("✅ Đặt giá thành công!");
+                    lblMessage.setStyle("-fx-text-fill: #27ae60;");
+                }
+                else if (response.getStatus() == com.auction.protocol.StatusType.ERROR) {
                     showError("Từ chối đặt giá", response.getMessage());
                 }
             });
         });
     }
 
+    private void startCountdown() {
+        if (countdownTimeline != null) countdownTimeline.stop();
+
+        countdownTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+            long secondsLeft = ChronoUnit.SECONDS.between(LocalDateTime.now(), currentAuction.getEndTime());
+            if (secondsLeft <= 0) {
+                lblTimeLeft.setText("ĐÃ KẾT THÚC");
+                lblTimeLeft.setStyle("-fx-text-fill: gray;");
+                countdownTimeline.stop();
+            } else {
+                long h = secondsLeft / 3600;
+                long m = (secondsLeft % 3600) / 60;
+                long s = secondsLeft % 60;
+                lblTimeLeft.setText(String.format("%02d:%02d:%02d", h, m, s));
+
+                // Hiệu ứng đổi màu đỏ khi còn dưới 1 phút
+                if (secondsLeft < 60) lblTimeLeft.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+            }
+        }));
+        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+        countdownTimeline.play();
+    }
+
     private void updateUI() {
         lblProductName.setText(currentAuction.getItem().getNameItem());
         lblSellerName.setText(currentAuction.getSeller().getUserName());
         lblCurrentPrice.setText("$" + currentAuction.getCurrentHighestBid());
-        lblTimeLeft.setText(currentAuction.getEndTime().toString());
     }
 
     @FXML
@@ -91,10 +125,8 @@ public class AuctionDetailController {
                     currentUser.getUserName(),
                     amount
             );
-
             NetworkClient.getInstance().sendRequest(new Request(ActionType.PLACE_BID, payload));
-            txtBidAmount.clear();
-            lblMessage.setText("Đang gửi yêu cầu..."); 
+            lblMessage.setText("🚀 Đang gửi giá thầu...");
         } catch (NumberFormatException e) {
             showError("Lỗi", "Vui lòng nhập số tiền hợp lệ!");
         }
@@ -103,24 +135,21 @@ public class AuctionDetailController {
     private void showError(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
+        alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
     }
 
     @FXML
     public void onBackButtonClick(javafx.event.ActionEvent event) {
+        if (countdownTimeline != null) countdownTimeline.stop();
         try {
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/auction/view/Dashboard.fxml"));
             javafx.scene.Parent root = loader.load();
-
-            DashboardController dashboardController = loader.getController();
-            dashboardController.setUser(currentUser);
-
             javafx.stage.Stage stage = (javafx.stage.Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
             stage.setScene(new javafx.scene.Scene(root));
         } catch (Exception e) {
-            e.printStackTrace();
-            showError("Lỗi", "Không thể quay lại màn hình chính.");
+            showError("Lỗi", "Không thể quay lại.");
         }
     }
 }

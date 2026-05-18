@@ -9,16 +9,14 @@
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.Button?>
 
-<StackPane fx:id="rootPane" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-           stylesheets="@style.css"
-           fx:controller="com.auction.controller.AddProductController">
+<StackPane fx:id="rootPane" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.AddProductController">
 
     <VBox spacing="15" alignment="TOP_CENTER" maxWidth="600">
         <padding>
             <Insets top="20" right="20" bottom="20" left="20"/>
         </padding>
 
-        <Label text="Đăng sản phẩm mới" styleClass="header-title"/>
+        <Label text="ĐĂNG SẢN PHẨM MỚI" styleClass="title-label"/>
 
         <TextField fx:id="txtName" promptText="Tên sản phẩm"/>
         <TextField fx:id="txtStartingPrice" promptText="Giá khởi điểm ($)"/>
@@ -26,10 +24,10 @@
 
         <ComboBox fx:id="categoryBox" promptText="Chọn danh mục" maxWidth="Infinity"/>
 
-        <VBox fx:id="dynamicForm" spacing="10" visible="false" managed="false"
-              styleClass="form-container"/>
+        <VBox fx:id="dynamicForm" spacing="10" visible="false" managed="false" styleClass="form-container"/>
 
-        <Button text="Đăng bán" onAction="#handleSubmit" maxWidth="Infinity"
-                styleClass="button, btn-success"/>
+        <Button text="ĐĂNG BÁN" onAction="#handleSubmit" maxWidth="Infinity" styleClass="button btn-success"/>
+
     </VBox>
+
 </StackPane>

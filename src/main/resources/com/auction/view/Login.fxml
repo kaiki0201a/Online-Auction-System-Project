@@ -3,34 +3,35 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="CENTER" spacing="15.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.LoginController">
-    <padding>
-        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
-    </padding>
-    <children>
-        <Label styleClass="title-label" text="HỆ THỐNG ĐẤU GIÁ" />
-        <Label text="Vui lòng đăng nhập để tiếp tục" />
+<StackPane fx:id="rootPane" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.LoginController">
 
-        <VBox spacing="5.0" maxWidth="250.0">
-            <children>
-                <Label text="Tên đăng nhập:" />
-                <TextField fx:id="txtUsername" promptText="Nhập username..." />
-            </children>
-        </VBox>
+    <VBox alignment="CENTER" spacing="15.0">
+        <padding>
+            <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+        </padding>
+        <children>
+            <Label styleClass="title-label" text="HỆ THỐNG ĐẤU GIÁ" />
+            <Label text="Vui lòng đăng nhập để tiếp tục" />
 
-        <VBox spacing="5.0" maxWidth="250.0">
-            <children>
-                <Label text="Mật khẩu:" />
-                <PasswordField fx:id="txtPassword" promptText="Nhập mật khẩu..." />
-            </children>
-        </VBox>
+            <VBox spacing="5.0" maxWidth="250.0">
+                <children>
+                    <Label text="Tên đăng nhập:" />
+                    <TextField fx:id="txtUsername" promptText="Nhập username..." />
+                </children>
+            </VBox>
 
-        <Label fx:id="lblError" styleClass="error-label" text="" />
+            <VBox spacing="5.0" maxWidth="250.0">
+                <children>
+                    <Label text="Mật khẩu:" />
+                    <PasswordField fx:id="txtPassword" promptText="Nhập mật khẩu..." />
+                </children>
+            </VBox>
 
-        <Button fx:id="btnLogin" onAction="#onLoginClick" mnemonicParsing="false" prefWidth="250.0" styleClass="custom-button" text="ĐĂNG NHẬP">
-            <VBox.margin>
-                <Insets top="10.0" />
-            </VBox.margin>
-        </Button>
-    </children>
-</VBox>
+            <Button fx:id="btnLogin" onAction="#onLoginClick" mnemonicParsing="false" prefWidth="250.0" styleClass="button" text="ĐĂNG NHẬP">
+                <VBox.margin>
+                    <Insets top="10.0" />
+                </VBox.margin>
+            </Button>
+        </children>
+    </VBox>
+</StackPane>
