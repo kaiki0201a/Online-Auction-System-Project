@@ -9,6 +9,9 @@ import com.auction.protocol.Response;
 import com.auction.protocol.StatusType;
 import com.auction.protocol.BidPayload;
 import com.auction.utils.AuctionManager;
+import com.auction.utils.UserManager;
+import com.auction.model.User;
+import com.auction.protocol.AuctionListUpdate;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -60,6 +63,7 @@ public class ClientHandler implements Runnable {
     public synchronized void sendResponse(Response response) {
         if (out != null) {
             try {
+                out.reset();
                 out.writeObject(response);
                 out.flush();
             } catch (IOException e) {
@@ -76,60 +80,79 @@ public class ClientHandler implements Runnable {
             case PLACE_BID:
                 try {
                     BidPayload bidData = (BidPayload) request.getPayload();
-                    System.out.println("Nhận được Bid: User " + bidData.getUsername() + " đặt " + bidData.getBidAmount() + "$ cho sản phẩm " + bidData.getAuctionId());
 
+                    // CHUẨN MVC: Controller gọi Manager, không gọi DAO
                     Auction auction = AuctionManager.getInstance().getAuctionById(bidData.getAuctionId());
                     if (auction == null) {
                         return new Response(StatusType.ERROR, "Phiên đấu giá không tồn tại.", null);
                     }
 
-                    // Tạo Bidder tạm thời (Do chưa có hệ thống Auth hoàn chỉnh)
-                    Bidder dummyBidder = new Bidder(bidData.getUsername(), "123", bidData.getUsername() + "@mail.com", 999999.0);
-                    
-                    // Xử lý nghiệp vụ thực tế
-                    dummyBidder.placeBid(auction, bidData.getBidAmount());
+                    // CHUẨN OOP: Lấy User từ UserManager, tuyệt đối không dùng new Bidder(...)
+                    Bidder realBidder = (Bidder) UserManager.getInstance().getUser(bidData.getUsername());
+                    if (realBidder == null) {
+                        return new Response(StatusType.ERROR, "Tài khoản không hợp lệ.", null);
+                    }
 
-                    // Tự động lưu trạng thái xuống file
-                    ServerApp.getAuctionDAO().update(auction);
+                    // Thực hiện nghiệp vụ đặt giá
+                    realBidder.placeBid(auction, bidData.getBidAmount());
 
-                    // Broadcasting: Thông báo toàn cục cho tất cả client về giá mới
-                    ServerApp.broadcast(new Response(StatusType.SUCCESS, "UPDATE_AUCTION", auction));
+                    // Cập nhật dữ liệu qua Manager
+                    AuctionManager.getInstance().updateAuction(auction);
+
+                    // Broadcast cho tất cả Client (cập nhật Realtime)
+                    AuctionListUpdate updatePackage = new AuctionListUpdate(auction);
+                    ServerApp.broadcastToAuction(auction.getAuctionId(), updatePackage);
 
                     return new Response(StatusType.SUCCESS, "Đặt giá thành công!", null);
-                } catch (AuctionException e) {
+
+                } catch (AuctionException e) { // Bắt đúng lỗi nghiệp vụ (hết tiền, phiên đóng...)
                     return new Response(StatusType.ERROR, e.getMessage(), null);
                 } catch (Exception e) {
-                    return new Response(StatusType.ERROR, "Lỗi hệ thống: " + e.getMessage(), null);
+                    return new Response(StatusType.ERROR, "Lỗi hệ thống khi xử lý đặt giá", null);
                 }
 
             case GET_AUCTION_LIST:
-                // Lấy toàn bộ danh sách phiên đấu giá hiện có
-                return new Response(StatusType.SUCCESS, "Danh sách phiên đấu giá", AuctionManager.getInstance().getAllAuctions());
+                // CHUẨN MVC: Gọi qua Manager
+                return new Response(StatusType.SUCCESS, "Danh sách", AuctionManager.getInstance().getAllAuctions());
 
             case LOGIN:
                 try {
-                    // 1. Lấy dữ liệu Client gửi lên (username|password)
                     String loginData = (String) request.getPayload();
                     String[] credentials = loginData.split("\\|");
                     String username = credentials[0];
                     String password = credentials[1];
 
-                    // 2. Kiểm tra (Giả lập logic check DB)
-                    // Ở đây ta cho phép đăng nhập nếu có nhập pass
-                    if (password != null && !password.isEmpty()) {
-
-                        // 3. TẠO ĐỐI TƯỢNG TRẢ VỀ (ĐÂY LÀ KHÚC QUAN TRỌNG NHẤT)
-                        // Giả lập tài khoản này có 50.000$
-                        Bidder loggedInUser = new Bidder(username, password, username + "@gmail.com", 50000.0);
-
-                        // Nhét loggedInUser vào tham số thứ 3 (data) của Response
+                    // CHUẨN BẢO MẬT: Kiểm tra qua UserManager
+                    if (UserManager.getInstance().authenticate(username, password)) {
+                        User loggedInUser = UserManager.getInstance().getUser(username);
                         return new Response(StatusType.SUCCESS, "Đăng nhập thành công!", loggedInUser);
                     } else {
-                        return new Response(StatusType.ERROR, "Mật khẩu không được để trống!", null);
+                        return new Response(StatusType.ERROR, "Sai tài khoản hoặc mật khẩu!", null);
                     }
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Dữ liệu đăng nhập không hợp lệ.", null);
                 }
+
+            case REGISTER:
+                try {
+                    String registerData = (String) request.getPayload();
+                    // Giả sử payload gửi lên là: "username|password|email"
+                    String[] data = registerData.split("\\|");
+                    boolean success = UserManager.getInstance().register(data[0], data[1], data[2]);
+
+                    if (success) {
+                        return new Response(StatusType.SUCCESS, "Đăng ký thành công!", null);
+                    } else {
+                        return new Response(StatusType.ERROR, "Tên đăng nhập đã tồn tại!", null);
+                    }
+                } catch (Exception e) {
+                    return new Response(StatusType.ERROR, "Dữ liệu đăng ký không hợp lệ.", null);
+                }
+
+            case LOGOUT:
+                // Tùy vào thiết kế, nếu cần ghi log đăng xuất thì gọi UserManager
+                return new Response(StatusType.SUCCESS, "Đã đăng xuất", null);
+
             default:
                 return new Response(StatusType.ERROR, "Không hỗ trợ hành động này.", null);
         }
