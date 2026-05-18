@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.DashboardController">
+    <padding><Insets bottom="20.0" left="20.0" right="20.0" top="20.0" /></padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="15.0">
+        <Label styleClass="title-label" text="SÀN ĐẤU GIÁ ONLINE" />
+        <Region HBox.hgrow="ALWAYS" />
+        <TextField fx:id="txtSearch" promptText="Tìm kiếm sản phẩm..." prefWidth="200"/>
+        <Button fx:id="btnSearch" text="Tìm" styleClass="custom-button"/>
+        <Button fx:id="btnCreateAuction" onAction="#onCreateAuctionClick" text="Đăng sản phẩm" styleClass="custom-button"/>
+        <Button fx:id="btnProfile" onAction="#onProfileClick" text="Trang cá nhân" styleClass="custom-button"/>    </HBox>
+
+    <TableView fx:id="tableAuctions" onMouseClicked="#onTableClick" VBox.vgrow="ALWAYS">        <columns>
+            <TableColumn fx:id="colId" text="Mã Phiên" prefWidth="100"/>
+            <TableColumn fx:id="colProductName" text="Tên Sản Phẩm" prefWidth="200"/>
+            <TableColumn fx:id="colCurrentPrice" text="Giá Hiện Tại" prefWidth="150"/>
+            <TableColumn fx:id="colEndTime" text="Thời Gian Kết Thúc" prefWidth="150"/>
+            <TableColumn fx:id="colStatus" text="Trạng Thái" prefWidth="100"/>
+        </columns>
+    </TableView>
+
+    <HBox alignment="CENTER_RIGHT" spacing="10.0">
+        <Button fx:id="btnViewDetail" text="Xem Chi Tiết &amp; Đấu Giá" styleClass="custom-button"/>
+    </HBox>
+</VBox>

@@ -1,6 +1,8 @@
 package com.auction.model;
 
-public abstract class Item extends Entity{
+import java.io.Serializable;
+
+public abstract class Item extends Entity implements Serializable {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
