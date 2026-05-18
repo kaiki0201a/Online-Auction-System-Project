@@ -3,6 +3,9 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
 <VBox spacing="20.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.AuctionDetailController">
     <padding><Insets bottom="30.0" left="30.0" right="30.0" top="30.0" /></padding>
 
@@ -21,14 +24,20 @@
 
     <Separator />
 
+    <LineChart fx:id="priceChart" title="📈 Biến Động Giá Real-time" prefHeight="320" animated="false">
+        <xAxis>
+            <CategoryAxis fx:id="xAxis" label="Thời gian" side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+            <NumberAxis fx:id="yAxis" label="Mức giá ($)" autoRanging="true" side="LEFT" />
+        </yAxis>
+    </LineChart>
     <VBox spacing="10">
         <Label text="Khu vực trả giá:" style="-fx-font-weight: bold;"/>
         <HBox spacing="10">
             <TextField fx:id="txtBidAmount" promptText="Nhập số tiền ($)..." />
-            <Button fx:id="btnPlaceBid" text="Đặt Giá Ngay" styleClass="custom-button"/>
-        </HBox>
+            <Button fx:id="btnPlaceBid" onAction="#onBidButtonClick" text="Đặt Giá Ngay" styleClass="custom-button"/>        </HBox>
         <Label fx:id="lblMessage" styleClass="error-label" text="" />
     </VBox>
 
-    <Button fx:id="btnBack" text="Quay lại danh sách" />
-</VBox>
+    <Button fx:id="btnBack" onAction="#onBackButtonClick" text="Quay lại danh sách" /></VBox>

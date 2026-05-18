@@ -6,18 +6,19 @@ import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InsufficientBalanceException;
 import com.auction.utils.AuctionObserver;
 
+import java.util.concurrent.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-public class Auction extends Entity {
+public class Auction extends Entity implements Serializable {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
     // --- CÁC HẰNG SỐ CHO ANTI-SNIPING ---
-    private static final int SNIPE_THRESHOLD_MINUTES = 5; // Nếu đặt giá trong 5 phút cuối
-    private static final int EXTENSION_MINUTES = 10;      // Thì gia hạn thêm 10 phút
+    private static final int SNIPE_THRESHOLD_SECONDS = 30;
+    private static final int EXTENSION_SECONDS = 60;  
 
     private List<AutoBidRule> autoBidRules;
     private Item item;
@@ -32,8 +33,7 @@ public class Auction extends Entity {
     private List<BidTransaction> bidHistory;
     // THÊM MỚI: Danh sách những người đang xem phiên đấu giá này
     private List<AuctionObserver> observers;
-
-    // CONSTRUCTOR
+    private transient ExecutorService notificationPool = Executors.newCachedThreadPool();    // CONSTRUCTOR
 
     public Auction(Item item, Seller seller, LocalDateTime startTime, LocalDateTime endTime) {
         super(); // Gọi Entity để sinh ID
@@ -63,7 +63,8 @@ public class Auction extends Entity {
         this.bidHistory.add(transaction);
 
         // 3. Thông báo (DIP - phụ thuộc vào Interface Observer)
-        notifyObservers("🔥 Giá mới: $" + currentHighestBid + " bởi " + highestBidder.getUserName());
+        //notifyObservers("🔥 Giá mới: $" + currentHighestBid + " bởi " + highestBidder.getUserName());
+        notifyObservers(transaction);
         //Trigger gọi auto bid xem robot có ai muốn đặt giá không
         triggerAutoBids();
     }
@@ -101,60 +102,149 @@ public class Auction extends Entity {
     // Hàm Anti-Sniping
     private synchronized void applyAntiSniping() {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime thresholdTime = this.endTime.minusMinutes(SNIPE_THRESHOLD_MINUTES);
+        LocalDateTime thresholdTime = this.endTime.minusSeconds(SNIPE_THRESHOLD_SECONDS);
 
         // Nếu đặt giá vào những phút cuối cùng
         if (now.isAfter(thresholdTime) && now.isBefore(this.endTime)) {
-            this.endTime = this.endTime.plusMinutes(EXTENSION_MINUTES);
-            System.out.println("🛡️ [Anti-Sniping] Phiên đấu giá được gia hạn thêm " + EXTENSION_MINUTES + " phút!");
-            notifyObservers("🛡️ Có người đặt giá phút chót! Phiên đấu giá gia hạn thêm " + EXTENSION_MINUTES + " phút. Kết thúc lúc: " + this.endTime);
+            this.endTime = this.endTime.plusSeconds(EXTENSION_SECONDS);
+            System.out.println("🛡️ [Anti-Sniping] Phiên đấu giá được gia hạn thêm " + EXTENSION_SECONDS + " giây!");
+            notifyObservers("🛡️ Có người đặt giá phút chót! Phiên đấu giá gia hạn thêm " + EXTENSION_SECONDS + " giây. Kết thúc lúc: " + this.endTime);
         }
     }
-    private void triggerAutoBids() {
+    //Triggerauobid sử dụng priority nhưng chưa tối ưu, đoạn code dưới đã tối ưu bằng cách sử dụng ARRList + sort
+    /* 
+private void triggerAutoBids() {
         boolean hasNewAction;
-        // Vòng lặp do-while đảm bảo nếu có 2 đại gia cùng cài Auto-bid, họ sẽ đập nhau đến khi 1 người hết tiền hoặc chạm Max Bid
         do {
             hasNewAction = false;
-
-            for (AutoBidRule rule : this.autoBidRules) {
-                // Nếu luật đã tắt hoặc người này ĐANG LÀ người dẫn đầu thì bỏ qua
-                if (!rule.isActive() || (this.highestBidder != null && rule.getBidder().getId().equals(this.highestBidder.getId()))) {
-                    continue;
+            
+            // 1. TẠO HÀNG ĐỢI ƯU TIÊN (PRIORITY QUEUE) VỚI LUẬT TIE-BREAKER
+            java.util.PriorityQueue<AutoBidRule> priorityQueue = new java.util.PriorityQueue<>(
+                (r1, r2) -> {
+                    // So sánh tiền trước (Ai max bid cao hơn đứng trước)
+                    int priceCompare = Double.compare(r2.getMaxBid(), r1.getMaxBid());
+                    if (priceCompare == 0) {
+                        // Hòa tiền -> So sánh thời gian (Ai đăng ký sớm hơn đứng trước)
+                        return r1.getRegisterTime().compareTo(r2.getRegisterTime());
+                    }
+                    return priceCompare;
                 }
+            );
 
-                double targetPrice = this.currentHighestBid + rule.getIncrement();
+            // 2. Lọc những người đang bật Auto-Bid và đưa vào xếp hàng
+            for (AutoBidRule rule : this.autoBidRules) {
+                // Bỏ qua nếu luật đã tắt, hoặc người đó ĐANG LÀ người dẫn đầu
+                if (rule.isActive() && (this.highestBidder == null || !rule.getBidder().getId().equals(this.highestBidder.getId()))) {
+                    priorityQueue.add(rule);
+                }
+            }
 
-                // Kiểm tra xem giá mục tiêu có vượt quá Max Bid không
-                if (targetPrice <= rule.getMaxBid()) {
+            // 3. XỬ LÝ HÀNG ĐỢI: Rút lần lượt cho đến khi có người mua thành công hoặc cạn hàng đợi
+            while (!priorityQueue.isEmpty()) {
+                AutoBidRule topRule = priorityQueue.poll(); // Rút người đứng đầu ra
+                double targetPrice = this.currentHighestBid + topRule.getIncrement();
+
+                if (targetPrice <= topRule.getMaxBid()) {
                     try {
-                        BidTransaction autoTx = new BidTransaction(this, rule.getBidder(), targetPrice);
-                        // Tận dụng hàm validateBid để kiểm tra xem đại gia này còn đủ tiền trong ví không
-                        validateBid(autoTx);
+                        BidTransaction autoTx = new BidTransaction(this, topRule.getBidder(), targetPrice);
+                        validateBid(autoTx); // Kiểm tra tiền trong ví (có thể ném ra Exception)
 
-                        // Tiến hành chốt đơn tự động
+                        //  CHỐT ĐƠN THÀNH CÔNG!
                         this.currentHighestBid = targetPrice;
-                        this.highestBidder = rule.getBidder();
+                        this.highestBidder = topRule.getBidder();
                         this.bidHistory.add(autoTx);
-                        rule.getBidder().addTransaction(autoTx);
+                        topRule.getBidder().addTransaction(autoTx);
 
-                        System.out.println("🤖 [AUTO-BID] Tự động trả giá $" + targetPrice + " thay cho " + rule.getBidder().getUserName());
-                        notifyObservers("🤖 Auto-Bid kích hoạt: " + rule.getBidder().getUserName() + " vừa nâng giá lên $" + targetPrice);
-
+                        System.out.println("🤖 [AUTO-BID] Tự động trả giá $" + targetPrice + " thay cho " + topRule.getBidder().getUserName());
+                        notifyObservers(autoTx); // Vẽ lên biểu đồ
+                        
                         hasNewAction = true;
-                        break; // Thoát vòng lặp for để do-while quét lại từ đầu với giá cao nhất mới
+                        // THÀNH CÔNG THÌ PHẢI BREAK ĐỂ RESET LẠI TỪ ĐẦU (Vì giá hiện tại đã thay đổi)
+                        break; 
 
                     } catch (AuctionException e) {
-                        System.out.println("⚠️ [AUTO-BID TẮT] Hủy lệnh của " + rule.getBidder().getUserName() + " vì: " + e.getMessage());
-                        rule.setActive(false);
+                        //  Lỗi (VD: Hết tiền). Tắt luật của người này.
+                        System.out.println("⚠️ [AUTO-BID TẮT] Hủy lệnh của " + topRule.getBidder().getUserName() + " vì: " + e.getMessage());
+                        topRule.setActive(false);
+                        // Kẻ ngáng đường đã bị loại, vòng lặp while đi tiếp xem ông top 2 có đặt được không!
                     }
                 } else {
-                    System.out.println("🏳️ [AUTO-BID TẮT] " + rule.getBidder().getUserName() + " đã chạm trần Max Bid ($" + rule.getMaxBid() + ").");
-                    rule.setActive(false);
+                    // Chạm trần Max Bid. Tắt luật của người này.
+                    System.out.println("🏳️ [AUTO-BID TẮT] " + topRule.getBidder().getUserName() + " đã chạm trần Max Bid.");
+                    topRule.setActive(false);
+                    // Kẻ ngáng đường đã bị loại, vòng lặp while đi tiếp xem ông top 2 có đặt được không!
                 }
             }
         } while (hasNewAction);
     }
+*/
+private void triggerAutoBids() {
+        // 1. TỐI ƯU HÓA: Sắp xếp bảng xếp hạng MỘT LẦN DUY NHẤT ở bên ngoài vòng lặp.
+        // Tạo một list copy chứa các luật đang active để tránh làm ảnh hưởng list gốc
+        java.util.List<AutoBidRule> sortedRules = new java.util.ArrayList<>();
+        for (AutoBidRule rule : this.autoBidRules) {
+            if (rule.isActive()) {
+                sortedRules.add(rule);
+            }
+        }
+        
+        // Sắp xếp theo đúng luật Tie-breaker của bạn
+        sortedRules.sort((r1, r2) -> {
+            int priceCompare = Double.compare(r2.getMaxBid(), r1.getMaxBid());
+            if (priceCompare == 0) {
+                return r1.getRegisterTime().compareTo(r2.getRegisterTime());
+            }
+            return priceCompare;
+        });
 
+        boolean hasNewAction;
+        do {
+            hasNewAction = false;
+
+            // 2. DUYỆT BẢNG XẾP HẠNG: Đi từ người có ưu tiên cao nhất xuống
+            for (AutoBidRule topRule : sortedRules) {
+                // Bỏ qua nếu luật đã tắt giữa chừng, hoặc người đó ĐANG LÀ người dẫn đầu
+                if (!topRule.isActive() || (this.highestBidder != null && topRule.getBidder().getId().equals(this.highestBidder.getId()))) {
+                    continue; // Tương đương với việc lúc nãy bạn không add vào Priority Queue
+                }
+
+                double targetPrice = this.currentHighestBid + topRule.getIncrement();
+
+                if (targetPrice <= topRule.getMaxBid()) {
+                    try {
+                        BidTransaction autoTx = new BidTransaction(this, topRule.getBidder(), targetPrice);
+                        validateBid(autoTx); // Kiểm tra tiền trong ví (có thể ném ra Exception)
+
+                        // 🟢 CHỐT ĐƠN THÀNH CÔNG!
+                        this.currentHighestBid = targetPrice;
+                        this.highestBidder = topRule.getBidder();
+                        this.bidHistory.add(autoTx);
+                        topRule.getBidder().addTransaction(autoTx);
+
+                        System.out.println("🤖 [AUTO-BID] Tự động trả giá $" + targetPrice + " thay cho " + topRule.getBidder().getUserName());
+                        notifyObservers(autoTx); // Vẽ lên biểu đồ
+                        
+                        hasNewAction = true;
+                        // THÀNH CÔNG THÌ PHẢI BREAK ĐỂ RESET LẠI TỪ ĐẦU (Vì giá hiện tại đã thay đổi)
+                        // Khi break vòng for, vòng do-while sẽ lặp lại và for sẽ quét lại từ ĐẦU LIST (từ ông top 1).
+                        break; 
+
+                    } catch (AuctionException e) {
+                        // 🔴 Lỗi (VD: Hết tiền). Tắt luật của người này.
+                        System.out.println("⚠️ [AUTO-BID TẮT] Hủy lệnh của " + topRule.getBidder().getUserName() + " vì: " + e.getMessage());
+                        topRule.setActive(false);
+                        // Lệnh catch KHÔNG break. Vòng lặp for sẽ tự động đi tiếp xuống ông xếp thứ 2.
+                        // (Hoạt động Y HỆT như while (!priorityQueue.isEmpty()) lấy topRule tiếp theo ở code cũ)
+                    }
+                } else {
+                    // 🔴 Chạm trần Max Bid. Tắt luật của người này.
+                    System.out.println("🏳️ [AUTO-BID TẮT] " + topRule.getBidder().getUserName() + " đã chạm trần Max Bid.");
+                    topRule.setActive(false);
+                    // Lệnh else KHÔNG break. Vòng lặp for sẽ tự động đi tiếp xuống ông xếp thứ 2.
+                }
+            }
+        } while (hasNewAction);
+    }
     // QUẢN LÝ THÔNG TIN & PHÂN QUYỀN
 
     public synchronized boolean updateAuctionDetails(User requestor, Item newItem, LocalDateTime newStart, LocalDateTime newEnd) {
@@ -245,13 +335,27 @@ public class Auction extends Entity {
     }
 
     // 3. Hàm cầm loa thông báo cho tất cả mọi người
-    private synchronized void notifyObservers(String message) {
+    private void notifyObservers(String message) {
         for (AuctionObserver obs : observers) {
-            obs.update(message);
+            CompletableFuture.runAsync(() -> {
+                obs.update(message);
+            }, notificationPool);
+        }
+    }
+
+    private void notifyObservers(BidTransaction tx) {
+        for (AuctionObserver obs : observers) {
+            CompletableFuture.runAsync(() -> {
+                obs.onNewBidPlaced(tx);
+            }, notificationPool);
         }
     }
     // GETTERS
-
+    // HÀM NÀY VÀO TRONG CLASS AUCTION ĐỂ CHỐT BUG TRANSIENT 
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+        in.defaultReadObject(); // Đọc các dữ liệu bình thường từ file
+        this.notificationPool = Executors.newCachedThreadPool(); // Khởi tạo lại Thread Pool mới sau khi hồi sinh đối tượng
+    }
     public String getAuctionId() { return this.getId(); }
     public Item getItem() { return item; }
     public Seller getSeller() { return seller; }

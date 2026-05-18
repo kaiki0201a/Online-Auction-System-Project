@@ -93,7 +93,7 @@ public class ClientHandler implements Runnable {
                     ServerApp.getAuctionDAO().update(auction);
 
                     // Broadcasting: Thông báo toàn cục cho tất cả client về giá mới
-                    ServerApp.broadcast(new Response(StatusType.SUCCESS, "Giá mới: $" + bidData.getBidAmount() + " bởi " + bidData.getUsername(), null));
+                    ServerApp.broadcast(new Response(StatusType.SUCCESS, "UPDATE_AUCTION", auction));
 
                     return new Response(StatusType.SUCCESS, "Đặt giá thành công!", null);
                 } catch (AuctionException e) {
@@ -107,9 +107,29 @@ public class ClientHandler implements Runnable {
                 return new Response(StatusType.SUCCESS, "Danh sách phiên đấu giá", AuctionManager.getInstance().getAllAuctions());
 
             case LOGIN:
-                // Tương tự xử lý login...
-                return new Response(StatusType.SUCCESS, "Đăng nhập thành công!", null);
+                try {
+                    // 1. Lấy dữ liệu Client gửi lên (username|password)
+                    String loginData = (String) request.getPayload();
+                    String[] credentials = loginData.split("\\|");
+                    String username = credentials[0];
+                    String password = credentials[1];
 
+                    // 2. Kiểm tra (Giả lập logic check DB)
+                    // Ở đây ta cho phép đăng nhập nếu có nhập pass
+                    if (password != null && !password.isEmpty()) {
+
+                        // 3. TẠO ĐỐI TƯỢNG TRẢ VỀ (ĐÂY LÀ KHÚC QUAN TRỌNG NHẤT)
+                        // Giả lập tài khoản này có 50.000$
+                        Bidder loggedInUser = new Bidder(username, password, username + "@gmail.com", 50000.0);
+
+                        // Nhét loggedInUser vào tham số thứ 3 (data) của Response
+                        return new Response(StatusType.SUCCESS, "Đăng nhập thành công!", loggedInUser);
+                    } else {
+                        return new Response(StatusType.ERROR, "Mật khẩu không được để trống!", null);
+                    }
+                } catch (Exception e) {
+                    return new Response(StatusType.ERROR, "Dữ liệu đăng nhập không hợp lệ.", null);
+                }
             default:
                 return new Response(StatusType.ERROR, "Không hỗ trợ hành động này.", null);
         }

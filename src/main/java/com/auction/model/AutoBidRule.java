@@ -1,19 +1,25 @@
 package com.auction.model;
-import com.auction.model.*;
+
+import java.time.LocalDateTime; 
+
 public class AutoBidRule {
     // Dùng từ khóa 'final' để bảo vệ dữ liệu, chống việc bị sửa đổi sau khi đã tạo
     private final Bidder bidder;
     private final double maxBid;
     private final double increment;
+    
+    // 2. THÊM BIẾN LƯU THỜI GIAN ĐĂNG KÝ (Dùng cho luật Tie-Breaker)
+    private final LocalDateTime registerTime; 
 
-    // THÊM MỚI: Biến kiểm soát trạng thái của lệnh Auto-Bid
-    // Nếu hết tiền hoặc chạm trần maxBid, biến này sẽ bị tắt thành false
     private boolean active;
 
     public AutoBidRule(Bidder bidder, double maxBid, double increment) {
         this.bidder = bidder;
         this.maxBid = maxBid;
         this.increment = increment;
+        
+        // 3. TỰ ĐỘNG CHỐT GIỜ NGAY KHI VỪA TẠO LUẬT
+        this.registerTime = LocalDateTime.now(); 
         
         // Mặc định khi vừa đăng ký xong, lệnh này luôn có hiệu lực
         this.active = true; 
@@ -23,8 +29,11 @@ public class AutoBidRule {
     public Bidder getBidder() { return bidder; }
     public double getMaxBid() { return maxBid; }
     public double getIncrement() { return increment; }
+    
+    // 4. THÊM GETTER CHO BIẾN THỜI GIAN ĐỂ HÀM BÊN KIA GỌI ĐƯỢC
+    public LocalDateTime getRegisterTime() { return registerTime; }
 
-    // --- GETTER & SETTER CHO TRẠNG THÁI ACTIVE (KHỚP VỚI TRIGGER_AUTO_BID) ---
+    // --- GETTER & SETTER CHO TRẠNG THÁI ACTIVE ---
     public boolean isActive() { 
         return active; 
     }
@@ -33,7 +42,6 @@ public class AutoBidRule {
         this.active = active; 
     }
 
-    // (Tùy chọn) Thêm hàm toString để dễ in ra Console kiểm tra (Debug)
     @Override
     public String toString() {
         return "AutoBidRule{" +
@@ -41,6 +49,7 @@ public class AutoBidRule {
                 ", maxBid=" + maxBid +
                 ", increment=" + increment +
                 ", active=" + active +
+                ", registerTime=" + registerTime + // Update thêm vào toString cho dễ debug
                 '}';
     }
 }

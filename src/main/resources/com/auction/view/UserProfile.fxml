@@ -28,5 +28,4 @@
         </columns>
     </TableView>
 
-    <Button fx:id="btnLogout" text="Đăng Xuất" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
-</VBox>
+    <Button fx:id="btnLogout" onAction="#onLogoutClick" text="Đăng Xuất" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/></VBox>

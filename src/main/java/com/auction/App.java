@@ -1,7 +1,5 @@
 package com.auction;
 
-import com.auction.view.AdminView;
-import com.auction.view.SellerView;
 import com.auction.utils.NotificationUtil;
 import com.auction.utils.UIUtils;
 import javafx.application.Application;
@@ -23,10 +21,9 @@ public class App extends Application {
     @Override
     public void start(Stage primaryStage) {
         rootNode = new StackPane();
-        
         VBox mainContainer = new VBox();
         
-        // Top Navigation
+        // Thanh điều hướng (NavBar)
         HBox navBar = new HBox(15);
         navBar.setPadding(new Insets(15));
         navBar.setStyle("-fx-background-color: #2196F3;");
@@ -35,13 +32,21 @@ public class App extends Application {
         Label brand = new Label("Auction System");
         brand.setStyle("-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;");
         
+        // Nút chuyển sang màn hình Đăng sản phẩm (Đã fix dùng FXML)
         Button btnSeller = new Button("Seller View");
         btnSeller.setStyle("-fx-cursor: hand;");
-        btnSeller.setOnAction(e -> navigateTo(new SellerView()));
+        btnSeller.setOnAction(e -> {
+            javafx.scene.Node view = loadFXML("/com/auction/view/AddProduct.fxml");
+            if (view != null) navigateTo(view);
+        });
         
+        // Nút chuyển sang màn hình Admin (Đã fix dùng FXML)
         Button btnAdmin = new Button("Admin Dashboard");
         btnAdmin.setStyle("-fx-cursor: hand;");
-        btnAdmin.setOnAction(e -> navigateTo(new AdminView()));
+        btnAdmin.setOnAction(e -> {
+            javafx.scene.Node view = loadFXML("/com/auction/view/AdminDashboard.fxml");
+            if (view != null) navigateTo(view);
+        });
         
         Button btnTestNotification1 = new Button("Test: Bị vượt giá");
         btnTestNotification1.setStyle("-fx-cursor: hand;");
@@ -69,9 +74,29 @@ public class App extends Application {
         rootNode.getChildren().add(mainContainer);
         
         Scene scene = new Scene(rootNode, 900, 600);
+        
+        // Nhúng CSS tổng (Tùy chọn, nhớ sửa đường dẫn nếu cần)
+        try {
+            String cssPath = getClass().getResource("/com/auction/view/styles.css").toExternalForm();
+            scene.getStylesheets().add(cssPath);
+        } catch (Exception ex) {
+            System.out.println("Chưa tìm thấy styles.css tổng, bỏ qua load CSS.");
+        }
+
         primaryStage.setTitle("Online Auction System - JavaFX");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    // Hàm phụ trợ dùng để đọc file FXML an toàn
+    private javafx.scene.Node loadFXML(String fxmlPath) {
+        try {
+            return javafx.fxml.FXMLLoader.load(getClass().getResource(fxmlPath));
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi: Không tìm thấy file FXML tại " + fxmlPath);
+            return null;
+        }
     }
 
     private void navigateTo(javafx.scene.Node view) {
