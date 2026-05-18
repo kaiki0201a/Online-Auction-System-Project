@@ -3,10 +3,13 @@ package com.auction.controller;
 import com.auction.client.NetworkClient;
 import com.auction.model.Auction;
 import com.auction.model.Bidder;
+import com.auction.model.User;
 import com.auction.protocol.ActionType;
 import com.auction.protocol.Request;
 import com.auction.protocol.StatusType;
+import com.auction.utils.AppContext;
 import com.auction.utils.AuctionManager;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -36,6 +39,10 @@ public class DashboardController {
 
     // Thêm vào phần khai báo biến @FXML
     @FXML private TableColumn<Auction, java.time.LocalDateTime> colEndTime;
+    // Thêm một biến Node để gắn Toast (Cần đảm bảo Dashboard.fxml có id này ở phần tử gốc)
+    @FXML private Node rootPane;
+
+    private User currentUser; // Lấy từ Session
 
     // 2. Danh sách quan sát (ObservableList) - Tự động cập nhật bảng khi dữ liệu thay đổi
     private ObservableList<Auction> auctionData = FXCollections.observableArrayList();
@@ -45,31 +52,44 @@ public class DashboardController {
      */
     @FXML
     public void initialize() {
-        // Bước A: Cấu hình các cột (Nói cho Java biết mỗi cột lấy dữ liệu từ hàm nào của lớp Auction)
-        colId.setCellValueFactory(new PropertyValueFactory<>("auctionId")); // Gọi getAuctionId()
-        colProductName.setCellValueFactory(new PropertyValueFactory<>("item")); // Sẽ hiển thị qua toString() của Item
+        // 1. LẤY SESSION NGƯỜI DÙNG (Không cần hàm setUser bên ngoài truyền vào nữa)
+        currentUser = AppContext.getCurrentUser();
+
+        // 2. PHÂN QUYỀN GIAO DIỆN
+        if (currentUser instanceof Bidder) {
+            btnCreateAuction.setVisible(false);
+            btnCreateAuction.setManaged(false);
+        } else {
+            btnCreateAuction.setVisible(true);
+            btnCreateAuction.setManaged(true);
+        }
+
+        // 3. CẤU HÌNH BẢNG
+        colId.setCellValueFactory(new PropertyValueFactory<>("auctionId"));
+        colProductName.setCellValueFactory(new PropertyValueFactory<>("item"));
         colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentHighestBid"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
 
-        // XÓA loadMockData();
-        // THAY BẰNG: Đăng ký nhận danh sách từ mạng
+        // 4. LẮNG NGHE MẠNG
         NetworkClient.getInstance().setOnResponseReceived(response -> {
-            // SỬA LẠI: Kiểm tra qua getMessage thay vì getAction
-            if ("Danh sách phiên đấu giá".equals(response.getMessage())) {
-                List<Auction> auctions = (List<Auction>) response.getData();
-                auctionData.setAll(auctions);
-            }
+            // LƯU Ý 1: Dùng Platform.runLater để đổi giao diện
+            Platform.runLater(() -> {
+                // Sửa thành getPayload() theo chuẩn Protocol của C
+                if (response.getStatus() == StatusType.SUCCESS && response.getData() instanceof List) {
+                    List<Auction> auctions = (List<Auction>) response.getData();
+                    auctionData.setAll(auctions);
+                }
 
-            // Nếu ai đó đặt giá thành công (Server broadcast UPDATE_AUCTION), cập nhật lại bảng
-            if ("UPDATE_AUCTION".equals(response.getMessage())) {
-                NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
-            }
+                // Nếu có người đặt giá mới, load lại bảng
+                if ("UPDATE_AUCTION".equals(response.getMessage())) {
+                    NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
+                }
+            });
         });
 
-        // Gửi lệnh lên Server đòi danh sách
+        // 5. GỬI YÊU CẦU LẤY DANH SÁCH LÚC VỪA MỞ MÀN HÌNH
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
-
         tableAuctions.setItems(auctionData);
     }
 
@@ -94,7 +114,7 @@ public class DashboardController {
     public void onCreateAuctionClick(ActionEvent event) {
         try {
             // Bạn cần bảo bạn A làm thêm file CreateAuctionView.fxml này hoặc tự tạo file trống để test
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/CreateAuctionView.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/AddProduct.fxml"));
             Parent root = loader.load();
 
             Stage stage = new Stage();
@@ -137,8 +157,6 @@ public class DashboardController {
             showError("Lỗi", "Không thể mở chi tiết phiên đấu giá." + e.getMessage());
         }
     }
-    // Thêm dòng này vào DashboardController
-    private com.auction.model.User currentUser;
 
     // Thêm hàm này để LoginController có thể "gửi" User sang cho Dashboard
     public void setUser(com.auction.model.User user) {

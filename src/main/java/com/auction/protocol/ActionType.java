@@ -4,9 +4,14 @@ import java.io.Serializable;
 
 public enum ActionType implements Serializable {
     LOGIN,
-    REGISTER,           // Đăng ký tài khoản mới
-    GET_AUCTION_LIST,   // Lấy danh sách sản phẩm đang đấu giá
-    UPDATE_AUCTION,     // Server chủ động đẩy thông tin cập nhật giá hoặc thời gian
-    PLACE_BID,          // Đặt giá
-    LOGOUT
+    CREATE_AUCTION,
+    REGISTER,
+    GET_AUCTION_LIST,
+    UPDATE_AUCTION,
+    PLACE_BID,
+    LOGOUT,
+    // --- THÊM 3 HÀNH ĐỘNG CỦA ADMIN VÀO ĐÂY ---
+    GET_USER_LIST,      // Lấy danh sách người dùng
+    BAN_USER,           // Khóa/Mở khóa tài khoản
+    CANCEL_AUCTION      // Ép dừng phiên đấu giá
 }

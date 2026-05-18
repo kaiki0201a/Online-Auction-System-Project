@@ -1,11 +1,20 @@
 package com.auction.controller;
 
+import com.auction.client.NetworkClient;
+import com.auction.model.*;
+import com.auction.protocol.ActionType;
+import com.auction.protocol.Request;
+import com.auction.utils.AppContext;
+import com.auction.utils.NotificationUtil;
+import com.auction.utils.UIUtils;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+
+import java.time.LocalDateTime;
 
 public class AddProductController {
 
@@ -20,7 +29,6 @@ public class AddProductController {
     public void initialize() {
         categoryBox.setItems(FXCollections.observableArrayList("Art", "Electronics", "Vehicle"));
 
-        // 1. PHỤC HỒI LOGIC RENDER FORM ĐỘNG (Đã xóa CSS cứng)
         categoryBox.setOnAction(e -> {
             dynamicForm.getChildren().clear();
             dynamicForm.setVisible(true);
@@ -28,80 +36,115 @@ public class AddProductController {
 
             String cat = categoryBox.getValue();
 
+            // ĐÃ SỬA: Vẽ đúng số lượng tham số khớp với Model
             if ("Art".equals(cat)) {
                 TextField txtArtist = new TextField();
                 txtArtist.setPromptText("Tên họa sĩ / Nghệ nhân");
                 TextField txtYear = new TextField();
-                txtYear.setPromptText("Năm sáng tác");
+                txtYear.setPromptText("Năm sáng tác (VD: 1990)");
                 Label lbl = new Label("Thông tin Art:");
-                lbl.setStyle("-fx-font-weight: bold;"); // Có thể chuyển cái này vào style.css luôn nếu muốn
+                lbl.setStyle("-fx-font-weight: bold;");
                 dynamicForm.getChildren().addAll(lbl, txtArtist, txtYear);
 
             } else if ("Electronics".equals(cat)) {
                 TextField txtBrand = new TextField();
                 txtBrand.setPromptText("Thương hiệu");
-                TextField txtModel = new TextField();
-                txtModel.setPromptText("Model");
-                TextField txtCondition = new TextField();
-                txtCondition.setPromptText("Tình trạng (Mới/Cũ)");
+                TextField txtWarranty = new TextField();
+                txtWarranty.setPromptText("Số tháng bảo hành (VD: 12)");
                 Label lbl = new Label("Thông tin Electronics:");
                 lbl.setStyle("-fx-font-weight: bold;");
-                dynamicForm.getChildren().addAll(lbl, txtBrand, txtModel, txtCondition);
+                dynamicForm.getChildren().addAll(lbl, txtBrand, txtWarranty);
 
             } else if ("Vehicle".equals(cat)) {
-                TextField txtMake = new TextField();
-                txtMake.setPromptText("Hãng sản xuất");
-                TextField txtMileage = new TextField();
-                txtMileage.setPromptText("Số KM đã đi");
                 TextField txtEngine = new TextField();
-                txtEngine.setPromptText("Loại động cơ");
+                txtEngine.setPromptText("Loại động cơ (VD: V8, Xăng)");
+                TextField txtMileage = new TextField();
+                txtMileage.setPromptText("Số dặm đã đi (VD: 1000)");
                 Label lbl = new Label("Thông tin Vehicle:");
                 lbl.setStyle("-fx-font-weight: bold;");
-                dynamicForm.getChildren().addAll(lbl, txtMake, txtMileage, txtEngine);
+                dynamicForm.getChildren().addAll(lbl, txtEngine, txtMileage);
             }
 
-            com.auction.utils.UIUtils.applyFadeIn(dynamicForm);
+            UIUtils.applyFadeIn(dynamicForm);
         });
     }
 
     @FXML
     public void handleSubmit() {
-        String productName = txtName.getText();
-        String price = txtStartingPrice.getText();
+        String productName = txtName.getText().trim();
+        String priceStr = txtStartingPrice.getText().trim();
+        String description = txtDescription.getText().trim();
         String category = categoryBox.getValue();
 
-        // (Tùy chọn) Validate nếu người dùng bỏ trống
-        if (productName.isEmpty() || price.isEmpty() || category == null) {
-            com.auction.utils.NotificationUtil.showToast("Vui lòng điền đủ thông tin!", rootPane, "warning");
+        // 1. VALIDATE CƠ BẢN
+        if (productName.isEmpty() || priceStr.isEmpty() || category == null) {
+            NotificationUtil.showToast("Vui lòng điền đủ thông tin!", rootPane, "warning");
             return;
         }
 
-        // Hiện Spinner (Giả sử UIUtils đã được bạn fix để hiện Popup mượt mà như Toast)
-        com.auction.utils.UIUtils.showLoadingSpinner(rootPane, () -> {
+        double price;
+        try {
+            price = Double.parseDouble(priceStr);
+        } catch (NumberFormatException ex) {
+            NotificationUtil.showToast("Giá khởi điểm phải là số!", rootPane, "error");
+            return;
+        }
 
-            // 2. CHẠY TASK GỌI MẠNG TRONG THREAD RIÊNG ĐỂ KHÔNG LÀM ĐƠ GIAO DIỆN
+        // 2. MÓC DỮ LIỆU TỪ FORM ĐỘNG VÀ TẠO ĐỐI TƯỢNG ITEM (Đã sửa code trích xuất dữ liệu)
+        Item newItem = null;
+        try {
+            if ("Art".equals(category)) {
+                String artist = ((TextField) dynamicForm.getChildren().get(1)).getText();
+                int year = Integer.parseInt(((TextField) dynamicForm.getChildren().get(2)).getText());
+                newItem = new Art(productName, description, price, artist, year);
+
+            } else if ("Electronics".equals(category)) {
+                String brand = ((TextField) dynamicForm.getChildren().get(1)).getText();
+                int warranty = Integer.parseInt(((TextField) dynamicForm.getChildren().get(2)).getText());
+                newItem = new Electronics(productName, description, price, brand, warranty);
+
+            } else if ("Vehicle".equals(category)) {
+                String engine = ((TextField) dynamicForm.getChildren().get(1)).getText();
+                double mileage = Double.parseDouble(((TextField) dynamicForm.getChildren().get(2)).getText());
+                newItem = new Vehicle(productName, description, price, engine, mileage);
+            }
+        } catch (Exception ex) {
+            NotificationUtil.showToast("Vui lòng nhập đúng định dạng số (Năm / Số KM / Tháng bảo hành)!", rootPane, "warning");
+            return;
+        }
+
+        // 3. TẠO PHIÊN ĐẤU GIÁ (AUCTION)
+        User currentUser = AppContext.getCurrentUser();
+        if (!(currentUser instanceof Seller)) {
+            NotificationUtil.showToast("Lỗi quyền: Chỉ Seller mới được đăng sản phẩm!", rootPane, "error");
+            return;
+        }
+
+        Auction newAuction = new Auction(
+                newItem,
+                (Seller) currentUser,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusDays(3)
+        );
+
+        // 4. GỌI MẠNG ĐỂ ĐẨY LÊN SERVER
+        UIUtils.showLoadingSpinner(rootPane, () -> {
             new Thread(() -> {
                 try {
-                    // =================================================================
-                    // TODO: ĐOẠN NÀY LÀ NƠI GỌI NETWORK CLIENT THẬT
-                    // Ví dụ: NetworkClient.post("/api/products", ...);
-                    // Giả lập thời gian chờ Server phản hồi:
-                    Thread.sleep(1500);
-                    // =================================================================
+                    Request request = new Request(ActionType.CREATE_AUCTION, newAuction);
+                    NetworkClient.getInstance().sendRequest(request);
 
-                    // 3. KHI CÓ KẾT QUẢ TỪ SERVER, PHẢI ĐẨY LẠI VÀO LUỒNG JAVAFX (Platform.runLater) ĐỂ CẬP NHẬT GIAO DIỆN
                     Platform.runLater(() -> {
-                        com.auction.utils.NotificationUtil.showToast("Đã đăng sản phẩm thành công!", rootPane, "success");
+                        NotificationUtil.showToast("Gửi yêu cầu đăng sản phẩm thành công!", rootPane, "success");
                         resetForm();
                     });
 
                 } catch (Exception ex) {
                     Platform.runLater(() -> {
-                        com.auction.utils.NotificationUtil.showToast("Lỗi kết nối Server!", rootPane, "error");
+                        NotificationUtil.showToast("Lỗi kết nối Server!", rootPane, "error");
                     });
                 }
             }).start();
-
         });
     }
 

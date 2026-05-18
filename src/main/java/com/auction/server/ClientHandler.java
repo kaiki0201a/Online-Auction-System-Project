@@ -99,9 +99,7 @@ public class ClientHandler implements Runnable {
                     // Cập nhật dữ liệu qua Manager
                     AuctionManager.getInstance().updateAuction(auction);
 
-                    // Broadcast cho tất cả Client (cập nhật Realtime)
-                    AuctionListUpdate updatePackage = new AuctionListUpdate(auction);
-                    ServerApp.broadcastToAuction(auction.getAuctionId(), updatePackage);
+                    ServerApp.broadcast(new Response(StatusType.SUCCESS, "UPDATE_AUCTION", auction));
 
                     return new Response(StatusType.SUCCESS, "Đặt giá thành công!", null);
 
@@ -110,11 +108,70 @@ public class ClientHandler implements Runnable {
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Lỗi hệ thống khi xử lý đặt giá", null);
                 }
+            case CREATE_AUCTION:
+                try {
+                    // 1. Nhận đối tượng Auction từ Client gửi lên
+                    com.auction.model.Auction newAuction = (com.auction.model.Auction) request.getPayload();
 
+                    // 2. Thêm vào danh sách quản lý trên RAM (AuctionManager)
+                    com.auction.utils.AuctionManager.getInstance().getAllAuctions().add(newAuction);
+
+                    // 3. Gọi DAO của bạn C để lưu ngay xuống file (tránh mất dữ liệu khi tắt Server)
+                    ServerApp.getAuctionDAO().save(newAuction);
+
+                    // 4. Phát loa thông báo cho TẤT CẢ các Client khác đang online biết có hàng mới
+                    // Lưu ý: DashboardController đang lắng nghe chữ "UPDATE_AUCTION" để tự động load lại bảng
+                    ServerApp.broadcast(new Response(StatusType.SUCCESS, "UPDATE_AUCTION", null));
+
+                    // 5. Trả lời riêng cho Seller vừa đăng là thành công
+                    return new Response(StatusType.SUCCESS, "Đăng sản phẩm thành công!", null);
+
+                } catch (Exception e) {
+                    System.err.println("Lỗi khi tạo phiên đấu giá: " + e.getMessage());
+                    return new Response(StatusType.ERROR, "Lỗi hệ thống khi lưu sản phẩm.", null);
+                }
             case GET_AUCTION_LIST:
                 // CHUẨN MVC: Gọi qua Manager
                 return new Response(StatusType.SUCCESS, "Danh sách", AuctionManager.getInstance().getAllAuctions());
+            case GET_USER_LIST:
+                // Trả về toàn bộ danh sách User đang có trong hệ thống
+                // (Giả định class UserManager của bạn có hàm getAllUsers(), nếu tên hàm khác bạn tự đổi nhẹ nhé)
+                return new Response(StatusType.SUCCESS, "Danh sách User", UserManager.getInstance().getAllUsers());
 
+            case BAN_USER:
+                try {
+                    String targetUsername = (String) request.getPayload();
+                    User targetUser = UserManager.getInstance().getUser(targetUsername);
+
+                    if (targetUser != null) {
+                        // Đảo ngược trạng thái khóa (Nếu đang khóa thì mở, đang mở thì khóa)
+                        targetUser.setBanned(!targetUser.isBanned());
+
+                        return new Response(StatusType.SUCCESS, "Đã cập nhật trạng thái tài khoản!", null);
+                    }
+                    return new Response(StatusType.ERROR, "Không tìm thấy User.", null);
+                } catch (Exception e) {
+                    return new Response(StatusType.ERROR, "Lỗi khi xử lý Ban/Unban", null);
+                }
+
+            case CANCEL_AUCTION:
+                try {
+                    String targetAuctionId = (String) request.getPayload();
+                    Auction auctionToCancel = AuctionManager.getInstance().getAuctionById(targetAuctionId);
+
+                    if (auctionToCancel != null) {
+                        // Đổi trạng thái thành CANCELED (Giả định bạn có Enum AuctionStatus.CANCELED ở model)
+                        auctionToCancel.setStatus(com.auction.model.AuctionStatus.CANCELED);
+                        AuctionManager.getInstance().updateAuction(auctionToCancel);
+
+                        // Hú lên cho cả server biết phiên này đã bị hủy để cập nhật bảng
+                        ServerApp.broadcast(new Response(StatusType.SUCCESS, "UPDATE_AUCTION", null));
+                        return new Response(StatusType.SUCCESS, "Đã ép dừng phiên đấu giá!", null);
+                    }
+                    return new Response(StatusType.ERROR, "Không tìm thấy phiên đấu giá.", null);
+                } catch (Exception e) {
+                    return new Response(StatusType.ERROR, "Lỗi khi hủy phiên.", null);
+                }
             case LOGIN:
                 try {
                     String loginData = (String) request.getPayload();
