@@ -62,6 +62,7 @@ public class ClientHandler implements Runnable {
     public synchronized void sendResponse(Response response) {
         if (out != null) {
             try {
+                out.reset();
                 out.writeObject(response);
                 out.flush();
             } catch (IOException e) {
@@ -98,7 +99,8 @@ public class ClientHandler implements Runnable {
                     AuctionManager.getInstance().updateAuction(auction);
 
                     // Broadcast cho tất cả Client (cập nhật Realtime)
-                    ServerApp.broadcast(new Response(StatusType.SUCCESS, "UPDATE_AUCTION", auction));
+                    AuctionListUpdate updatePackage = new AuctionListUpdate(auction);
+                    ServerApp.broadcastToAuction(auction.getAuctionId(), updatePackage);
 
                     return new Response(StatusType.SUCCESS, "Đặt giá thành công!", null);
 
