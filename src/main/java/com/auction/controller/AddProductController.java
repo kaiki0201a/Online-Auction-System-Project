@@ -34,7 +34,7 @@ public class AddProductController {
                 TextField txtYear = new TextField();
                 txtYear.setPromptText("Năm sáng tác");
                 Label lbl = new Label("Thông tin Art:");
-                lbl.setStyle("-fx-font-weight: bold;"); // Có thể chuyển cái này vào styles.css luôn nếu muốn
+                lbl.setStyle("-fx-font-weight: bold;"); // Có thể chuyển cái này vào style.css luôn nếu muốn
                 dynamicForm.getChildren().addAll(lbl, txtArtist, txtYear);
 
             } else if ("Electronics".equals(cat)) {

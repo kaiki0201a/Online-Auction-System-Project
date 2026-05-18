@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 
 <StackPane fx:id="rootPane" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-           stylesheets="@styles.css"
+           stylesheets="@style.css"
            fx:controller="com.auction.controller.AdminController">
 
     <BorderPane>

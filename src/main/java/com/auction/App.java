@@ -76,8 +76,8 @@ public class App extends Application {
 
         Scene scene = new Scene(rootNode, 900, 600);
 
-        // Thêm styles.css chung cho toàn bộ App (tùy chọn)
-        // String cssPath = getClass().getResource("/com/auction/css/styles.css").toExternalForm();
+        // Thêm style.css chung cho toàn bộ App (tùy chọn)
+        // String cssPath = getClass().getResource("/com/auction/css/style.css").toExternalForm();
         // scene.getStylesheets().add(cssPath);
 
         primaryStage.setTitle("Online Auction System - JavaFX");
