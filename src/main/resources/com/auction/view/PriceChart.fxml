@@ -8,7 +8,7 @@
 <AnchorPane prefHeight="400.0" prefWidth="600.0" 
             xmlns="http://javafx.com/javafx/23" 
             xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="com.auction.ui.PriceChartController">
+            fx:controller="com.auction.utils.PriceChartController">
             
    <children>
       <LineChart fx:id="priceChart" animated="false" 
