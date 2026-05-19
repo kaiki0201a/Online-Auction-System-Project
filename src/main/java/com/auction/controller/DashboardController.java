@@ -33,8 +33,13 @@ public class DashboardController {
     @FXML private TableColumn<Auction, String> colProductName;
     @FXML private TableColumn<Auction, Double> colCurrentPrice;
     @FXML private TableColumn<Auction, String> colStatus;
-    @FXML private TableColumn<Auction, java.time.LocalDateTime> colEndTime;
     @FXML private Button btnCreateAuction;
+    @FXML private ComboBox<String> comboCategory;
+    @FXML private TextField txtSearch;
+    @FXML private Button btnSearch;
+
+    // Thêm vào phần khai báo biến @FXML
+    @FXML private TableColumn<Auction, java.time.LocalDateTime> colEndTime;
     @FXML private Node rootPane;
 
     private User currentUser;
@@ -51,11 +56,24 @@ public class DashboardController {
         btnCreateAuction.setManaged(!isBidder);
 
         // Cấu hình bảng
+
+        // 3. CẤU HÌNH BẢNG
         colId.setCellValueFactory(new PropertyValueFactory<>("auctionId"));
         colProductName.setCellValueFactory(new PropertyValueFactory<>("item"));
         colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentHighestBid"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+        // 3.5 BỔ SUNG: CÀI ĐẶT BỘ LỌC VÀ TÌM KIẾM
+        comboCategory.setItems(FXCollections.observableArrayList("Tất cả", "Art", "Electronics", "Vehicle"));
+        comboCategory.getSelectionModel().selectFirst(); // Mặc định chọn "Tất cả"
+
+        btnSearch.setOnAction(event -> filterAuctions());
+
+        // Lắng nghe sự kiện gõ phím Enter trên ô tìm kiếm
+        txtSearch.setOnAction(event -> filterAuctions());
+
+        // Lắng nghe sự kiện khi chọn danh mục mới trong ComboBox sẽ tự động lọc
+        comboCategory.setOnAction(event -> filterAuctions());
 
         // Lắng nghe mạng
         NetworkClient.getInstance().setOnResponseReceived(response -> {
@@ -63,6 +81,7 @@ public class DashboardController {
                 if (response.getStatus() == StatusType.SUCCESS && response.getData() instanceof List) {
                     List<Auction> auctions = (List<Auction>) response.getData();
                     auctionData.setAll(auctions);
+                    filterAuctions();
                 }
                 if ("UPDATE_AUCTION".equals(response.getMessage())) {
                     NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
@@ -74,6 +93,49 @@ public class DashboardController {
         tableAuctions.setItems(auctionData);
     }
 
+    // --- HÀM BỔ SUNG ĐỂ XỬ LÝ LỌC & TÌM KIẾM ---
+    private void filterAuctions() {
+        String keyword = txtSearch.getText().toLowerCase().trim();
+        String selectedCategory = comboCategory.getValue();
+
+        ObservableList<Auction> filteredList = FXCollections.observableArrayList();
+
+        for (Auction auction : auctionData) {
+            boolean matchesSearch = auction.getItem().getNameItem().toLowerCase().contains(keyword);
+
+            boolean matchesCategory = true;
+            if (!"Tất cả".equals(selectedCategory)) {
+                // Kiểm tra xem class của Item có khớp với danh mục được chọn không
+                String itemType = auction.getItem().getClass().getSimpleName();
+                matchesCategory = itemType.equals(selectedCategory);
+            }
+
+            if (matchesSearch && matchesCategory) {
+                filteredList.add(auction);
+            }
+        }
+
+        // Cập nhật lại dữ liệu hiển thị trên bảng
+        tableAuctions.setItems(filteredList);
+    }
+
+
+    private void loadMockData() {
+        // Ở đây bạn tự tạo dữ liệu để test giao diện
+        // Sau này khi Thành viên C xong, bạn sẽ thay bằng: auctionData.addAll(AuctionManager.getInstance().getAllAuctions());
+        System.out.println("Đang nạp dữ liệu giả để kiểm tra giao diện...");
+        // Tạo thử các vật phẩm giả
+        com.auction.model.Art art = new com.auction.model.Art("Tranh sơn dầu", "Đẹp", 1000, "Picasso", 1920);
+        com.auction.model.Seller seller = new com.auction.model.Seller("Seller01", "123", "seller@test.com");
+
+        // Tạo phiên đấu giá giả
+        Auction mockAuction = new Auction(art, seller, java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusDays(1));
+
+        // Thêm vào danh sách hiển thị
+        auctionData.add(mockAuction);
+    }
+
+    // --- HÀM MỚI BỔ SUNG ĐỂ MỞ MÀN HÌNH TẠO ĐẤU GIÁ ---
     @FXML
     public void onCreateAuctionClick(ActionEvent event) {
         try {
