@@ -6,7 +6,7 @@
 <VBox spacing="20.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.UserProfileController">
     <padding><Insets bottom="30.0" left="30.0" right="30.0" top="30.0" /></padding>
 
-    <Label styleClass="title-label" text="THÔNG TIN TÀI KHOẢN" />
+    <Label styleClass="header-title" text="THÔNG TIN TÀI KHOẢN" />
 
     <HBox spacing="50">
         <VBox spacing="10">
@@ -15,17 +15,19 @@
         </VBox>
         <VBox spacing="10">
             <Label text="Số dư khả dụng:" />
-            <Label fx:id="lblBalance" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;" text="\$0.0" />
+            <Label fx:id="lblBalance" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;" text="0.0 VNĐ" />
         </VBox>
     </HBox>
 
-    <Label text="Lịch sử đấu giá của bạn:" style="-fx-font-weight: bold;"/>
+    <Label text="Lịch sử đấu giá của bạn:" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+
     <TableView fx:id="tblHistory" VBox.vgrow="ALWAYS">
         <columns>
             <TableColumn fx:id="colHisTime" text="Thời gian" prefWidth="150"/>
             <TableColumn fx:id="colHisItem" text="Sản phẩm" prefWidth="200"/>
-            <TableColumn fx:id="colHisAmount" text="Số tiền đặt" prefWidth="120"/>
+            <TableColumn fx:id="colHisAmount" text="Số tiền đặt" prefWidth="150"/>
         </columns>
     </TableView>
 
-    <Button fx:id="btnLogout" onAction="#onLogoutClick" text="Đăng Xuất" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/></VBox>
+    <Button fx:id="btnLogout" onAction="#onLogoutClick" text="Đăng Xuất" styleClass="button btn-danger"/>
+</VBox>
