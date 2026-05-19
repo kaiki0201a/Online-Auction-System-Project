@@ -55,9 +55,6 @@ public class DashboardController {
         btnCreateAuction.setVisible(!isBidder);
         btnCreateAuction.setManaged(!isBidder);
 
-        // Cấu hình bảng
-
-
         // 3. CẤU HÌNH BẢNG
         colId.setCellValueFactory(new PropertyValueFactory<>("auctionId"));
         colProductName.setCellValueFactory(new PropertyValueFactory<>("item"));
@@ -72,9 +69,6 @@ public class DashboardController {
 
         // Lắng nghe sự kiện gõ phím Enter trên ô tìm kiếm
         txtSearch.setOnAction(event -> filterAuctions());
-
-        // Lắng nghe sự kiện khi chọn danh mục mới trong ComboBox sẽ tự động lọc
-        comboCategory.setOnAction(event -> filterAuctions());
 
         // Lắng nghe sự kiện khi chọn danh mục mới trong ComboBox sẽ tự động lọc
         comboCategory.setOnAction(event -> filterAuctions());
