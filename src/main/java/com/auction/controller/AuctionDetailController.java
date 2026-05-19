@@ -34,6 +34,18 @@ public class AuctionDetailController {
     private Bidder currentUser;
     private Timeline countdownTimeline;
 
+    @FXML
+    public void initialize() {
+        // Chặn nhập chữ vào ô Đặt giá (Nguyên tắc KISS - Input Validation)
+        // Regex "\\d*(\\.\\d*)?" cho phép nhập số và dấu chấm thập phân
+        txtBidAmount.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+            if (change.getControlNewText().matches("\\d*(\\.\\d*)?")) {
+                return change; // Hợp lệ -> cho phép hiển thị
+            }
+            return null; // Không hợp lệ (là chữ, ký tự đặc biệt) -> chặn lại
+        }));
+    }
+
     public void setAuctionData(Auction auction) {
         this.currentAuction = auction;
 
@@ -120,8 +132,9 @@ public class AuctionDetailController {
     private void updateUI() {
         lblProductName.setText(currentAuction.getItem().getNameItem());
         lblSellerName.setText(currentAuction.getSeller().getUserName());
-        // Sửa dòng dưới đây:
-        lblCurrentPrice.setText(String.format("%,.0f VNĐ", currentAuction.getCurrentHighestBid()));
+
+        // SỬ DỤNG HÀM TIỆN ÍCH ĐÃ TẠO ĐỂ FORMAT TIỀN
+        lblCurrentPrice.setText(com.auction.utils.CurrencyFormatter.format(currentAuction.getCurrentHighestBid()));
     }
 
     @FXML

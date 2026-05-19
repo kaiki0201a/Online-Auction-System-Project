@@ -29,6 +29,13 @@ public class AddProductController {
 
     @FXML
     public void initialize() {
+        // ---> BỔ SUNG: Chặn nhập chữ vào ô Giá khởi điểm <---
+        txtStartingPrice.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+            if (change.getControlNewText().matches("\\d*(\\.\\d*)?")) {
+                return change; // Hợp lệ (số và dấu chấm) -> cho phép hiển thị
+            }
+            return null; // Là chữ cái -> chặn ngay
+        }));
         categoryBox.setItems(FXCollections.observableArrayList("Art", "Electronics", "Vehicle"));
 
         categoryBox.setOnAction(e -> {
@@ -42,16 +49,36 @@ public class AddProductController {
             dynamicForm.getChildren().add(lbl);
 
             if ("Art".equals(cat)) {
-                TextField txtArtist = new TextField(); txtArtist.setPromptText("Tên họa sĩ / Nghệ nhân");
-                TextField txtYear = new TextField(); txtYear.setPromptText("Năm sáng tác (VD: 1990)");
+                TextField txtArtist = new TextField();
+                txtArtist.setPromptText("Tên họa sĩ / Nghệ nhân");
+
+                TextField txtYear = new TextField();
+                txtYear.setPromptText("Năm sáng tác (VD: 1990)");
+                // Chặn nhập chữ (Chỉ cho phép số nguyên)
+                txtYear.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches("\\d*") ? change : null));
+
                 dynamicForm.getChildren().addAll(txtArtist, txtYear);
+
             } else if ("Electronics".equals(cat)) {
-                TextField txtBrand = new TextField(); txtBrand.setPromptText("Thương hiệu");
-                TextField txtWarranty = new TextField(); txtWarranty.setPromptText("Số tháng bảo hành (VD: 12)");
+                TextField txtBrand = new TextField();
+                txtBrand.setPromptText("Thương hiệu");
+
+                TextField txtWarranty = new TextField();
+                txtWarranty.setPromptText("Số tháng bảo hành (VD: 12)");
+                // Chặn nhập chữ (Chỉ cho phép số nguyên vì dùng Integer.parseInt)
+                txtWarranty.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches("\\d*") ? change : null));
+
                 dynamicForm.getChildren().addAll(txtBrand, txtWarranty);
+
             } else if ("Vehicle".equals(cat)) {
-                TextField txtEngine = new TextField(); txtEngine.setPromptText("Loại động cơ (VD: V8)");
-                TextField txtMileage = new TextField(); txtMileage.setPromptText("Số dặm đã đi (VD: 1000)");
+                TextField txtEngine = new TextField();
+                txtEngine.setPromptText("Loại động cơ (VD: V8)");
+
+                TextField txtMileage = new TextField();
+                txtMileage.setPromptText("Số dặm đã đi (VD: 1000 hoặc 1000.5)");
+                // Chặn nhập chữ (Cho phép số thập phân vì dùng Double.parseDouble)
+                txtMileage.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches("\\d*(\\.\\d*)?") ? change : null));
+
                 dynamicForm.getChildren().addAll(txtEngine, txtMileage);
             }
 
