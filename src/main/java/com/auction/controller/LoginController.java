@@ -3,7 +3,9 @@ package com.auction.controller; // Dòng này luôn ở đầu file
 // Khu vực 1: Import các thư viện cần thiết
 import com.auction.client.NetworkClient;
 import com.auction.model.Admin;
+import com.auction.model.User;
 import com.auction.protocol.StatusType;
+import com.auction.utils.AppContext;
 import com.auction.utils.NotificationUtil;
 import com.auction.utils.UIUtils;
 import javafx.application.Platform;
@@ -43,15 +45,12 @@ public class LoginController {
             Platform.runLater(() -> {
                 if (response.getStatus() == StatusType.SUCCESS) {
                     try {
-                        // ĐÚNG CHUẨN THEO FILE RESPONSE CỦA BẠN
-                        com.auction.model.User userFromServer = (com.auction.model.User) response.getData();
+                        User userFromServer = (User) response.getData();
 
-                        // 👇 THÊM ĐÚNG DÒNG NÀY VÀO ĐÂY ĐỂ LƯU KÉT SẮT (SESSION) 👇
-                        com.auction.utils.AppContext.setCurrentUser(userFromServer);
+                        // LƯU KÉT SẮT (SESSION)
+                        AppContext.setCurrentUser(userFromServer);
 
-                        // Hiện Toast thành công của A
                         NotificationUtil.showToast("Đăng nhập thành công!", rootPane, "success");
-
                         // Chuyển màn hình
                         navigateToDashboard(event, userFromServer);
                     } catch (Exception e) {
@@ -71,26 +70,12 @@ public class LoginController {
     }
     // Hàm bổ trợ - Phân quyền và Chuyển màn hình
     private void navigateToDashboard(ActionEvent event, com.auction.model.User user) throws IOException {
-        String fxmlPath;
-
-        // 🔄 TÍCH HỢP MỚI: Bẻ lái nếu là Admin
-        if (user instanceof Admin) {
-            fxmlPath = "/com/auction/view/AdminDashboard.fxml";
-        } else {
-            fxmlPath = "/com/auction/view/Dashboard.fxml";
-        }
+        String fxmlPath = (user instanceof Admin) ? "/com/auction/view/AdminDashboard.fxml" : "/com/auction/view/Dashboard.fxml";
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
         Parent root = loader.load();
 
-        // Kiểm tra xem là Controller nào để truyền User cho đúng
-        if (user instanceof Admin) {
-            AdminController adminController = loader.getController();
-            // Nếu AdminController cần setup gì từ user thì truyền vào đây
-        } else {
-            DashboardController dashboardController = loader.getController();
-            dashboardController.setUser(user);
-        }
+        // ĐÃ XÓA logic gọi dashboardController.setUser() vì đã có AppContext lo
 
         Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
         stage.setScene(new Scene(root));
