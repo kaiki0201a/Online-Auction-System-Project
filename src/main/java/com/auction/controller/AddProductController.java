@@ -10,17 +10,19 @@ import com.auction.utils.UIUtils;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddProductController {
 
     @FXML private StackPane rootPane;
-    @FXML private TextField txtName;
-    @FXML private TextField txtStartingPrice;
+    @FXML private TextField txtName, txtStartingPrice;
     @FXML private TextArea txtDescription;
     @FXML private ComboBox<String> categoryBox;
     @FXML private VBox dynamicForm;
@@ -35,37 +37,32 @@ public class AddProductController {
             dynamicForm.setManaged(true);
 
             String cat = categoryBox.getValue();
+            Label lbl = new Label("Thông tin " + cat + ":");
+            lbl.setStyle("-fx-font-weight: bold;");
+            dynamicForm.getChildren().add(lbl);
 
-            // ĐÃ SỬA: Vẽ đúng số lượng tham số khớp với Model
             if ("Art".equals(cat)) {
-                TextField txtArtist = new TextField();
-                txtArtist.setPromptText("Tên họa sĩ / Nghệ nhân");
-                TextField txtYear = new TextField();
-                txtYear.setPromptText("Năm sáng tác (VD: 1990)");
-                Label lbl = new Label("Thông tin Art:");
-                lbl.setStyle("-fx-font-weight: bold;");
-                dynamicForm.getChildren().addAll(lbl, txtArtist, txtYear);
-
+                TextField txtArtist = new TextField(); txtArtist.setPromptText("Tên họa sĩ / Nghệ nhân");
+                TextField txtYear = new TextField(); txtYear.setPromptText("Năm sáng tác (VD: 1990)");
+                dynamicForm.getChildren().addAll(txtArtist, txtYear);
             } else if ("Electronics".equals(cat)) {
-                TextField txtBrand = new TextField();
-                txtBrand.setPromptText("Thương hiệu");
-                TextField txtWarranty = new TextField();
-                txtWarranty.setPromptText("Số tháng bảo hành (VD: 12)");
-                Label lbl = new Label("Thông tin Electronics:");
-                lbl.setStyle("-fx-font-weight: bold;");
-                dynamicForm.getChildren().addAll(lbl, txtBrand, txtWarranty);
-
+                TextField txtBrand = new TextField(); txtBrand.setPromptText("Thương hiệu");
+                TextField txtWarranty = new TextField(); txtWarranty.setPromptText("Số tháng bảo hành (VD: 12)");
+                dynamicForm.getChildren().addAll(txtBrand, txtWarranty);
             } else if ("Vehicle".equals(cat)) {
-                TextField txtEngine = new TextField();
-                txtEngine.setPromptText("Loại động cơ (VD: V8, Xăng)");
-                TextField txtMileage = new TextField();
-                txtMileage.setPromptText("Số dặm đã đi (VD: 1000)");
-                Label lbl = new Label("Thông tin Vehicle:");
-                lbl.setStyle("-fx-font-weight: bold;");
-                dynamicForm.getChildren().addAll(lbl, txtEngine, txtMileage);
+                TextField txtEngine = new TextField(); txtEngine.setPromptText("Loại động cơ (VD: V8)");
+                TextField txtMileage = new TextField(); txtMileage.setPromptText("Số dặm đã đi (VD: 1000)");
+                dynamicForm.getChildren().addAll(txtEngine, txtMileage);
             }
 
             UIUtils.applyFadeIn(dynamicForm);
+
+            // Giãn cửa sổ tự động
+            Platform.runLater(() -> {
+                if (rootPane.getScene() != null && rootPane.getScene().getWindow() != null) {
+                    ((javafx.stage.Stage) rootPane.getScene().getWindow()).sizeToScene();
+                }
+            });
         });
     }
 
@@ -76,7 +73,6 @@ public class AddProductController {
         String description = txtDescription.getText().trim();
         String category = categoryBox.getValue();
 
-        // 1. VALIDATE CƠ BẢN
         if (productName.isEmpty() || priceStr.isEmpty() || category == null) {
             NotificationUtil.showToast("Vui lòng điền đủ thông tin!", rootPane, "warning");
             return;
@@ -90,70 +86,54 @@ public class AddProductController {
             return;
         }
 
-        // 2. MÓC DỮ LIỆU TỪ FORM ĐỘNG VÀ TẠO ĐỐI TƯỢNG ITEM (Đã sửa code trích xuất dữ liệu)
+        // LỌC AN TOÀN CHỈ LẤY CÁC Ô NHẬP LIỆU BẰNG LIST
+        List<String> inputs = new ArrayList<>();
+        for (Node node : dynamicForm.getChildren()) {
+            if (node instanceof TextField) {
+                inputs.add(((TextField) node).getText().trim());
+            }
+        }
+
         Item newItem = null;
         try {
             if ("Art".equals(category)) {
-                String artist = ((TextField) dynamicForm.getChildren().get(1)).getText();
-                int year = Integer.parseInt(((TextField) dynamicForm.getChildren().get(2)).getText());
-                newItem = new Art(productName, description, price, artist, year);
-
+                newItem = new Art(productName, description, price, inputs.get(0), Integer.parseInt(inputs.get(1)));
             } else if ("Electronics".equals(category)) {
-                String brand = ((TextField) dynamicForm.getChildren().get(1)).getText();
-                int warranty = Integer.parseInt(((TextField) dynamicForm.getChildren().get(2)).getText());
-                newItem = new Electronics(productName, description, price, brand, warranty);
-
+                newItem = new Electronics(productName, description, price, inputs.get(0), Integer.parseInt(inputs.get(1)));
             } else if ("Vehicle".equals(category)) {
-                String engine = ((TextField) dynamicForm.getChildren().get(1)).getText();
-                double mileage = Double.parseDouble(((TextField) dynamicForm.getChildren().get(2)).getText());
-                newItem = new Vehicle(productName, description, price, engine, mileage);
+                newItem = new Vehicle(productName, description, price, inputs.get(0), Double.parseDouble(inputs.get(1)));
             }
         } catch (Exception ex) {
-            NotificationUtil.showToast("Vui lòng nhập đúng định dạng số (Năm / Số KM / Tháng bảo hành)!", rootPane, "warning");
+            NotificationUtil.showToast("Dữ liệu nhập vào chưa đúng định dạng số!", rootPane, "warning");
             return;
         }
 
-        // 3. TẠO PHIÊN ĐẤU GIÁ (AUCTION)
         User currentUser = AppContext.getCurrentUser();
         if (!(currentUser instanceof Seller)) {
             NotificationUtil.showToast("Lỗi quyền: Chỉ Seller mới được đăng sản phẩm!", rootPane, "error");
             return;
         }
 
-        Auction newAuction = new Auction(
-                newItem,
-                (Seller) currentUser,
-                LocalDateTime.now(),
-                LocalDateTime.now().plusDays(3)
-        );
+        Auction newAuction = new Auction(newItem, (Seller) currentUser, LocalDateTime.now(), LocalDateTime.now().plusDays(3));
 
-        // 4. GỌI MẠNG ĐỂ ĐẨY LÊN SERVER
         UIUtils.showLoadingSpinner(rootPane, () -> {
             new Thread(() -> {
                 try {
-                    Request request = new Request(ActionType.CREATE_AUCTION, newAuction);
-                    NetworkClient.getInstance().sendRequest(request);
-
+                    NetworkClient.getInstance().sendRequest(new Request(ActionType.CREATE_AUCTION, newAuction));
                     Platform.runLater(() -> {
                         NotificationUtil.showToast("Gửi yêu cầu đăng sản phẩm thành công!", rootPane, "success");
                         resetForm();
                     });
-
                 } catch (Exception ex) {
-                    Platform.runLater(() -> {
-                        NotificationUtil.showToast("Lỗi kết nối Server!", rootPane, "error");
-                    });
+                    Platform.runLater(() -> NotificationUtil.showToast("Lỗi kết nối Server!", rootPane, "error"));
                 }
             }).start();
         });
     }
 
     private void resetForm() {
-        txtName.clear();
-        txtStartingPrice.clear();
-        txtDescription.clear();
+        txtName.clear(); txtStartingPrice.clear(); txtDescription.clear();
         categoryBox.getSelectionModel().clearSelection();
-        dynamicForm.setVisible(false);
-        dynamicForm.setManaged(false);
+        dynamicForm.setVisible(false); dynamicForm.setManaged(false);
     }
 }
