@@ -79,6 +79,8 @@ public class AuctionDetailController {
                 else if ("Đặt giá thành công!".equals(response.getMessage())) {
                     lblMessage.setText("✅ Đặt giá thành công!");
                     lblMessage.setStyle("-fx-text-fill: #27ae60;");
+                    // BỔ SUNG: Xóa trắng ô nhập liệu
+                    txtBidAmount.clear();
                 }
                 else if (response.getStatus() == com.auction.protocol.StatusType.ERROR) {
                     showError("Từ chối đặt giá", response.getMessage());
@@ -102,6 +104,9 @@ public class AuctionDetailController {
                 long s = secondsLeft % 60;
                 lblTimeLeft.setText(String.format("%02d:%02d:%02d", h, m, s));
 
+                // BỔ SUNG: Reset lại style mặc định trước
+                lblTimeLeft.setStyle("-fx-text-fill: black; -fx-font-weight: bold;");
+
                 // Hiệu ứng đổi màu đỏ khi còn dưới 1 phút
                 if (secondsLeft < 60) lblTimeLeft.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
             }
@@ -113,7 +118,8 @@ public class AuctionDetailController {
     private void updateUI() {
         lblProductName.setText(currentAuction.getItem().getNameItem());
         lblSellerName.setText(currentAuction.getSeller().getUserName());
-        lblCurrentPrice.setText("$" + currentAuction.getCurrentHighestBid());
+        // Sửa dòng dưới đây:
+        lblCurrentPrice.setText(String.format("%,.0f VNĐ", currentAuction.getCurrentHighestBid()));
     }
 
     @FXML

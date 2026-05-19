@@ -7,12 +7,17 @@
     <padding><Insets bottom="20.0" left="20.0" right="20.0" top="20.0" /></padding>
 
     <HBox alignment="CENTER_LEFT" spacing="15.0">
-        <Label styleClass="title-label" text="SÀN ĐẤU GIÁ ONLINE" />
+        <Label styleClass="header-title" text="SÀN ĐẤU GIÁ ONLINE" />
         <Region HBox.hgrow="ALWAYS" />
-        <TextField fx:id="txtSearch" promptText="Tìm kiếm sản phẩm..." prefWidth="200"/>
-        <Button fx:id="btnSearch" text="Tìm" styleClass="custom-button"/>
-        <Button fx:id="btnCreateAuction" onAction="#onCreateAuctionClick" text="Đăng sản phẩm" styleClass="custom-button"/>
-        <Button fx:id="btnProfile" onAction="#onProfileClick" text="Trang cá nhân" styleClass="custom-button"/>    </HBox>
+
+        <ComboBox fx:id="comboCategory" promptText="Tất cả danh mục" prefWidth="130" styleClass="combo-box"/>
+
+        <TextField fx:id="txtSearch" promptText="Tìm kiếm sản phẩm..." prefWidth="200" styleClass="text-field"/>
+
+        <Button fx:id="btnSearch" text="Tìm" styleClass="button, btn-primary"/>
+        <Button fx:id="btnCreateAuction" onAction="#onCreateAuctionClick" text="Đăng sản phẩm" styleClass="button, btn-success"/>
+        <Button fx:id="btnProfile" onAction="#onProfileClick" text="Trang cá nhân" styleClass="button"/>
+    </HBox>
 
     <TableView fx:id="tableAuctions" onMouseClicked="#onTableClick" VBox.vgrow="ALWAYS">        <columns>
             <TableColumn fx:id="colId" text="Mã Phiên" prefWidth="100"/>

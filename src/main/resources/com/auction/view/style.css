@@ -101,3 +101,57 @@
 .toast-default {
     -fx-background-color: #333333; /* Xám đen */
 }
+
+/* =========================================
+   NÚT HÀNH ĐỘNG CHÍNH (PRIMARY - ĐẶT GIÁ, TÌM KIẾM)
+   ========================================= */
+.btn-primary {
+    -fx-background-color: #2196F3; /* Màu xanh dương */
+}
+.btn-primary:hover {
+    -fx-background-color: #0b7dda;
+}
+
+/* =========================================
+   Ô NHẬP LIỆU & COMBOBOX (TÌM KIẾM, BỘ LỌC)
+   ========================================= */
+.text-field, .combo-box {
+    -fx-padding: 8px;
+    -fx-background-radius: 4px;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4px;
+}
+.text-field:focused, .combo-box:focused {
+    -fx-border-color: #2196F3; /* Đổi viền xanh khi click vào */
+    -fx-border-width: 2px;
+}
+
+/* =========================================
+   THẺ SẢN PHẨM (DASHBOARD)
+   ========================================= */
+.product-card {
+    -fx-background-color: white;
+    -fx-padding: 15px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #e0e0e0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2); /* Bóng đổ nhẹ */
+}
+.product-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 8, 0, 0, 4); /* Đậm hơn khi hover */
+    -fx-cursor: hand;
+}
+
+/* =========================================
+   BIỂU ĐỒ ĐƯỜNG (LINE CHART) - REALTIME BIDDING
+   ========================================= */
+.chart-series-line {
+    -fx-stroke: #f44336; /* Màu của đường biểu đồ giá (Đỏ nổi bật) */
+    -fx-stroke-width: 3px;
+}
+.chart-line-symbol {
+    -fx-background-color: transparent, transparent; /* Ẩn các chấm tròn trên biểu đồ cho mượt */
+}
+.chart-plot-background {
+    -fx-background-color: #fafafa;
+}
