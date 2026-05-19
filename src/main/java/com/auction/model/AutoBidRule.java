@@ -1,8 +1,15 @@
 package com.auction.model;
 
 import java.time.LocalDateTime; 
+import java.io.Serializable;
+public class AutoBidRule implements Serializable {
 
-public class AutoBidRule {
+    public static final long serialVersionUID = 1L;
+
+    // --- CÁC HẰNG SỐ CHO ANTI-SNIPING ---
+    private static final int SNIPE_THRESHOLD_SECONDS = 30;
+    private static final int EXTENSION_SECONDS = 60;    
+
     // Dùng từ khóa 'final' để bảo vệ dữ liệu, chống việc bị sửa đổi sau khi đã tạo
     private final Bidder bidder;
     private final double maxBid;

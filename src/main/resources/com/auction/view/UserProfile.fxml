@@ -25,9 +25,18 @@
         <columns>
             <TableColumn fx:id="colHisTime" text="Thời gian" prefWidth="150"/>
             <TableColumn fx:id="colHisItem" text="Sản phẩm" prefWidth="200"/>
+<<<<<<< HEAD
             <TableColumn fx:id="colHisAmount" text="Số tiền đặt" prefWidth="150"/>
         </columns>
     </TableView>
 
     <Button fx:id="btnLogout" onAction="#onLogoutClick" text="Đăng Xuất" styleClass="button btn-danger"/>
+=======
+            <TableColumn fx:id="colHisAmount" text="Số tiền đặt" prefWidth="120"/>
+            <TableColumn fx:id="colHisStatus" text="Kết Quả" prefWidth="120"/>
+        </columns>
+    </TableView>
+
+    <Button fx:id="btnLogout" onAction="#onLogoutClick" text="Đăng Xuất" styleClass="button, btn-danger"/>
+>>>>>>> 6ac111e812f00eb3e9c66c4251a27e9df61b4cdc
 </VBox>

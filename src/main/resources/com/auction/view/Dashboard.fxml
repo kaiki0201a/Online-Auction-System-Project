@@ -9,6 +9,18 @@
     <HBox alignment="CENTER_LEFT" spacing="15.0">
         <Label styleClass="header-title" text="SÀN ĐẤU GIÁ ONLINE" />
         <Region HBox.hgrow="ALWAYS" />
+<<<<<<< HEAD
+=======
+
+        <ComboBox fx:id="comboCategory" promptText="Tất cả danh mục" prefWidth="130" styleClass="combo-box"/>
+
+        <TextField fx:id="txtSearch" promptText="Tìm kiếm sản phẩm..." prefWidth="200" styleClass="text-field"/>
+
+        <Button fx:id="btnSearch" text="Tìm" styleClass="button, btn-primary"/>
+        <Button fx:id="btnCreateAuction" onAction="#onCreateAuctionClick" text="Đăng sản phẩm" styleClass="button, btn-success"/>
+        <Button fx:id="btnProfile" onAction="#onProfileClick" text="Trang cá nhân" styleClass="button"/>
+    </HBox>
+>>>>>>> 6ac111e812f00eb3e9c66c4251a27e9df61b4cdc
 
         <ComboBox fx:id="comboCategory" promptText="Tất cả danh mục" prefWidth="130" styleClass="combo-box"/>
         <TextField fx:id="txtSearch" promptText="Tìm kiếm sản phẩm..." prefWidth="200" styleClass="text-field"/>
