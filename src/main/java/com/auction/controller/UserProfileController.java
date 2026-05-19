@@ -23,15 +23,17 @@ public class UserProfileController {
     @FXML private TableColumn<BidTransaction, String> colHisTime;
     @FXML private TableColumn<BidTransaction, String> colHisItem;
     @FXML private TableColumn<BidTransaction, Double> colHisAmount;
+    @FXML private TableColumn<BidTransaction, String> colHisStatus;
 
     private Bidder currentUser;
 
     @FXML
     public void initialize() {
-        // Cấu hình các cột cho bảng lịch sử giao dịch (dùng các thuộc tính trong BidTransaction của bạn D)
         colHisTime.setCellValueFactory(new PropertyValueFactory<>("timestamp"));
         colHisItem.setCellValueFactory(new PropertyValueFactory<>("auction"));
         colHisAmount.setCellValueFactory(new PropertyValueFactory<>("bidAmount"));
+        // Bổ sung thêm dòng này (Giả định bạn D có viết hàm getStatus() trong model BidTransaction):
+        colHisStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
     }
 
     // Hàm quan trọng để Dashboard "đẩy" dữ liệu sang

@@ -36,6 +36,9 @@ public class DashboardController {
     @FXML private TableColumn<Auction, Double> colCurrentPrice;
     @FXML private TableColumn<Auction, String> colStatus;
     @FXML private Button btnCreateAuction;
+    @FXML private ComboBox<String> comboCategory;
+    @FXML private TextField txtSearch;
+    @FXML private Button btnSearch;
 
     // Thêm vào phần khai báo biến @FXML
     @FXML private TableColumn<Auction, java.time.LocalDateTime> colEndTime;
@@ -64,12 +67,24 @@ public class DashboardController {
             btnCreateAuction.setManaged(true);
         }
 
+
         // 3. CẤU HÌNH BẢNG
         colId.setCellValueFactory(new PropertyValueFactory<>("auctionId"));
         colProductName.setCellValueFactory(new PropertyValueFactory<>("item"));
         colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentHighestBid"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+        // 3.5 BỔ SUNG: CÀI ĐẶT BỘ LỌC VÀ TÌM KIẾM
+        comboCategory.setItems(FXCollections.observableArrayList("Tất cả", "Art", "Electronics", "Vehicle"));
+        comboCategory.getSelectionModel().selectFirst(); // Mặc định chọn "Tất cả"
+
+        btnSearch.setOnAction(event -> filterAuctions());
+
+        // Lắng nghe sự kiện gõ phím Enter trên ô tìm kiếm
+        txtSearch.setOnAction(event -> filterAuctions());
+
+        // Lắng nghe sự kiện khi chọn danh mục mới trong ComboBox sẽ tự động lọc
+        comboCategory.setOnAction(event -> filterAuctions());
 
         // 4. LẮNG NGHE MẠNG
         NetworkClient.getInstance().setOnResponseReceived(response -> {
@@ -79,6 +94,7 @@ public class DashboardController {
                 if (response.getStatus() == StatusType.SUCCESS && response.getData() instanceof List) {
                     List<Auction> auctions = (List<Auction>) response.getData();
                     auctionData.setAll(auctions);
+                    filterAuctions();
                 }
 
                 // Nếu có người đặt giá mới, load lại bảng
@@ -91,6 +107,32 @@ public class DashboardController {
         // 5. GỬI YÊU CẦU LẤY DANH SÁCH LÚC VỪA MỞ MÀN HÌNH
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
         tableAuctions.setItems(auctionData);
+    }
+
+    // --- HÀM BỔ SUNG ĐỂ XỬ LÝ LỌC & TÌM KIẾM ---
+    private void filterAuctions() {
+        String keyword = txtSearch.getText().toLowerCase().trim();
+        String selectedCategory = comboCategory.getValue();
+
+        ObservableList<Auction> filteredList = FXCollections.observableArrayList();
+
+        for (Auction auction : auctionData) {
+            boolean matchesSearch = auction.getItem().getNameItem().toLowerCase().contains(keyword);
+
+            boolean matchesCategory = true;
+            if (!"Tất cả".equals(selectedCategory)) {
+                // Kiểm tra xem class của Item có khớp với danh mục được chọn không
+                String itemType = auction.getItem().getClass().getSimpleName();
+                matchesCategory = itemType.equals(selectedCategory);
+            }
+
+            if (matchesSearch && matchesCategory) {
+                filteredList.add(auction);
+            }
+        }
+
+        // Cập nhật lại dữ liệu hiển thị trên bảng
+        tableAuctions.setItems(filteredList);
     }
 
 
