@@ -14,11 +14,14 @@
         </padding>
 
         <top>
-            <Label text="Admin Dashboard" styleClass="header-title">
+            <HBox alignment="CENTER_LEFT">
                 <BorderPane.margin>
                     <Insets bottom="20"/>
                 </BorderPane.margin>
-            </Label>
+                <Label text="Admin Dashboard" styleClass="header-title"/>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button text="Đăng xuất" onAction="#onLogoutClick" styleClass="button btn-danger"/>
+            </HBox>
         </top>
 
         <center>
@@ -26,8 +29,7 @@
                 <Tab text="Quản lý người dùng" closable="false">
                     <VBox spacing="10">
                         <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
-
-                        <TableView fx:id="userTable" columnResizePolicy="CONSTRAINED_RESIZE_POLICY">
+                        <TableView fx:id="userTable" columnResizePolicy="CONSTRAINED_RESIZE_POLICY" VBox.vgrow="ALWAYS">
                             <columns>
                                 <TableColumn fx:id="userNameCol" text="Tên người dùng"/>
                                 <TableColumn fx:id="userStatusCol" text="Trạng thái"/>
@@ -40,8 +42,7 @@
                 <Tab text="Phiên đấu giá đang diễn ra" closable="false">
                     <VBox spacing="10">
                         <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
-
-                        <TableView fx:id="auctionTable" columnResizePolicy="CONSTRAINED_RESIZE_POLICY">
+                        <TableView fx:id="auctionTable" columnResizePolicy="CONSTRAINED_RESIZE_POLICY" VBox.vgrow="ALWAYS">
                             <columns>
                                 <TableColumn fx:id="auctionItemCol" text="Sản phẩm"/>
                                 <TableColumn fx:id="auctionBidCol" text="Giá hiện tại"/>

@@ -149,4 +149,15 @@ public class AdminController {
             }
         });
     }
+    @FXML
+    public void onLogoutClick(javafx.event.ActionEvent event) {
+        try {
+            com.auction.utils.AppContext.logout(); // Xóa két sắt
+            javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+            javafx.stage.Stage stage = (javafx.stage.Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new javafx.scene.Scene(root));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
