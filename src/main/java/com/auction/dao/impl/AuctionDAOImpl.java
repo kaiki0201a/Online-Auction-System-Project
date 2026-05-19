@@ -57,4 +57,26 @@ public class AuctionDAOImpl {
     public void save(Auction auction) {
         saveDataToFile();
     }
+    public List<Auction> findAll() {
+        Object data = FileDataManager.loadFromFile(FILE_PATH);
+        if (data != null && data instanceof List) {
+            return (List<Auction>) data;
+        }
+        return new java.util.ArrayList<>();
+    }
+
+    public Auction findById(String id) {
+        List<Auction> list = findAll();
+        for (Auction a : list) {
+            if (String.valueOf(a.getId()).equals(id)) {
+                return a;
+            }
+        }
+        return null;
+    }
+
+    public void update(Auction auction) {
+        // Khi có thay đổi (update), chỉ cần ghi đè danh sách mới nhất xuống ổ cứng
+        saveDataToFile();
+    }
 }
