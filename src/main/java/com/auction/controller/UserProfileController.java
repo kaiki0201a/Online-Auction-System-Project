@@ -32,8 +32,25 @@ public class UserProfileController {
         colHisTime.setCellValueFactory(new PropertyValueFactory<>("timestamp"));
         colHisItem.setCellValueFactory(new PropertyValueFactory<>("auction"));
         colHisAmount.setCellValueFactory(new PropertyValueFactory<>("bidAmount"));
-        // Bổ sung thêm dòng này (Giả định bạn D có viết hàm getStatus() trong model BidTransaction):
         colHisStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // BỔ SUNG: Custom lại cách hiển thị của cột tiền
+        colHisAmount.setCellFactory(tc -> new TableCell<BidTransaction, Double>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null) {
+                    setText(null);
+                } else {
+                    setText(com.auction.utils.CurrencyFormatter.format(price));
+                }
+            }
+        });
+
+        // BỔ SUNG: Trạng thái rỗng khi bảng không có dữ liệu
+        Label emptyLabel = new Label("Hiện chưa có lịch sử đấu giá nào");
+        emptyLabel.setStyle("-fx-text-fill: gray; -fx-font-style: italic;");
+        tblHistory.setPlaceholder(emptyLabel);
     }
 
     // Hàm quan trọng để Dashboard "đẩy" dữ liệu sang
@@ -45,9 +62,10 @@ public class UserProfileController {
     private void refreshUI() {
         if (currentUser != null) {
             lblUsername.setText(currentUser.getUserName());
-            lblBalance.setText(String.format("%.2f VNĐ", currentUser.getBalance()));
 
-            // Lấy lịch sử giao dịch từ Model của bạn D
+            // SỬ DỤNG HÀM TIỆN ÍCH ĐỂ FORMAT SỐ DƯ
+            lblBalance.setText(com.auction.utils.CurrencyFormatter.format(currentUser.getBalance()));
+
             ObservableList<BidTransaction> history = FXCollections.observableArrayList(currentUser.getTransactionHistory());
             tblHistory.setItems(history);
         }

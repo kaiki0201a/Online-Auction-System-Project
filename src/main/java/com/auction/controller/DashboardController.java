@@ -62,6 +62,23 @@ public class DashboardController {
         colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentHighestBid"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+        // ---> BỔ SUNG: Custom lại cách hiển thị của cột tiền tệ <---
+        colCurrentPrice.setCellFactory(tc -> new TableCell<Auction, Double>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null) {
+                    setText(null);
+                } else {
+                    // Gọi hàm tiện ích đã tạo để format
+                    setText(com.auction.utils.CurrencyFormatter.format(price));
+                }
+            }
+        });
+        // ---> BỔ SUNG: Trạng thái rỗng (Empty States) khi chưa có sản phẩm <---
+        Label emptyLabel = new Label("Hiện chưa có sản phẩm nào");
+        emptyLabel.setStyle("-fx-text-fill: gray; -fx-font-style: italic; -fx-font-size: 14px;");
+        tableAuctions.setPlaceholder(emptyLabel);
         // 3.5 BỔ SUNG: CÀI ĐẶT BỘ LỌC VÀ TÌM KIẾM
         comboCategory.setItems(FXCollections.observableArrayList("Tất cả", "Art", "Electronics", "Vehicle"));
         comboCategory.getSelectionModel().selectFirst(); // Mặc định chọn "Tất cả"
