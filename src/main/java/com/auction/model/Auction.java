@@ -82,7 +82,9 @@ public class Auction extends Entity implements Serializable {
         if (this.status != AuctionStatus.RUNNING) {
             throw new AuctionClosedException("Phiên đấu giá không ở trạng thái RUNNING.");
         }
-
+        if (transaction.getBidAmount() <= 0){
+            throw new InvalidBidException("Số tiền đặt giá phải lớn hơn 0");
+        }
         if (transaction.getBidAmount() <= this.currentHighestBid) {
             throw new InvalidBidException("Giá thầu phải cao hơn giá hiện tại.",
                     this.currentHighestBid, transaction.getBidAmount());
@@ -301,7 +303,7 @@ private void triggerAutoBids() {
         if (this.status == AuctionStatus.RUNNING) {
             this.status = AuctionStatus.FINISHED;
             System.out.println("Phiên đấu giá ĐÃ KẾT THÚC!");
-            determineWinner(); // Gọi luôn hàm công bố người thắng cuộc của bạn
+            determineWinner(); 
         }
     }
 
@@ -313,15 +315,24 @@ private void triggerAutoBids() {
             System.out.println("Không có ai tham gia trả giá cho phiên đấu giá này.");
         }
     }
-    public synchronized void registerAutoBid(Bidder bidder, double maxBid, double increment) throws AuctionClosedException {
-        if(this.status == AuctionStatus.FINISHED){
-            throw new AuctionClosedException("Lỗi: Không thể cài Auto-bid vì phiên đấu giá đã kết thúc!");        }
-        AutoBidRule newRule = new AutoBidRule(bidder,maxBid,increment);
-        this.autoBidRules.add(newRule);
-    }
-    // THÊM MỚI 3 HÀM CỦA OBSERVER PATTERN:
+   public synchronized void registerAutoBid(Bidder bidder, double maxBid, double increment) throws AuctionClosedException, InvalidBidException {
+        if (this.status == AuctionStatus.FINISHED) {
+            throw new AuctionClosedException("Lỗi: Không thể cài Auto-bid vì phiên đấu giá đã kết thúc!");        
+        }
+        
+        // 🚀 THÊM MỚI: Rào lỗi khi đăng ký Auto-bid
+        if (maxBid <= this.currentHighestBid) {
+            throw new InvalidBidException("Số tiền tối đa (Max Bid) phải lớn hơn giá cao nhất hiện tại (" + this.currentHighestBid + ").");
+        }
+        if (increment <= 0) {
+            throw new InvalidBidException("Bước giá (Increment) phải lớn hơn 0.");
+        }
 
-    // 1. Cho phép người dùng tham gia xem (Đăng ký nhận thông báo)
+        AutoBidRule newRule = new AutoBidRule(bidder, maxBid, increment);
+        this.autoBidRules.add(newRule);
+        System.out.println("✅ " + bidder.getUserName() + " đã cài Auto-bid (Max: " + maxBid + ", Bước giá: " + increment + ")");
+    }
+
     public synchronized void addObserver(AuctionObserver observer) {
         if (!observers.contains(observer)) {
             observers.add(observer);

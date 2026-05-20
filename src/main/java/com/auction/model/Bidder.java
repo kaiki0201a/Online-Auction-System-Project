@@ -62,7 +62,7 @@ public class Bidder extends User implements AuctionObserver {
         this.addTransaction(newTransaction);
     }
     public void setupAutoBid(Auction auction, double maxBid, double increment)
-            throws InsufficientBalanceException, AuctionClosedException {
+            throws InsufficientBalanceException, AuctionClosedException. InvalidBidException {
 
         if (maxBid > this.getBalance()){
             throw new InsufficientBalanceException(
