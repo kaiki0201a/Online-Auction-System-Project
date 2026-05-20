@@ -50,8 +50,12 @@ public class ClientHandler implements Runnable {
                 }
             }
 
+        } catch (java.io.EOFException | java.net.SocketException e) {
+            // Bắt lỗi khi người dùng bấm [X] tắt app hoặc rớt mạng
+            System.out.println("🔌 Client " + socket.getInetAddress() + " đã ngắt kết nối (Đóng ứng dụng).");
         } catch (IOException e) {
-            System.out.println("🔌 Client " + socket.getInetAddress() + " đã ngắt kết nối.");
+            // Bắt các lỗi I/O vặt khác
+            System.out.println("⚠️ Lỗi luồng mạng với Client " + socket.getInetAddress() + ": " + e.getMessage());
         } finally {
             closeConnections();
         }
