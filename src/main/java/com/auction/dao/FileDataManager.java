@@ -10,7 +10,7 @@ public class FileDataManager {
      * @param filePath Đường dẫn tới file lưu trữ (truyền vào từ các lớp DAO)
      * @return true nếu lưu thành công, false nếu thất bại
      */
-    public static boolean saveToFile(Object data, String filePath) {
+    public static synchronized boolean saveToFile(Object data, String filePath) {
         // Sử dụng try-with-resources để Java tự động đóng file (close)
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
 

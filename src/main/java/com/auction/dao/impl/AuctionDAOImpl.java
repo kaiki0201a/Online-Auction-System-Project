@@ -1,20 +1,22 @@
 package com.auction.dao.impl;
 
 import com.auction.dao.FileDataManager;
+import com.auction.dao.IAuctionDAO;
 import com.auction.model.Auction;
 import com.auction.utils.AuctionManager;
 
 import java.util.List;
 
-public class AuctionDAOImpl {
+public class AuctionDAOImpl implements IAuctionDAO {
     // Tên file lưu trữ dữ liệu (nằm ở thư mục gốc của project)
     private static final String FILE_PATH = "auctions_data.dat";
 
     /**
      * LƯU DỮ LIỆU: Kéo data từ Manager đang chạy trên RAM và ghi đè xuống file.
      * Hàm này sẽ được gọi tự động khi Server tắt (Shutdown Hook).
+     * ĐÃ SỬA: Đổi kiểu trả về thành boolean để khớp với Interface contract
      */
-    public void saveDataToFile() {
+    public boolean saveDataToFile() {
         // Lấy danh sách đang chạy thực tế trên RAM
         List<Auction> currentAuctions = AuctionManager.getInstance().getAllAuctions();
 
@@ -25,6 +27,7 @@ public class AuctionDAOImpl {
         } else {
             System.err.println("❌ Lỗi: Không thể lưu dữ liệu Auction!");
         }
+        return success;
     }
 
     /**
@@ -50,13 +53,12 @@ public class AuctionDAOImpl {
         }
     }
 
-    /**
-     * Hàm phụ trợ: Được gọi bên ClientHandler khi có 1 phiên đấu giá mới được tạo (CREATE_AUCTION).
-     * Thực chất là ta sẽ lưu lại toàn bộ trạng thái danh sách mới nhất xuống file cho chắc cốp.
-     */
-    public void save(Auction auction) {
-        saveDataToFile();
+    @Override
+    public boolean save(Auction auction) {
+        return saveDataToFile();
     }
+
+    @Override
     public List<Auction> findAll() {
         Object data = FileDataManager.loadFromFile(FILE_PATH);
         if (data != null && data instanceof List) {
@@ -65,6 +67,7 @@ public class AuctionDAOImpl {
         return new java.util.ArrayList<>();
     }
 
+    @Override
     public Auction findById(String id) {
         List<Auction> list = findAll();
         for (Auction a : list) {
@@ -75,8 +78,18 @@ public class AuctionDAOImpl {
         return null;
     }
 
-    public void update(Auction auction) {
-        // Khi có thay đổi (update), chỉ cần ghi đè danh sách mới nhất xuống ổ cứng
-        saveDataToFile();
+    @Override
+    public boolean update(Auction auction) {
+        return saveDataToFile();
+    }
+
+    @Override
+    public boolean delete(String id) {
+        List<Auction> list = AuctionManager.getInstance().getAllAuctions();
+        boolean removed = list.removeIf(a -> String.valueOf(a.getId()).equals(id));
+        if (removed) {
+            return saveDataToFile();
+        }
+        return false;
     }
 }
