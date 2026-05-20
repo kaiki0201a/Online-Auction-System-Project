@@ -273,6 +273,7 @@ public class Auction extends Entity implements Serializable {
 
         AutoBidRule newRule = new AutoBidRule(bidder, maxBid, increment);
         this.autoBidRules.add(newRule);
+        System.out.println("✅ " + bidder.getUserName() + " đã cài Auto-bid (Max: " + maxBid + ", Bước giá: " + increment + ")");
     }
 
     // THÊM MỚI 3 HÀM CỦA OBSERVER PATTERN:

@@ -96,84 +96,97 @@ public class AuctionTest {
     }
     // TEST 5: ANTI-SNIPING TỰ ĐỘNG GIA HẠN THỜI GIAN
     @Test
-    @DisplayName("Test 5: Anti-Sniping tự động gia hạn thêm 60 giây khi bid ở phút chót")
+    @DisplayName("Test 5: Anti-Sniping gia hạn thêm 60 giây khi bid ở 10 giây cuối")
     public void testAntiSnipingExtendsTime() throws Exception {
-        // 1. Chuẩn bị (Arrange): Ép thời gian kết thúc của phiên đấu giá về còn đúng 15 giây nữa (Nằm trong khung 30s)
+        // 1. Chuẩn bị: Ép thời gian kết thúc của phiên đấu giá về còn ĐÚNG 10 GIÂY
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime shortEndTime = now.plusSeconds(15); 
+        LocalDateTime shortEndTime = now.plusSeconds(10); 
         
-        // Tạo một phiên đấu giá đặc biệt sắp kết thúc
         Auction urgentAuction = new Auction(item, seller, now.minusMinutes(10), shortEndTime);
         urgentAuction.setStatus(AuctionStatus.RUNNING);
 
-        // 2. Hành động (Act): Tung lệnh đặt giá vào giây chót
+        // 2. Hành động: Tung lệnh đặt giá
         BidTransaction quickTx = new BidTransaction(urgentAuction, bidder1, 200.0);
         urgentAuction.processBid(quickTx);
 
-        // 3. Kiểm tra (Assert): Đảm bảo thời gian kết thúc ban đầu (shortEndTime) phải được cộng đúng 60 giây
+        // 3. Kiểm tra: Thời gian mới phải bằng shortEndTime + 60s
         LocalDateTime expectedNewEndTime = shortEndTime.plusSeconds(60);
         
         assertEquals(
             expectedNewEndTime, 
             urgentAuction.getEndTime(), 
-            "Lỗi: Anti-Sniping phải gia hạn đúng 60 giây khi bid ở 30s cuối!"
+            "Lỗi: Anti-Sniping không gia hạn đúng 60 giây!"
         );
     }
-    @Test
-    @DisplayName("Test 6: Robot Auto-Bid tự động đè giá giành lại Top 1")
-    public void testAutoBiddingTriggersCorrectly() throws Exception {
-        // Đại gia 1 cài Auto-bid (Max: 1000$, Bước nhảy: 20$)
-        bidder1.setupAutoBid(auction, 1000.0, 20.0);
 
-        // Khách 2 vào đặt thủ công 300$
-        BidTransaction manualTx = new BidTransaction(auction, bidder2, 300.0);
+    // TEST 6: 2 ROBOT ĐẤNH NHAU (AUTO-BID)
+    @Test
+    @DisplayName("Test 6: Hai Robot Auto-Bid chiến đấu, Robot Max Bid cao hơn giành chiến thắng")
+    public void testAutoBiddingTriggersCorrectly() throws Exception {
+        // Đại gia 1 (Robot A): Max 1000$, Bước nhảy 50$
+        auction.registerAutoBid(bidder1, 1000.0, 50.0);
+
+        // Dân cày 2 (Robot B): Max 500$, Bước nhảy 20$
+        auction.registerAutoBid(bidder2, 500.0, 20.0);
+
+        // Người mồi nhử ném vào 150$ để đánh thức 2 robot
+        Bidder mồiNhử = new Bidder("MoiNhu", "pass", "moi@gmail.com", 2000.0);
+        BidTransaction manualTx = new BidTransaction(auction, mồiNhử, 150.0);
+        
+        // Cú processBid này sẽ kích hoạt chuỗi combat của 2 robot bên trong
         auction.processBid(manualTx);
 
-        // Kiểm tra: Robot của Đại gia 1 phải tự động đè giá 320$ (300 + 20)
+        // Kiểm tra kết quả:
+        // Robot A và B sẽ liên tục đè giá nhau. Khi giá đẩy lên trên 500$, Robot B sẽ bỏ cuộc.
+        // Robot A sẽ chốt hạ ở mức giá 550$ (do 500$ + 50$ bước nhảy của nó).
         assertNotNull(auction.getHighestBidder());
-        assertEquals(bidder1.getUserName(), auction.getHighestBidder().getUserName(), "Lỗi: Auto-bid không hoạt động");
-        assertEquals(320.0, auction.getCurrentHighestBid(), "Lỗi: Robot không tính toán đúng bước nhảy!");
+        assertEquals(bidder1.getUserName(), auction.getHighestBidder().getUserName(), "Lỗi: Đại gia 1 phải là người chiến thắng");
+        assertEquals(550.0, auction.getCurrentHighestBid(), "Lỗi: Robot tính sai số tiền combat cuối cùng!");
     }
+
+    // TEST 7: ĐA LUỒNG - 10 NGƯỜI CÙNG ĐẶT GIÁ
     @Test
-    @DisplayName("Test 7: Stress Test Đa Luồng (100 Request cùng lúc)")
+    @DisplayName("Test 7: Stress Test Đa Luồng (10 người cùng đặt giá 1 lúc)")
     public void testConcurrencySafeBidding() throws InterruptedException {
-        int numberOfThreads = 100;
+        int numberOfThreads = 10; // Chỉnh về đúng 10 theo task
         ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
         
+        // Latch dùng để đồng bộ: Bắt 10 luồng đứng chờ ở vạch xuất phát
         CountDownLatch readyLatch = new CountDownLatch(numberOfThreads);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch finishLatch = new CountDownLatch(numberOfThreads);
 
         for (int i = 1; i <= numberOfThreads; i++) {
-            final double bidAmount = 100.0 + i; // Giá tăng dần từ 101 đến 200
+            // Giá trị bid từ 101.0 đến 110.0
+            final double bidAmount = 100.0 + i; 
             Bidder threadBidder = new Bidder("Clone_" + i, "pass", "clone" + i + "@gmail.com", 1000.0);
 
             executorService.submit(() -> {
                 try {
-                    readyLatch.countDown(); // Sẵn sàng
-                    startLatch.await();     // Chờ lệnh bắt đầu
+                    readyLatch.countDown(); // Báo cáo đã nạp đạn xong
+                    startLatch.await();     // Chờ tiếng súng lệnh
                     
                     // Thực hiện bắn request
                     BidTransaction tx = new BidTransaction(auction, threadBidder, bidAmount);
                     auction.processBid(tx);
                 } catch (Exception ignored) {
+                    // Luồng nào chạy chậm hơn sẽ bị ném InvalidBidException do giá bị đè,
+                    // việc này là hoàn toàn bình thường trong đa luồng.
                 } finally {
-                    finishLatch.countDown(); // Báo cáo chạy xong
+                    finishLatch.countDown(); 
                 }
             });
         }
 
-        readyLatch.await(); // Đợi 100 luồng nạp đạn
-        startLatch.countDown(); // Bóp cò!
-        finishLatch.await(5, TimeUnit.SECONDS); // Chờ tối đa 5s
+        readyLatch.await(); // Đợi 10 luồng sẵn sàng
+        startLatch.countDown(); // Bóp cò cho 10 luồng chạy CÙNG MỘT TÍCH TẮC
+        finishLatch.await(5, TimeUnit.SECONDS); // Chờ tối đa 5s cho chạy xong
         executorService.shutdown();
 
-        // Kiểm tra xem hệ thống có bảo toàn được dữ liệu không
-        assertTrue(auction.getCurrentHighestBid() <= 200.0);
-        assertTrue(auction.getCurrentHighestBid() > 100.0);
-        // Lưu ý: Không assert exact size là 100 vì trong môi trường đa luồng cực đoan, 
-        // một số luồng có thể bị văng InvalidBid (giá thấp hơn) do luồng khác chạy quá nhanh.
-        // Chỉ cần assert list > 0 và app không bị Crash là Pass xuất sắc!
+        // Kiểm tra GẮT GAO:
+        // Do có chữ 'synchronized', dù 10 luồng đâm vào cùng lúc, dữ liệu không bị ghi đè lung tung.
+        // Mức giá cuối cùng bắt buộc phải là mức giá lớn nhất được đẩy vào (110.0).
+        assertEquals(110.0, auction.getCurrentHighestBid(), "Lỗi: Đồng bộ luồng (synchronized) bị hỏng, sai giá cuối!");
         assertTrue(auction.getBidHistory().size() > 0, "Lỗi: Lịch sử giao dịch bị hỏng do đa luồng!");
     }
 }
