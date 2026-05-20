@@ -1,5 +1,6 @@
 package com.auction.utils;
 
+import com.auction.dao.IAuctionDAO;
 import com.auction.model.Auction;
 import com.auction.model.Item;
 import com.auction.model.Seller;
@@ -14,6 +15,9 @@ import java.util.List;
 public class AuctionManager {
 
     private static AuctionManager instance;
+
+    // Thuộc tính để lưu trữ đối tượng Mock DAO khi chạy Unit Test (Áp dụng DIP)
+    private IAuctionDAO auctionDAO;
 
     private AuctionManager() {
     }
@@ -30,25 +34,45 @@ public class AuctionManager {
         return instance;
     }
 
-    // Tạo phiên đấu giá mới và lưu xuống DB
+    /**
+     * Tiêm (Inject) Interface DAO vào Manager.
+     * Hàm này được gọi trong @BeforeEach của AuctionManagerTest để truyền Mock DAO vào.
+     */
+    public void setAuctionDAO(IAuctionDAO auctionDAO) {
+        this.auctionDAO = auctionDAO;
+    }
+
+    /**
+     * Hàm nội bộ bổ trợ: Quyết định nguồn dữ liệu xử lý.
+     * - Nếu đang chạy Unit Test (đã gọi setAuctionDAO): Trả về đối tượng Mock giả lập.
+     * - Nếu chạy thật (App/Server bình thường): Tự động lấy nguồn thực tế từ ServerApp.getAuctionDAO().
+     */
+    private IAuctionDAO getDAO() {
+        if (this.auctionDAO != null) {
+            return this.auctionDAO;
+        }
+        return ServerApp.getAuctionDAO();
+    }
+
+    // Tạo phiên đấu giá mới và lưu xuống DB/File
     public Auction createAuction(Item item, Seller seller, LocalDateTime start, LocalDateTime end) {
         Auction newAuction = new Auction(item, seller, start, end);
-        ServerApp.getAuctionDAO().save(newAuction);
+        getDAO().save(newAuction);
         return newAuction;
     }
 
     // Lấy danh sách toàn bộ phiên đấu giá
     public List<Auction> getAllAuctions() {
-        return ServerApp.getAuctionDAO().findAll();
+        return getDAO().findAll();
     }
 
     // Tìm phiên đấu giá theo ID
     public Auction getAuctionById(String auctionId) {
-        return ServerApp.getAuctionDAO().findById(auctionId);
+        return getDAO().findById(auctionId);
     }
 
     // Cập nhật thông tin phiên đấu giá (VD: khi có lượt bid mới)
     public void updateAuction(Auction auction) {
-        ServerApp.getAuctionDAO().update(auction);
+        getDAO().update(auction);
     }
 }
