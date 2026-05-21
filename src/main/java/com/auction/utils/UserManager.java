@@ -57,4 +57,13 @@ public class UserManager {
     public List<User> getAllUsers() {
         return new ArrayList<>(users.values());
     }
+    // THÊM HÀM NÀY ĐỂ DAO CÓ THỂ NẠP DỮ LIỆU TỪ FILE LÊN RAM
+    public void restoreUsers(List<User> loadedUsers) {
+        users.clear(); // Xóa các tài khoản mặc định (như admin, bidder test)
+        for (User user : loadedUsers) {
+            // Lưu ý: Đảm bảo class User của bạn có hàm getUserName()
+            users.put(user.getUserName(), user);
+        }
+    }
+
 }
