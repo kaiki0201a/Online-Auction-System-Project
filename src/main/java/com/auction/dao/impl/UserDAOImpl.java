@@ -1,12 +1,14 @@
 package com.auction.dao.impl;
 
 import com.auction.dao.FileDataManager;
+import com.auction.dao.IGenericDAO;
 import com.auction.model.User;
 import com.auction.utils.UserManager;
 
 import java.util.List;
 
-public class UserDAOImpl {
+// đã sửa level 2: Implement IGenericDAO<User> interface
+public class UserDAOImpl implements IGenericDAO<User> {
     // File lưu trữ tài khoản sẽ nằm cùng chỗ với auctions_data.dat
     private static final String FILE_PATH = "users_data.dat";
 
@@ -42,5 +44,37 @@ public class UserDAOImpl {
         } else {
             System.out.println("⚠️ File dữ liệu User trống hoặc chưa tồn tại (Dùng tài khoản mặc định).");
         }
+    }
+
+    // đã sửa level 2: Implement các method từ IGenericDAO interface
+    @Override
+    public boolean save(User user) {
+        UserManager.getInstance().addUser(user);
+        return saveDataToFile();
+    }
+
+    @Override
+    public boolean update(User user) {
+        return saveDataToFile();
+    }
+
+    @Override
+    public boolean delete(String id) {
+        List<User> allUsers = UserManager.getInstance().getAllUsers();
+        boolean removed = allUsers.removeIf(u -> u.getId().equals(id));
+        if (removed) {
+            return saveDataToFile();
+        }
+        return false;
+    }
+
+    @Override
+    public User findById(String id) {
+        return UserManager.getInstance().getUserById(id);
+    }
+
+    @Override
+    public List<User> findAll() {
+        return UserManager.getInstance().getAllUsers();
     }
 }

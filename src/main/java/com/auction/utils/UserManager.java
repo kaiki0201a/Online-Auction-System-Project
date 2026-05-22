@@ -1,5 +1,6 @@
 package com.auction.utils;
 
+import com.auction.exception.AuthenticationException;
 import com.auction.model.Admin;
 import com.auction.model.Bidder;
 import com.auction.model.Seller;
@@ -33,10 +34,14 @@ public class UserManager {
         return instance;
     }
 
-    // Xử lý đăng nhập
-    public boolean authenticate(String username, String password) {
+    // đã sửa level 2: Xử lý đăng nhập với exception handling
+    public boolean authenticate(String username, String password) throws AuthenticationException {
         User user = users.get(username);
-        return user != null && user.login(password);
+        if (user == null) {
+            throw new AuthenticationException("Tài khoản '" + username + "' không tồn tại!");
+        }
+        // Hàm login() của User tự động ném AuthenticationException nếu thất bại
+        return user.login(password);
     }
 
     // Xử lý đăng ký
@@ -53,10 +58,31 @@ public class UserManager {
         return users.get(username);
     }
 
+    // đã sửa level 2: Thêm method để tìm user theo ID
+    public User getUserById(String userId) {
+        for (User user : users.values()) {
+            if (user.getId().equals(userId)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    // đã sửa level 2: Thêm method để thêm user mới
+    public void addUser(User user) {
+        users.put(user.getUserName(), user);
+    }
+
+    // đã sửa level 2: Thêm method để xóa user
+    public boolean removeUser(String username) {
+        return users.remove(username) != null;
+    }
+
     // THÊM MỚI: Hàm lấy toàn bộ danh sách người dùng cho Admin
     public List<User> getAllUsers() {
         return new ArrayList<>(users.values());
     }
+
     // THÊM HÀM NÀY ĐỂ DAO CÓ THỂ NẠP DỮ LIỆU TỪ FILE LÊN RAM
     public void restoreUsers(List<User> loadedUsers) {
         users.clear(); // Xóa các tài khoản mặc định (như admin, bidder test)

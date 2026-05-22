@@ -58,6 +58,8 @@ public class Bidder extends User implements AuctionObserver {
         }
         BidTransaction newTransaction = new BidTransaction(auction,this,amount);
         auction.processBid(newTransaction);
+        // đã sửa level 1: Trừ balance khi đặt giá thành công
+        this.balance -= amount;
         System.out.println("Bidder " + this.getUserName() + " đã đấu giá thành công " + amount + " vào phiên " + auction.getAuctionId());
         this.addTransaction(newTransaction);
     }
@@ -84,7 +86,15 @@ public class Bidder extends User implements AuctionObserver {
     }
     @Override
     public void onNewBidPlaced(BidTransaction transaction){
-        //Hello hàm này thêm vào để tránh lỗi khi up lên github
+        // đã sửa level 2: Implement logic thông báo khi có bid mới
+        if (transaction.getBidder().getId().equals(this.getId())) {
+            System.out.println("✅ [Thông báo tới " + this.getUserName() + "] Đặt giá thành công: $" + transaction.getBidAmount());
+        } else if (transaction.getAuction().getHighestBidder() != null &&
+                   transaction.getAuction().getHighestBidder().getId().equals(this.getId())) {
+            System.out.println("📈 [Thông báo tới " + this.getUserName() + "] Bạn dẫn đầu! Mức giá: $" + transaction.getBidAmount());
+        } else {
+            System.out.println("📉 [Thông báo tới " + this.getUserName() + "] Bị vượt giá! Giá hiện tại: $" + transaction.getBidAmount());
+        }
     }
     
 }
