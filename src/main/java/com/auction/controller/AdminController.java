@@ -32,47 +32,54 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * AdminController — FIX hoàn chỉnh.
+ *
+ * FIXES THỰC HIỆN:
+ * 1. Dùng addEventListener("admin", ...) → không bị ghi đè
+ * 2. handleResponse: khi nhận AUCTION_APPROVED/REJECTED với data=List → cập nhật trực tiếp
+ *    Không cần gửi thêm GET_AUCTION_LIST (đã có data đầy đủ trong response)
+ * 3. updateStats: đếm APPROVED cùng với RUNNING cho "đang hoạt động"
+ * 4. setupAuctionTable: thêm case APPROVED và REJECTED trong display text
+ * 5. renderPendingList: chỉ hiển thị PENDING_APPROVAL
+ * 6. buildPendingCard: hiển thị đủ thông tin để admin quyết định
+ */
 public class AdminController {
 
     @FXML private BorderPane rootPane;
     @FXML private TabPane mainTabPane;
 
-    // Navbar thống kê
     @FXML private Label lblAdminName;
     @FXML private Label lblNavTotalUsers;
     @FXML private Label lblNavPending;
     @FXML private Label lblNavRunning;
     @FXML private Label lblNavRevenue;
 
-    // Tab Tổng Quan
     @FXML private Label lblStatUsers;
     @FXML private Label lblStatUsersSub;
     @FXML private Label lblStatRunning;
     @FXML private Label lblStatRunningSub;
     @FXML private Label lblStatPending;
     @FXML private Label lblStatRevenue;
-    @FXML private TableView<Auction> auctionTable;
-    @FXML private TableColumn<Auction, String> auctionItemCol;
-    @FXML private TableColumn<Auction, String> auctionSellerCol;
-    @FXML private TableColumn<Auction, String> auctionBidCol;
-    @FXML private TableColumn<Auction, String> auctionStatusCol;
-    @FXML private TableColumn<Auction, String> auctionBidCountCol;
-    @FXML private TableColumn<Auction, Void>   auctionActionCol;
+    @FXML private TableView<Auction>            auctionTable;
+    @FXML private TableColumn<Auction, String>  auctionItemCol;
+    @FXML private TableColumn<Auction, String>  auctionSellerCol;
+    @FXML private TableColumn<Auction, String>  auctionBidCol;
+    @FXML private TableColumn<Auction, String>  auctionStatusCol;
+    @FXML private TableColumn<Auction, String>  auctionBidCountCol;
+    @FXML private TableColumn<Auction, Void>    auctionActionCol;
 
-    // Tab Duyệt Sản Phẩm
     @FXML private VBox pendingContainer;
 
-    // Tab Quản Lý User
-    @FXML private TableView<User>              userTable;
-    @FXML private TableColumn<User, String>    userNameCol;
-    @FXML private TableColumn<User, String>    userEmailCol;
-    @FXML private TableColumn<User, String>    userRoleCol;
-    @FXML private TableColumn<User, String>    userBalanceCol;
-    @FXML private TableColumn<User, String>    userStatusCol;
-    @FXML private TableColumn<User, Void>      userActionCol;
-    @FXML private TextField                    txtUserSearch;
+    @FXML private TableView<User>               userTable;
+    @FXML private TableColumn<User, String>     userNameCol;
+    @FXML private TableColumn<User, String>     userEmailCol;
+    @FXML private TableColumn<User, String>     userRoleCol;
+    @FXML private TableColumn<User, String>     userBalanceCol;
+    @FXML private TableColumn<User, String>     userStatusCol;
+    @FXML private TableColumn<User, Void>       userActionCol;
+    @FXML private TextField                     txtUserSearch;
 
-    // Feedback bar
     @FXML private Label lblFeedback;
 
     private ObservableList<User>    allUsers    = FXCollections.observableArrayList();
@@ -81,7 +88,10 @@ public class AdminController {
 
     private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("dd/MM HH:mm");
 
-    // ─── INITIALIZE ───────────────────────────────────────────────────────────
+    // FIX: Key riêng cho admin listener
+    private static final String LISTENER_KEY = "admin";
+
+    // ─── INITIALIZE ────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
@@ -92,18 +102,19 @@ public class AdminController {
         setupUserTable();
 
         filteredUsers = new FilteredList<>(allUsers, u -> true);
-        if (userTable != null) userTable.setItems(filteredUsers);
+        if (userTable != null)   userTable.setItems(filteredUsers);
         if (auctionTable != null) auctionTable.setItems(allAuctions);
 
-        NetworkClient.getInstance().setOnResponseReceived(response ->
+        // FIX: Dùng addEventListener với key "admin"
+        NetworkClient.getInstance().addEventListener(LISTENER_KEY, response ->
             Platform.runLater(() -> handleResponse(response)));
 
-        // Tải dữ liệu
+        // Tải dữ liệu ban đầu
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
     }
 
-    // ─── XỬ LÝ RESPONSE TỪ SERVER ────────────────────────────────────────────
+    // ─── XỬ LÝ RESPONSE ────────────────────────────────────────────────────────
 
     @SuppressWarnings("unchecked")
     private void handleResponse(Response response) {
@@ -117,35 +128,35 @@ public class AdminController {
                 updateStats();
             }
 
-            // Nhận danh sách Auction (từ GET hoặc broadcast)
+            // FIX: Nhận bất kỳ response nào có data là List<Auction> → cập nhật ngay
             if (data instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof Auction) {
                 allAuctions.setAll((List<Auction>) data);
                 renderPendingList();
                 updateStats();
             }
 
-            // Admin vừa duyệt / từ chối → refresh
+            // FIX: Admin vừa approve/reject → response đã có List<Auction> trong data
+            // Không cần gửi thêm GET_AUCTION_LIST nếu data đã là List
             if (msg != null && (msg.startsWith("DUYỆT_OK|") || msg.startsWith("TỪ_CHỐI_OK|")
-                    || msg.startsWith("AUCTION_APPROVED") || msg.startsWith("AUCTION_REJECTED"))) {
-                setFeedback(msg.startsWith("DUYỆT_OK|") || msg.startsWith("AUCTION_APPROVED")
-                    ? "✅ Đã duyệt sản phẩm!" : "❌ Đã từ chối sản phẩm!", msg.startsWith("DUYỆT") || msg.startsWith("AUCTION_APPROVED") ? "#27ae60" : "#e74c3c");
-                NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
-                NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
-            }
-
-            // Broadcast UPDATE_AUCTION, AUCTION_CREATED, AUCTION_APPROVED, AUCTION_REJECTED
-            if ("UPDATE_AUCTION".equals(msg) || "AUCTION_CREATED".equals(msg)
-                    || "AUCTION_APPROVED".equals(msg) || "AUCTION_REJECTED".equals(msg)) {
-                if (data instanceof List<?> lst && !lst.isEmpty() && lst.get(0) instanceof Auction) {
-                    allAuctions.setAll((List<Auction>) data);
-                    renderPendingList();
-                    updateStats();
-                } else {
+                    || "AUCTION_APPROVED".equals(msg) || "AUCTION_REJECTED".equals(msg))) {
+                boolean isApprove = msg.startsWith("DUYỆT_OK|") || "AUCTION_APPROVED".equals(msg);
+                setFeedback(isApprove ? "✅ Đã duyệt sản phẩm thành công!" : "❌ Đã từ chối sản phẩm!",
+                    isApprove ? "#27ae60" : "#e74c3c");
+                // Nếu data không phải List → mới cần refresh
+                if (!(data instanceof List)) {
                     NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
                 }
             }
 
-            // Ban/Unban success
+            // Broadcast các sự kiện khác
+            if ("UPDATE_AUCTION".equals(msg) || "AUCTION_CREATED".equals(msg)
+                    || "AUCTION_WENT_LIVE".equals(msg) || "AUCTION_ENDED".equals(msg)) {
+                if (!(data instanceof List)) {
+                    NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
+                }
+            }
+
+            // Ban/Unban
             if (msg != null && msg.contains("khoản")) {
                 setFeedback("✅ " + msg, "#27ae60");
                 NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
@@ -159,32 +170,38 @@ public class AdminController {
     // ─── CẬP NHẬT THỐNG KÊ ────────────────────────────────────────────────────
 
     private void updateStats() {
-        long totalUsers  = allUsers.size();
-        long bidders     = allUsers.stream().filter(u -> u instanceof Bidder).count();
-        long sellers     = allUsers.stream().filter(u -> u instanceof Seller && !(u instanceof Admin)).count();
-        long running     = allAuctions.stream().filter(a -> a.getStatus() == AuctionStatus.RUNNING).count();
-        long pending     = allAuctions.stream().filter(a -> a.getStatus() == AuctionStatus.PENDING_APPROVAL).count();
-        long finished    = allAuctions.stream().filter(a -> a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID).count();
+        long totalUsers = allUsers.size();
+        long bidders    = allUsers.stream().filter(u -> u instanceof Bidder).count();
+        long sellers    = allUsers.stream().filter(u -> u instanceof Seller && !(u instanceof Admin)).count();
 
-        // Tổng doanh thu = tổng bid cao nhất của các phiên đã bán thành công
+        // FIX: Đếm APPROVED + RUNNING + OPEN cho "đang hoạt động"
+        long running    = allAuctions.stream()
+            .filter(a -> a.getStatus() == AuctionStatus.RUNNING
+                      || a.getStatus() == AuctionStatus.OPEN
+                      || a.getStatus() == AuctionStatus.APPROVED)
+            .count();
+        long pending    = allAuctions.stream()
+            .filter(a -> a.getStatus() == AuctionStatus.PENDING_APPROVAL).count();
+        long finished   = allAuctions.stream()
+            .filter(a -> a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID).count();
+
         double revenue = allAuctions.stream()
             .filter(a -> a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID)
-            .mapToDouble(Auction::getCurrentHighestBid)
-            .sum();
+            .mapToDouble(Auction::getCurrentHighestBid).sum();
 
         // Navbar
         safe(lblNavTotalUsers, String.valueOf(totalUsers));
-        safe(lblNavPending, String.valueOf(pending));
-        safe(lblNavRunning, String.valueOf(running));
-        safe(lblNavRevenue, CurrencyFormatter.format(revenue));
+        safe(lblNavPending,    String.valueOf(pending));
+        safe(lblNavRunning,    String.valueOf(running));
+        safe(lblNavRevenue,    CurrencyFormatter.format(revenue));
 
-        // Tab tổng quan cards
-        safe(lblStatUsers, String.valueOf(totalUsers));
-        safe(lblStatUsersSub, bidders + " Bidder · " + sellers + " Seller");
-        safe(lblStatRunning, String.valueOf(running));
+        // Tab tổng quan
+        safe(lblStatUsers,      String.valueOf(totalUsers));
+        safe(lblStatUsersSub,   bidders + " Bidder · " + sellers + " Seller");
+        safe(lblStatRunning,    String.valueOf(running));
         safe(lblStatRunningSub, finished + " phiên đã kết thúc");
-        safe(lblStatPending, String.valueOf(pending));
-        safe(lblStatRevenue, CurrencyFormatter.format(revenue));
+        safe(lblStatPending,    String.valueOf(pending));
+        safe(lblStatRevenue,    CurrencyFormatter.format(revenue));
     }
 
     private void safe(Label lbl, String text) {
@@ -229,7 +246,7 @@ public class AdminController {
                       "-fx-background-radius: 8; -fx-border-width: 0 0 0 3;");
         HBox.setHgrow(card, Priority.ALWAYS);
 
-        // Thumbnail / Icon
+        // Thumbnail
         StackPane thumb = new StackPane();
         thumb.setMinSize(70, 70); thumb.setMaxSize(70, 70);
         thumb.setStyle("-fx-background-color: #2A2A2A; -fx-background-radius: 8;");
@@ -287,20 +304,17 @@ public class AdminController {
         btnApprove.setMaxWidth(Double.MAX_VALUE);
         btnApprove.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; " +
                             "-fx-background-radius: 5; -fx-cursor: hand; -fx-padding: 10 18; -fx-font-size: 13px;");
-        btnApprove.setOnAction(e -> onApproveAuction(auction, btnApprove, actions));
+        btnApprove.setOnAction(e -> onApproveAuction(auction, btnApprove));
 
         Button btnReject = new Button("❌  TỪ CHỐI");
         btnReject.setMaxWidth(Double.MAX_VALUE);
         btnReject.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-weight: bold; " +
                            "-fx-background-radius: 5; -fx-cursor: hand; -fx-padding: 10 18; -fx-font-size: 13px;");
-        btnReject.setOnAction(e -> onRejectAuction(auction, btnReject, actions));
+        btnReject.setOnAction(e -> onRejectAuction(auction, btnReject));
 
         actions.getChildren().addAll(btnApprove, btnReject);
-
         card.getChildren().addAll(thumb, info, actions);
         return card;
-
-        // Separator
     }
 
     private void addCategoryIcon(StackPane thumb, Auction a) {
@@ -321,18 +335,19 @@ public class AdminController {
         g.add(v, col * 2 + 1, 0);
     }
 
-    private void onApproveAuction(Auction auction, Button btn, VBox actions) {
+    private void onApproveAuction(Auction auction, Button btn) {
         btn.setDisable(true);
         setFeedback("⏳ Đang duyệt " + auction.getItem().getNameItem() + "...", "#F5C518");
         NetworkClient.getInstance().sendRequest(
             new Request(ActionType.APPROVE_AUCTION, auction.getAuctionId()));
     }
 
-    private void onRejectAuction(Auction auction, Button btn, VBox actions) {
+    private void onRejectAuction(Auction auction, Button btn) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Xác nhận từ chối");
         confirm.setHeaderText(null);
-        confirm.setContentText("Bạn có chắc muốn TỪ CHỐI sản phẩm:\n\"" + auction.getItem().getNameItem() + "\"?");
+        confirm.setContentText("Bạn có chắc muốn TỪ CHỐI sản phẩm:\n\"" +
+            auction.getItem().getNameItem() + "\"?");
         confirm.showAndWait().ifPresent(result -> {
             if (result == ButtonType.OK) {
                 btn.setDisable(true);
@@ -347,33 +362,40 @@ public class AdminController {
 
     private void setupAuctionTable() {
         if (auctionItemCol != null)
-            auctionItemCol.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getItem().getNameItem()));
+            auctionItemCol.setCellValueFactory(d ->
+                new SimpleStringProperty(d.getValue().getItem().getNameItem()));
         if (auctionSellerCol != null)
-            auctionSellerCol.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getSeller().getUserName()));
+            auctionSellerCol.setCellValueFactory(d ->
+                new SimpleStringProperty(d.getValue().getSeller().getUserName()));
         if (auctionBidCol != null)
-            auctionBidCol.setCellValueFactory(d -> new SimpleStringProperty(CurrencyFormatter.format(d.getValue().getCurrentHighestBid())));
+            auctionBidCol.setCellValueFactory(d ->
+                new SimpleStringProperty(CurrencyFormatter.format(d.getValue().getCurrentHighestBid())));
         if (auctionStatusCol != null)
             auctionStatusCol.setCellValueFactory(d -> {
+                // FIX: Thêm case APPROVED và REJECTED
                 AuctionStatus s = d.getValue().getStatus();
                 String text = switch (s) {
                     case PENDING_APPROVAL -> "⏳ Chờ duyệt";
-                    case RUNNING -> "🔴 Đang chạy";
-                    case FINISHED -> "✅ Kết thúc";
-                    case PAID -> "💰 Đã thanh toán";
-                    case CANCELED -> "❌ Đã hủy";
-                    default -> s.toString();
+                    case APPROVED         -> "✅ Đã duyệt";
+                    case RUNNING          -> "🔴 Đang chạy";
+                    case OPEN             -> "🟢 Đang mở";
+                    case REJECTED         -> "❌ Bị từ chối";
+                    case FINISHED         -> "✅ Kết thúc";
+                    case PAID             -> "💰 Đã thanh toán";
+                    case CANCELED         -> "🚫 Đã hủy";
+                    default               -> s.toString();
                 };
                 return new SimpleStringProperty(text);
             });
         if (auctionBidCountCol != null)
-            auctionBidCountCol.setCellValueFactory(d -> new SimpleStringProperty(String.valueOf(d.getValue().getBidHistory().size())));
+            auctionBidCountCol.setCellValueFactory(d ->
+                new SimpleStringProperty(String.valueOf(d.getValue().getBidHistory().size())));
 
         if (auctionActionCol != null)
             auctionActionCol.setCellFactory(col -> new TableCell<>() {
-                private final Button btnCancel = new Button("🚫 Dừng Phiên");
+                private final Button btnCancel  = new Button("🚫 Dừng Phiên");
                 private final Button btnApprove = new Button("✅ Duyệt");
                 private final HBox box = new HBox(6, btnApprove, btnCancel);
-
                 {
                     box.setAlignment(Pos.CENTER_LEFT);
                     btnCancel.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white; -fx-cursor: hand; " +
@@ -382,22 +404,27 @@ public class AdminController {
                                         "-fx-padding: 4 10; -fx-background-radius: 4; -fx-font-size: 11px;");
                     btnCancel.setOnAction(e -> {
                         Auction a = getTableView().getItems().get(getIndex());
-                        NetworkClient.getInstance().sendRequest(new Request(ActionType.CANCEL_AUCTION, a.getAuctionId()));
+                        NetworkClient.getInstance().sendRequest(
+                            new Request(ActionType.CANCEL_AUCTION, a.getAuctionId()));
                     });
                     btnApprove.setOnAction(e -> {
                         Auction a = getTableView().getItems().get(getIndex());
-                        onApproveAuction(a, btnApprove, null);
+                        onApproveAuction(a, btnApprove);
                     });
                 }
 
                 @Override
                 protected void updateItem(Void item, boolean empty) {
                     super.updateItem(item, empty);
-                    if (empty || getIndex() >= getTableView().getItems().size()) { setGraphic(null); return; }
+                    if (empty || getIndex() >= getTableView().getItems().size()) {
+                        setGraphic(null); return;
+                    }
                     Auction a = getTableView().getItems().get(getIndex());
                     btnApprove.setVisible(a.getStatus() == AuctionStatus.PENDING_APPROVAL);
                     btnApprove.setManaged(a.getStatus() == AuctionStatus.PENDING_APPROVAL);
-                    boolean canStop = a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.OPEN;
+                    boolean canStop = a.getStatus() == AuctionStatus.RUNNING
+                                   || a.getStatus() == AuctionStatus.OPEN
+                                   || a.getStatus() == AuctionStatus.APPROVED;
                     btnCancel.setVisible(canStop);
                     btnCancel.setManaged(canStop);
                     setGraphic(box);
@@ -415,7 +442,7 @@ public class AdminController {
         if (userRoleCol != null)
             userRoleCol.setCellValueFactory(d -> {
                 User u = d.getValue();
-                if (u instanceof Admin) return new SimpleStringProperty("👑 Admin");
+                if (u instanceof Admin)  return new SimpleStringProperty("👑 Admin");
                 if (u instanceof Seller) return new SimpleStringProperty("🏪 Seller");
                 return new SimpleStringProperty("🏷 Bidder");
             });
@@ -433,20 +460,21 @@ public class AdminController {
         if (userActionCol != null)
             userActionCol.setCellFactory(col -> new TableCell<>() {
                 private final Button btn = new Button();
-
                 {
                     btn.setOnAction(e -> {
                         User user = getTableView().getItems().get(getIndex());
-                        NetworkClient.getInstance().sendRequest(new Request(ActionType.BAN_USER, user.getUserName()));
+                        NetworkClient.getInstance().sendRequest(
+                            new Request(ActionType.BAN_USER, user.getUserName()));
                     });
                 }
 
                 @Override
                 protected void updateItem(Void item, boolean empty) {
                     super.updateItem(item, empty);
-                    if (empty || getIndex() >= getTableView().getItems().size()) { setGraphic(null); return; }
+                    if (empty || getIndex() >= getTableView().getItems().size()) {
+                        setGraphic(null); return;
+                    }
                     User user = getTableView().getItems().get(getIndex());
-                    // Không cho ban Admin
                     if (user instanceof Admin) { setGraphic(null); return; }
                     btn.setText(user.isBanned() ? "🔓 Mở Khóa" : "🔒 Khóa");
                     btn.setStyle(user.isBanned()
@@ -467,7 +495,7 @@ public class AdminController {
         }
     }
 
-    // ─── Hành động ──────────────────────────────────────────────────────────
+    // ─── Hành động ────────────────────────────────────────────────────────────
 
     @FXML
     public void onRefreshClick(ActionEvent event) {
@@ -476,9 +504,10 @@ public class AdminController {
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
     }
 
+    // FIX: removeEventListener thay vì removeOnResponseReceived
     @FXML
     public void onLogoutClick(ActionEvent event) {
-        NetworkClient.getInstance().removeOnResponseReceived();
+        NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
         AppContext.logout();
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));

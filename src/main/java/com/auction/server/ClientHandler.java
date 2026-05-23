@@ -10,9 +10,25 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.util.List;
 
+/**
+ * ClientHandler — xử lý tất cả request từ một client cụ thể.
+ *
+ * FIXES THỰC HIỆN:
+ * 1. CREATE_AUCTION: trả về List<Auction> thay vì single Auction — client tự renderInventory
+ * 2. APPROVE_AUCTION: auto-LIVE nếu startTime <= now, còn lại set APPROVED + lên scheduler
+ *    Trả về List<Auction> thay vì single Auction.
+ *    Trigger scheduleAutoClose() sau khi approve để auction tự kết thúc đúng giờ.
+ * 3. REJECT_AUCTION: set REJECTED thay vì CANCELED — seller thấy đúng status.
+ *    Trả về List<Auction>.
+ * 4. PLACE_BID: trigger settleAuction() khi thời gian kết thúc
+ * 5. Toàn bộ broadcast dùng List<Auction> để client filter nhất quán.
+ */
 public class ClientHandler implements Runnable {
-    private Socket socket;
+
+    private final Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
@@ -87,7 +103,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, e.getMessage(), null);
                 }
 
-            // ─── ĐĂNG KÝ (Hỗ trợ Bidder, Seller, Admin) ─────────────────────
+            // ─── ĐĂNG KÝ ─────────────────────────────────────────────────────
             case REGISTER:
                 try {
                     String registerData = (String) request.getPayload();
@@ -99,7 +115,6 @@ public class ClientHandler implements Runnable {
                     String regPassword = data[1];
                     String regEmail    = data[2];
                     String regRole     = (data.length >= 4) ? data[3] : "Bidder";
-                    // Field thứ 5: adminCode (chỉ cần khi role = Admin)
                     String adminCode   = (data.length >= 5) ? data[4] : null;
 
                     boolean success = UserManager.getInstance().register(
@@ -136,6 +151,14 @@ public class ClientHandler implements Runnable {
                         return new Response(StatusType.ERROR, "Phiên đấu giá không tồn tại.", null);
                     }
 
+                    // Cho phép đặt giá khi RUNNING hoặc APPROVED (đã được duyệt)
+                    if (auction.getStatus() != AuctionStatus.RUNNING &&
+                        auction.getStatus() != AuctionStatus.OPEN &&
+                        auction.getStatus() != AuctionStatus.APPROVED) {
+                        return new Response(StatusType.ERROR,
+                            "Phiên đấu giá không ở trạng thái có thể đặt giá. Trạng thái: " + auction.getStatus(), null);
+                    }
+
                     Bidder realBidder = (Bidder) UserManager.getInstance().getUser(bidData.getUsername());
                     if (realBidder == null) {
                         return new Response(StatusType.ERROR, "Tài khoản không hợp lệ.", null);
@@ -143,9 +166,15 @@ public class ClientHandler implements Runnable {
 
                     realBidder.placeBid(auction, bidData.getBidAmount());
                     AuctionManager.getInstance().updateAuction(auction);
-                    ServerApp.broadcastAuctionUpdate(auction, "UPDATE_AUCTION");
 
-                    return new Response(StatusType.SUCCESS, "Đặt giá thành công!", null);
+                    // Broadcast toàn bộ list để các client tự refresh
+                    List<Auction> allAfterBid = AuctionManager.getInstance().getAllAuctions();
+                    ServerApp.broadcastAuctionUpdate(allAfterBid, "UPDATE_AUCTION");
+
+                    // Lưu số dư mới của bidder
+                    ServerApp.getUserDAO().saveDataToFile();
+
+                    return new Response(StatusType.SUCCESS, "Đặt giá thành công!", realBidder.getBalance());
 
                 } catch (AuctionException e) {
                     return new Response(StatusType.ERROR, e.getMessage(), null);
@@ -153,20 +182,26 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, "Lỗi hệ thống khi xử lý đặt giá.", null);
                 }
 
-            // ─── TẠO PHIÊN ĐẤU GIÁ ──────────────────────────────────────────
+            // ─── TẠO PHIÊN ĐẤU GIÁ ─────────────────────────────────────────
             case CREATE_AUCTION:
                 try {
                     Auction newAuction = (Auction) request.getPayload();
+
+                    // FIX: Thêm vào RAM list trước khi broadcast
                     AuctionManager.getInstance().getAllAuctions().add(newAuction);
-                    ServerApp.getAuctionDAO().save(newAuction);
+                    // Flush file (RAM đã có newAuction rồi)
+                    ServerApp.getAuctionDAO().saveDataToFile();
 
-                    // Broadcast toàn bộ danh sách mới đến TẤT CẢ client
-                    // (dùng data = danh sách để client tự refresh)
-                    ServerApp.broadcastAuctionUpdate(
-                            AuctionManager.getInstance().getAllAuctions(),
-                            "AUCTION_CREATED");
+                    // FIX: Lấy toàn bộ list (đã bao gồm newAuction) để broadcast
+                    List<Auction> updatedList = AuctionManager.getInstance().getAllAuctions();
 
-                    return new Response(StatusType.SUCCESS, "Đăng sản phẩm thành công!", newAuction);
+                    // Broadcast với data = List<Auction> — client nhận và renderInventory ngay
+                    ServerApp.broadcastAuctionUpdate(updatedList, "AUCTION_CREATED");
+
+                    // FIX: Trả về List (không phải single Auction) để client filter ngay
+                    System.out.println("📦 [SERVER] Auction mới tạo: " + newAuction.getItem().getNameItem() +
+                        " | Tổng: " + updatedList.size() + " phiên");
+                    return new Response(StatusType.SUCCESS, "AUCTION_CREATED", updatedList);
 
                 } catch (Exception e) {
                     System.err.println("Lỗi khi tạo phiên đấu giá: " + e.getMessage());
@@ -178,7 +213,7 @@ public class ClientHandler implements Runnable {
                 return new Response(StatusType.SUCCESS, "Danh sách đấu giá",
                         AuctionManager.getInstance().getAllAuctions());
 
-            // ─── LẤY DANH SÁCH NGƯỜI DÙNG ────────────────────────────────────
+            // ─── LẤY DANH SÁCH USER ──────────────────────────────────────────
             case GET_USER_LIST:
                 return new Response(StatusType.SUCCESS, "Danh sách User",
                         UserManager.getInstance().getAllUsers());
@@ -210,9 +245,9 @@ public class ClientHandler implements Runnable {
                     if (auctionToCancel != null) {
                         auctionToCancel.setStatus(AuctionStatus.CANCELED);
                         AuctionManager.getInstance().updateAuction(auctionToCancel);
-                        ServerApp.broadcastAuctionUpdate(
-                                AuctionManager.getInstance().getAllAuctions(), "UPDATE_AUCTION");
-                        return new Response(StatusType.SUCCESS, "Đã ép dừng phiên đấu giá!", null);
+                        List<Auction> allAfterCancel = AuctionManager.getInstance().getAllAuctions();
+                        ServerApp.broadcastAuctionUpdate(allAfterCancel, "UPDATE_AUCTION");
+                        return new Response(StatusType.SUCCESS, "Đã ép dừng phiên đấu giá!", allAfterCancel);
                     }
                     return new Response(StatusType.ERROR, "Không tìm thấy phiên đấu giá.", null);
                 } catch (Exception e) {
@@ -224,19 +259,36 @@ public class ClientHandler implements Runnable {
                 try {
                     String approveId = (String) request.getPayload();
                     Auction toApprove = AuctionManager.getInstance().getAuctionById(approveId);
+
                     if (toApprove == null)
                         return new Response(StatusType.ERROR, "Không tìm thấy phiên.", null);
                     if (toApprove.getStatus() != AuctionStatus.PENDING_APPROVAL)
                         return new Response(StatusType.ERROR, "Phiên này không ở trạng thái chờ duyệt.", null);
 
-                    toApprove.setStatus(AuctionStatus.RUNNING);
+                    // FIX: Auto-LIVE nếu startTime <= now, còn lại set APPROVED (chờ đến giờ)
+                    LocalDateTime now = LocalDateTime.now();
+                    if (toApprove.getStartTime() == null || !toApprove.getStartTime().isAfter(now)) {
+                        // Bắt đầu ngay → RUNNING
+                        toApprove.setStatus(AuctionStatus.RUNNING);
+                        // FIX: Trigger scheduleAutoClose để auction tự kết thúc đúng giờ
+                        ServerApp.scheduleAutoClose(toApprove);
+                        System.out.println("✅ [ADMIN] Duyệt + RUNNING ngay: " + toApprove.getItem().getNameItem());
+                    } else {
+                        // Chưa đến giờ → APPROVED, scheduler sẽ chuyển sang RUNNING sau
+                        toApprove.setStatus(AuctionStatus.APPROVED);
+                        ServerApp.scheduleApprovedToLive(toApprove);
+                        System.out.println("✅ [ADMIN] Duyệt → APPROVED (chờ giờ): " + toApprove.getItem().getNameItem());
+                    }
+
                     AuctionManager.getInstance().updateAuction(toApprove);
                     ServerApp.getAuctionDAO().saveDataToFile();
-                    // Broadcast toàn bộ danh sách để Seller thấy kho hàng, Bidder thấy phiên mới
-                    ServerApp.broadcastAuctionUpdate(
-                            AuctionManager.getInstance().getAllAuctions(), "AUCTION_APPROVED");
-                    System.out.println("✅ [ADMIN] Đã duyệt: " + toApprove.getItem().getNameItem());
-                    return new Response(StatusType.SUCCESS, "DUYỆT_OK|" + approveId, toApprove);
+
+                    // FIX: Broadcast với toàn bộ List<Auction> — client filter nhất quán
+                    List<Auction> allAfterApprove = AuctionManager.getInstance().getAllAuctions();
+                    ServerApp.broadcastAuctionUpdate(allAfterApprove, "AUCTION_APPROVED");
+
+                    return new Response(StatusType.SUCCESS, "DUYỆT_OK|" + approveId, allAfterApprove);
+
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Lỗi khi duyệt: " + e.getMessage(), null);
                 }
@@ -246,16 +298,22 @@ public class ClientHandler implements Runnable {
                 try {
                     String rejectId = (String) request.getPayload();
                     Auction toReject = AuctionManager.getInstance().getAuctionById(rejectId);
+
                     if (toReject == null)
                         return new Response(StatusType.ERROR, "Không tìm thấy phiên.", null);
 
-                    toReject.setStatus(AuctionStatus.CANCELED);
+                    // FIX: Set REJECTED thay vì CANCELED — seller thấy đúng lý do
+                    toReject.setStatus(AuctionStatus.REJECTED);
                     AuctionManager.getInstance().updateAuction(toReject);
                     ServerApp.getAuctionDAO().saveDataToFile();
-                    ServerApp.broadcastAuctionUpdate(
-                            AuctionManager.getInstance().getAllAuctions(), "AUCTION_REJECTED");
+
+                    // FIX: Broadcast với List<Auction>
+                    List<Auction> allAfterReject = AuctionManager.getInstance().getAllAuctions();
+                    ServerApp.broadcastAuctionUpdate(allAfterReject, "AUCTION_REJECTED");
+
                     System.out.println("❌ [ADMIN] Đã từ chối: " + toReject.getItem().getNameItem());
-                    return new Response(StatusType.SUCCESS, "TỪ_CHỐI_OK|" + rejectId, toReject);
+                    return new Response(StatusType.SUCCESS, "TỪ_CHỐI_OK|" + rejectId, allAfterReject);
+
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Lỗi khi từ chối: " + e.getMessage(), null);
                 }
@@ -272,13 +330,11 @@ public class ClientHandler implements Runnable {
                     double amount = Double.parseDouble(parts[1]);
 
                     User user = UserManager.getInstance().getUser(targetUser);
-                    if (user instanceof Bidder) {
-                        Bidder bidder = (Bidder) user;
+                    if (user instanceof Bidder bidder) {
                         bidder.setBalance(bidder.getBalance() + amount);
                         ServerApp.getUserDAO().saveDataToFile();
                         return new Response(StatusType.SUCCESS, "Nạp tiền thành công!", bidder.getBalance());
-                    } else if (user instanceof Seller) {
-                        Seller seller = (Seller) user;
+                    } else if (user instanceof Seller seller) {
                         seller.setBalance(seller.getBalance() + amount);
                         ServerApp.getUserDAO().saveDataToFile();
                         return new Response(StatusType.SUCCESS, "Nạp tiền thành công!", seller.getBalance());
@@ -300,16 +356,14 @@ public class ClientHandler implements Runnable {
                     double amount = Double.parseDouble(parts[1]);
 
                     User user = UserManager.getInstance().getUser(targetUser);
-                    if (user instanceof Bidder) {
-                        Bidder bidder = (Bidder) user;
+                    if (user instanceof Bidder bidder) {
                         if (bidder.getBalance() < amount) {
                             return new Response(StatusType.ERROR, "Số dư không đủ để rút tiền!", null);
                         }
                         bidder.setBalance(bidder.getBalance() - amount);
                         ServerApp.getUserDAO().saveDataToFile();
                         return new Response(StatusType.SUCCESS, "Rút tiền thành công!", bidder.getBalance());
-                    } else if (user instanceof Seller) {
-                        Seller seller = (Seller) user;
+                    } else if (user instanceof Seller seller) {
                         if (seller.getBalance() < amount) {
                             return new Response(StatusType.ERROR, "Số dư không đủ để rút tiền!", null);
                         }
@@ -332,7 +386,7 @@ public class ClientHandler implements Runnable {
                     }
                     String username    = parts[0];
                     String newEmail    = parts[1];
-                    String newPassword = parts[2]; // Có thể rỗng nếu không đổi
+                    String newPassword = parts[2];
 
                     User user = UserManager.getInstance().getUser(username);
                     if (user == null) {

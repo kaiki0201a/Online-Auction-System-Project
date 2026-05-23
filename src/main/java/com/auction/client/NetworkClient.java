@@ -9,8 +9,17 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+/**
+ * NetworkClient — Singleton TCP client với multi-listener EventBus.
+ *
+ * FIX CRITICAL: Thay thế single-listener (currentListener) bằng ConcurrentHashMap.
+ * Mỗi màn hình đăng ký với key riêng → không còn ghi đè nhau.
+ * Tất cả listeners đều nhận BROADCAST từ server (AUCTION_CREATED, AUCTION_APPROVED, v.v.)
+ */
 public class NetworkClient {
 
     private static volatile NetworkClient instance;
@@ -19,9 +28,11 @@ public class NetworkClient {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    // SỬA LỖI LOGIC: Dùng 1 listener duy nhất, có thể thay đổi
-    // Thay vì List tích lũy listener gây memory leak
-    private Consumer<Response> currentListener;
+    // FIX: Dùng Map thay vì 1 listener duy nhất — mỗi screen giữ key riêng
+    private final Map<String, Consumer<Response>> listeners = new ConcurrentHashMap<>();
+
+    // Key mặc định cho backward compatibility
+    private static final String DEFAULT_KEY = "default";
 
     private NetworkClient() {}
 
@@ -36,17 +47,46 @@ public class NetworkClient {
         return instance;
     }
 
+    // ─── EventBus API ────────────────────────────────────────────────────────
+
     /**
-     * SỬA LỖI LOGIC: Thay thế listener cũ bằng listener mới.
-     * Mỗi màn hình chỉ giữ 1 listener tại 1 thời điểm, tránh tích lũy vô hạn.
+     * Đăng ký listener với key định danh (VD: "seller", "admin", "bidder").
+     * Mỗi key ghi đè listener cũ có cùng key — nhưng không ảnh hưởng key khác.
      */
-    public void setOnResponseReceived(Consumer<Response> callback) {
-        this.currentListener = callback;
+    public void addEventListener(String key, Consumer<Response> callback) {
+        listeners.put(key, callback);
     }
 
-    public void removeOnResponseReceived() {
-        this.currentListener = null;
+    /**
+     * Gỡ listener theo key khi màn hình đóng/navigate đi.
+     */
+    public void removeEventListener(String key) {
+        listeners.remove(key);
     }
+
+    /**
+     * Backward compatibility: setOnResponseReceived → ghi vào key "default".
+     * Các màn hình cũ dùng API này vẫn hoạt động bình thường.
+     */
+    public void setOnResponseReceived(Consumer<Response> callback) {
+        listeners.put(DEFAULT_KEY, callback);
+    }
+
+    /**
+     * Backward compatibility: removeOnResponseReceived → xóa key "default".
+     */
+    public void removeOnResponseReceived() {
+        listeners.remove(DEFAULT_KEY);
+    }
+
+    /**
+     * Xóa toàn bộ listeners (khi disconnect hoàn toàn).
+     */
+    public void removeAllListeners() {
+        listeners.clear();
+    }
+
+    // ─── Network API ─────────────────────────────────────────────────────────
 
     public void connect(String serverAddress, int port) {
         try {
@@ -83,43 +123,35 @@ public class NetworkClient {
         }
     }
 
-    // --- CÁC HÀM TIỆN ÍCH GỬI REQUEST ---
+    // ─── Convenience Methods ─────────────────────────────────────────────────
 
     public void login(String username, String password) {
         sendRequest(new Request(ActionType.LOGIN, username + "|" + password));
     }
 
-    /**
-     * Đăng ký tài khoản mới (Bidder / Seller)
-     */
     public void register(String username, String password, String email, String role) {
         sendRequest(new Request(ActionType.REGISTER,
                 username + "|" + password + "|" + email + "|" + role));
     }
 
-    /**
-     * Đăng ký tài khoản Admin kèm mã xác nhận
-     */
     public void register(String username, String password, String email, String role, String adminCode) {
         sendRequest(new Request(ActionType.REGISTER,
                 username + "|" + password + "|" + email + "|" + role + "|" + adminCode));
     }
 
-    /** Admin phê duyệt sản phẩm đang chờ */
     public void approveAuction(String auctionId) {
         sendRequest(new Request(ActionType.APPROVE_AUCTION, auctionId));
     }
 
-    /** Admin từ chối sản phẩm đang chờ */
     public void rejectAuction(String auctionId) {
         sendRequest(new Request(ActionType.REJECT_AUCTION, auctionId));
     }
 
-    /** Admin dừng phiên đang chạy */
     public void cancelAuction(String auctionId) {
         sendRequest(new Request(ActionType.CANCEL_AUCTION, auctionId));
     }
 
+    // ─── Listen Thread ───────────────────────────────────────────────────────
 
     private void startListening() {
         Thread listenThread = new Thread(() -> {
@@ -127,10 +159,17 @@ public class NetworkClient {
                 try {
                     Response response = (Response) in.readObject();
 
-                    // Đẩy dữ liệu về luồng JavaFX
+                    // FIX: Dispatch đến TẤT CẢ listeners (không chỉ 1)
                     Platform.runLater(() -> {
-                        if (currentListener != null) {
-                            currentListener.accept(response);
+                        if (!listeners.isEmpty()) {
+                            // Snapshot để tránh ConcurrentModificationException
+                            for (Consumer<Response> listener : listeners.values()) {
+                                try {
+                                    listener.accept(response);
+                                } catch (Exception ex) {
+                                    System.err.println("⚠️ Lỗi trong listener: " + ex.getMessage());
+                                }
+                            }
                         }
                     });
 
@@ -147,7 +186,7 @@ public class NetworkClient {
 
     public void disconnect() {
         try {
-            this.currentListener = null;
+            listeners.clear();
             if (in != null) in.close();
             if (out != null) out.close();
             if (socket != null) socket.close();

@@ -82,8 +82,9 @@ public class Auction extends Entity implements Serializable {
             throw new AuctionFinishedException("Phiên đấu giá đã kết thúc vào lúc " + this.endTime);
         }
 
-        // 2. SỬA LỖI LOGIC: Cho phép cả OPEN và RUNNING đặt giá
-        if (this.status != AuctionStatus.RUNNING && this.status != AuctionStatus.OPEN) {
+        // 2. Cho phép cả OPEN, RUNNING và APPROVED đặt giá
+        if (this.status != AuctionStatus.RUNNING && this.status != AuctionStatus.OPEN
+                && this.status != AuctionStatus.APPROVED) {
             throw new AuctionClosedException("Phiên đấu giá không ở trạng thái hoạt động. Trạng thái: " + this.status);
         }
 

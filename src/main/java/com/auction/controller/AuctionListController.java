@@ -54,7 +54,7 @@ public class AuctionListController {
         comboStatus.setOnAction(e -> applyFilter());
         if (txtSearch != null) txtSearch.textProperty().addListener((o, ov, nv) -> applyFilter());
 
-        NetworkClient.getInstance().setOnResponseReceived(response -> {
+        NetworkClient.getInstance().addEventListener("auctionList", response -> {
             Platform.runLater(() -> {
                 if (response.getStatus() == StatusType.SUCCESS && response.getData() instanceof List) {
                     List<?> data = (List<?>) response.getData();
@@ -66,7 +66,8 @@ public class AuctionListController {
                 // Phản ứng các loại broadcast
                 String msg = response.getMessage();
                 if ("UPDATE_AUCTION".equals(msg) || "AUCTION_APPROVED".equals(msg)
-                        || "AUCTION_REJECTED".equals(msg) || "AUCTION_CREATED".equals(msg)) {
+                        || "AUCTION_REJECTED".equals(msg) || "AUCTION_CREATED".equals(msg)
+                        || "AUCTION_WENT_LIVE".equals(msg) || "AUCTION_ENDED".equals(msg)) {
                     if (!(response.getData() instanceof List)) {
                         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
                     }
@@ -88,8 +89,10 @@ public class AuctionListController {
             .filter(a -> a.getItem().getNameItem().toLowerCase().contains(kw))
             .filter(a -> "Tất cả".equals(cat) || a.getItem().getClass().getSimpleName().equals(cat))
             .filter(a -> {
-                if ("Đang diễn ra".equals(status)) return a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.OPEN;
-                if ("Đã kết thúc".equals(status)) return a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID;
+                if ("Đang diễn ra".equals(status)) return a.getStatus() == AuctionStatus.RUNNING
+                    || a.getStatus() == AuctionStatus.OPEN || a.getStatus() == AuctionStatus.APPROVED;
+                if ("Đã kết thúc".equals(status)) return a.getStatus() == AuctionStatus.FINISHED
+                    || a.getStatus() == AuctionStatus.PAID;
                 return true;
             }).collect(Collectors.toList());
 
@@ -201,17 +204,21 @@ public class AuctionListController {
     private String getStatusLabel(Auction a) {
         return switch (a.getStatus()) {
             case RUNNING, OPEN       -> "• ĐANG DIỄN RA";
+            case APPROVED            -> "• SẮP DIỄN RA";
             case FINISHED, PAID      -> "• ĐÃ KẾT THÚC";
             case CANCELED            -> "• ĐÃ HỦY";
-            case PENDING_APPROVAL    -> "• CHờ DUYỆT";
+            case REJECTED            -> "• BỊ TỪ CHỐI";
+            case PENDING_APPROVAL    -> "• CHỜ DUYỆT";
         };
     }
     private String getStatusStyle(Auction a) {
         String base = "-fx-padding: 3 8; -fx-background-radius: 4; -fx-font-size: 10px; -fx-font-weight: bold;";
         return switch (a.getStatus()) {
-            case RUNNING, OPEN -> base + "-fx-background-color: rgba(245,197,24,0.2); -fx-text-fill: #F5C518;";
-            case FINISHED, PAID -> base + "-fx-background-color: rgba(39,174,96,0.2); -fx-text-fill: #27ae60;";
-            default -> base + "-fx-background-color: rgba(231,76,60,0.2); -fx-text-fill: #e74c3c;";
+            case RUNNING, OPEN    -> base + "-fx-background-color: rgba(245,197,24,0.2); -fx-text-fill: #F5C518;";
+            case APPROVED         -> base + "-fx-background-color: rgba(52,152,219,0.2); -fx-text-fill: #3498db;";
+            case FINISHED, PAID   -> base + "-fx-background-color: rgba(39,174,96,0.2); -fx-text-fill: #27ae60;";
+            case REJECTED         -> base + "-fx-background-color: rgba(155,89,182,0.2); -fx-text-fill: #9b59b6;";
+            default               -> base + "-fx-background-color: rgba(231,76,60,0.2); -fx-text-fill: #e74c3c;";
         };
     }
 
@@ -228,7 +235,7 @@ public class AuctionListController {
     }
 
     @FXML public void onBackClick(ActionEvent event) {
-        NetworkClient.getInstance().removeOnResponseReceived();
+        NetworkClient.getInstance().removeEventListener("auctionList");
         try {
             User u = AppContext.getCurrentUser();
             String path = (u instanceof com.auction.model.Seller) ? "/com/auction/view/SellerDashboard.fxml" : "/com/auction/view/BidderDashboard.fxml";
