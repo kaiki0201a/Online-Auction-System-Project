@@ -9,6 +9,7 @@ import com.auction.utils.NotificationUtil;
 import com.auction.utils.UIUtils;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -95,72 +96,15 @@ public class AddProductController {
 
     @FXML
     public void handleSubmit() {
-        String productName = txtName.getText().trim();
-        String priceStr = txtStartingPrice.getText().trim();
-        String description = txtDescription.getText().trim();
-        String category = categoryBox.getValue();
 
-        if (productName.isEmpty() || priceStr.isEmpty() || category == null) {
-            NotificationUtil.showToast("Vui lòng điền đủ thông tin!", rootPane, "warning");
-            return;
-        }
-
-        double price;
-        try {
-            price = Double.parseDouble(priceStr);
-        } catch (NumberFormatException ex) {
-            NotificationUtil.showToast("Giá khởi điểm phải là số!", rootPane, "error");
-            return;
-        }
-
-        // LỌC AN TOÀN CHỈ LẤY CÁC Ô NHẬP LIỆU BẰNG LIST
-        List<String> inputs = new ArrayList<>();
-        for (Node node : dynamicForm.getChildren()) {
-            if (node instanceof TextField) {
-                inputs.add(((TextField) node).getText().trim());
-            }
-        }
-
-        Item newItem = null;
-        try {
-            if ("Art".equals(category)) {
-                newItem = new Art(productName, description, price, inputs.get(0), Integer.parseInt(inputs.get(1)));
-            } else if ("Electronics".equals(category)) {
-                newItem = new Electronics(productName, description, price, inputs.get(0), Integer.parseInt(inputs.get(1)));
-            } else if ("Vehicle".equals(category)) {
-                newItem = new Vehicle(productName, description, price, inputs.get(0), Double.parseDouble(inputs.get(1)));
-            }
-        } catch (Exception ex) {
-            NotificationUtil.showToast("Dữ liệu nhập vào chưa đúng định dạng số!", rootPane, "warning");
-            return;
-        }
-
-        User currentUser = AppContext.getCurrentUser();
-        if (!(currentUser instanceof Seller)) {
-            NotificationUtil.showToast("Lỗi quyền: Chỉ Seller mới được đăng sản phẩm!", rootPane, "error");
-            return;
-        }
-
-        Auction newAuction = new Auction(newItem, (Seller) currentUser, LocalDateTime.now(), LocalDateTime.now().plusDays(3));
-
-        UIUtils.showLoadingSpinner(rootPane, () -> {
-            new Thread(() -> {
-                try {
-                    NetworkClient.getInstance().sendRequest(new Request(ActionType.CREATE_AUCTION, newAuction));
-                    Platform.runLater(() -> {
-                        NotificationUtil.showToast("Gửi yêu cầu đăng sản phẩm thành công!", rootPane, "success");
-                        resetForm();
-                    });
-                } catch (Exception ex) {
-                    Platform.runLater(() -> NotificationUtil.showToast("Lỗi kết nối Server!", rootPane, "error"));
-                }
-            }).start();
-        });
     }
 
     private void resetForm() {
         txtName.clear(); txtStartingPrice.clear(); txtDescription.clear();
         categoryBox.getSelectionModel().clearSelection();
         dynamicForm.setVisible(false); dynamicForm.setManaged(false);
+    }
+
+    public void onCategoryChange(ActionEvent event) {
     }
 }

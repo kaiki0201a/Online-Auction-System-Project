@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane fx:id="rootPane" stylesheets="@fileCS/style.css"
+    xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.auction.controller.RegisterController">
+
+    <HBox prefHeight="680.0" prefWidth="950.0" style="-fx-background-color: #0d0d0d; -fx-font-family: 'Segoe UI', Arial, sans-serif;">
+
+        <!-- ========== Panel Trái: Branding ========== -->
+        <StackPane prefWidth="370.0" styleClass="login-background-image">
+            <Region style="-fx-background-color: rgba(0,0,0,0.55);" />
+            <VBox alignment="CENTER_LEFT" prefWidth="370.0" spacing="22.0" StackPane.alignment="CENTER">
+                <padding><Insets bottom="50.0" left="40.0" right="40.0" top="50.0" /></padding>
+                <Label style="-fx-text-fill: linear-gradient(to right,#FDEB94,#D4AF37); -fx-font-weight: 900; -fx-font-size: 30px;" text="BIDPRECISION" wrapText="true" />
+                <Label style="-fx-text-fill: #FFEBCD; -fx-font-size: 13px;" text="Tham gia cộng đồng đấu giá tinh hoa." wrapText="true"/>
+                <Region VBox.vgrow="ALWAYS" />
+                <VBox spacing="12">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label style="-fx-text-fill: #F5C518; -fx-font-size: 16px;" text="✓" />
+                        <Label style="-fx-text-fill: #FFEBCD; -fx-font-size: 12px;" text="Đăng ký miễn phí, không phí ẩn" />
+                    </HBox>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label style="-fx-text-fill: #F5C518; -fx-font-size: 16px;" text="✓" />
+                        <Label style="-fx-text-fill: #FFEBCD; -fx-font-size: 12px;" text="Seller dùng ngay, không cần duyệt" />
+                    </HBox>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label style="-fx-text-fill: #F5C518; -fx-font-size: 16px;" text="✓" />
+                        <Label style="-fx-text-fill: #FFEBCD; -fx-font-size: 12px;" text="Bidder nhận 10,000$ khởi đầu" />
+                    </HBox>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label style="-fx-text-fill: #666; -fx-font-size: 16px;" text="🛡" />
+                        <Label style="-fx-text-fill: #666; -fx-font-size: 11px; -fx-font-style: italic;" text="Admin: cần mã bảo mật nội bộ" />
+                    </HBox>
+                </VBox>
+            </VBox>
+        </StackPane>
+
+        <!-- ========== Panel Phải: Form ========== -->
+        <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS" spacing="13.0"
+            style="-fx-background-color: #0a0a0a;">
+            <padding><Insets bottom="35.0" left="45.0" right="45.0" top="32.0" /></padding>
+
+            <Label style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;" text="Tạo Tài Khoản" />
+            <Label style="-fx-text-fill: #A0A0A0; -fx-font-size: 12px;" text="Điền thông tin bên dưới để bắt đầu." />
+            <Region prefHeight="4.0" />
+
+            <!-- Username -->
+            <VBox spacing="5.0">
+                <Label style="-fx-text-fill: #e0e0e0; -fx-font-size: 10px; -fx-font-weight: bold;" text="TÊN ĐĂNG NHẬP * (ít nhất 4 ký tự)" />
+                <HBox alignment="CENTER_LEFT"
+                    style="-fx-background-color: #1a1a1a; -fx-border-color: #333; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 10 0 15;">
+                    <Label style="-fx-text-fill: #F5C518; -fx-font-size: 13px;" text="👤 " />
+                    <TextField fx:id="txtUsername" promptText="Tối thiểu 4 ký tự"
+                        style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 13px; -fx-padding: 10 10;"
+                        HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+
+            <!-- Email -->
+            <VBox spacing="5.0">
+                <Label style="-fx-text-fill: #e0e0e0; -fx-font-size: 10px; -fx-font-weight: bold;" text="EMAIL *" />
+                <HBox alignment="CENTER_LEFT"
+                    style="-fx-background-color: #1a1a1a; -fx-border-color: #333; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 10 0 15;">
+                    <Label style="-fx-text-fill: #F5C518; -fx-font-size: 13px;" text="✉ " />
+                    <TextField fx:id="txtEmail" promptText="example@email.com"
+                        style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 13px; -fx-padding: 10 10;"
+                        HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+
+            <!-- Password -->
+            <VBox spacing="5.0">
+                <Label style="-fx-text-fill: #e0e0e0; -fx-font-size: 10px; -fx-font-weight: bold;" text="MẬT KHẨU * (ít nhất 6 ký tự)" />
+                <HBox alignment="CENTER_LEFT"
+                    style="-fx-background-color: #1a1a1a; -fx-border-color: #333; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 5 0 15;">
+                    <Label style="-fx-text-fill: #F5C518; -fx-font-size: 13px;" text="🔒 " />
+                    <StackPane HBox.hgrow="ALWAYS">
+                        <PasswordField fx:id="txtPassword" promptText="Nhập mật khẩu"
+                            style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 13px; -fx-padding: 10 10;" />
+                        <TextField fx:id="txtPasswordVisible" promptText="Nhập mật khẩu"
+                            style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 13px; -fx-padding: 10 10;"
+                            visible="false" managed="false" />
+                    </StackPane>
+                    <Button fx:id="btnTogglePassword" onAction="#onTogglePassword" text="👁"
+                        style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-cursor: hand; -fx-padding: 5 8;" />
+                </HBox>
+            </VBox>
+
+            <!-- Confirm Password -->
+            <VBox spacing="5.0">
+                <Label style="-fx-text-fill: #e0e0e0; -fx-font-size: 10px; -fx-font-weight: bold;" text="XÁC NHẬN MẬT KHẨU *" />
+                <HBox alignment="CENTER_LEFT"
+                    style="-fx-background-color: #1a1a1a; -fx-border-color: #333; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 5 0 15;">
+                    <Label style="-fx-text-fill: #F5C518; -fx-font-size: 13px;" text="🔒 " />
+                    <StackPane HBox.hgrow="ALWAYS">
+                        <PasswordField fx:id="txtConfirmPassword" promptText="Nhập lại mật khẩu"
+                            style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 13px; -fx-padding: 10 10;" />
+                        <TextField fx:id="txtConfirmVisible" promptText="Nhập lại mật khẩu"
+                            style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 13px; -fx-padding: 10 10;"
+                            visible="false" managed="false" />
+                    </StackPane>
+                    <Button fx:id="btnToggleConfirm" onAction="#onToggleConfirm" text="👁"
+                        style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-cursor: hand; -fx-padding: 5 8;" />
+                </HBox>
+            </VBox>
+
+            <!-- Role -->
+            <VBox spacing="7.0">
+                <Label style="-fx-text-fill: #e0e0e0; -fx-font-size: 10px; -fx-font-weight: bold;" text="LOẠI TÀI KHOẢN *" />
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <RadioButton fx:id="radioBidder" text="🏷  Người Mua (Bidder)"
+                        style="-fx-text-fill: #FFFFFF; -fx-font-size: 12px;" selected="true">
+                        <toggleGroup><ToggleGroup fx:id="roleGroup" /></toggleGroup>
+                    </RadioButton>
+                    <RadioButton fx:id="radioSeller" text="🏪  Người Bán (Seller)"
+                        style="-fx-text-fill: #FFFFFF; -fx-font-size: 12px;" toggleGroup="$roleGroup" />
+                    <RadioButton fx:id="radioAdmin" text="👑  Quản Trị Viên"
+                        style="-fx-text-fill: #888; -fx-font-size: 12px;" toggleGroup="$roleGroup" />
+                </HBox>
+                <Label style="-fx-text-fill: #444; -fx-font-size: 10px; -fx-font-style: italic;"
+                    text="• Bidder: 10,000$ khởi đầu  • Seller: dùng ngay  • Admin: cần mã nội bộ" />
+            </VBox>
+
+            <!-- Mã Admin (ẩn theo mặc định, hiện khi chọn Admin) -->
+            <VBox fx:id="adminCodeBox" spacing="5.0" visible="false" managed="false">
+                <Label style="-fx-text-fill: #e74c3c; -fx-font-size: 10px; -fx-font-weight: bold;" text="MÃ XÁC NHẬN ADMIN * (Chỉ nhân viên nội bộ)" />
+                <HBox alignment="CENTER_LEFT"
+                    style="-fx-background-color: #1a1a1a; -fx-border-color: #e74c3c; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 10 0 15;">
+                    <Label style="-fx-text-fill: #e74c3c; -fx-font-size: 13px;" text="🛡 " />
+                    <PasswordField fx:id="txtAdminCode" promptText="Nhập mã bảo mật Admin"
+                        style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 13px; -fx-padding: 10 10;"
+                        HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+
+            <!-- Status -->
+            <Label fx:id="lblStatus" text="" style="-fx-font-size: 12px; -fx-min-height: 16;" wrapText="true"/>
+
+            <!-- Nút Đăng Ký -->
+            <Button fx:id="btnRegister" maxWidth="Infinity" onAction="#onRegisterClick"
+                style="-fx-background-color: #FFC107; -fx-text-fill: #000; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 4; -fx-cursor: hand;"
+                text="TẠO TÀI KHOẢN  →">
+                <padding><Insets bottom="12.0" top="12.0" /></padding>
+            </Button>
+
+            <HBox alignment="CENTER" spacing="8.0">
+                <Label style="-fx-text-fill: #666; -fx-font-size: 12px;" text="Đã có tài khoản?" />
+                <Button onAction="#onBackToLoginClick"
+                    style="-fx-background-color: transparent; -fx-text-fill: #FFC107; -fx-font-weight: bold; -fx-cursor: hand; -fx-font-size: 12px;"
+                    text="Đăng nhập ngay" />
+            </HBox>
+
+        </VBox>
+    </HBox>
+</StackPane>

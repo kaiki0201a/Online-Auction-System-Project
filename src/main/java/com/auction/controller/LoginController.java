@@ -1,6 +1,5 @@
-package com.auction.controller; // Dòng này luôn ở đầu file
+package com.auction.controller;
 
-// Khu vực 1: Import các thư viện cần thiết
 import com.auction.client.NetworkClient;
 import com.auction.model.Admin;
 import com.auction.model.User;
@@ -17,44 +16,69 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.Node;
+import javafx.scene.layout.StackPane;
 import java.io.IOException;
 
 public class LoginController {
-    @FXML private Node rootPane;
-    // Khu vực 2: Khai báo biến ánh xạ từ giao diện (Thành viên A đặt fx:id)
-    @FXML
-    private TextField txtUsername; // Nơi nhập tên
-    @FXML
-    private PasswordField txtPassword; // Nơi nhập mật khẩu
 
-    // Khu vực 3: Hàm xử lý khi người dùng nhấn nút Đăng nhập
+    @FXML private StackPane rootPane;
+    @FXML private TextField txtUsername;
+    @FXML private PasswordField txtPassword;
+    @FXML private TextField txtPasswordVisible;   // TextField hiện mật khẩu
+    @FXML private Button btnTogglePassword;       // Nút mắt
+    @FXML private Button btnLogin;
+    @FXML private Button btnRegister;
+
+    private boolean passwordVisible = false;
+
+    /** Toggle hiển thị / ẩn mật khẩu */
+    @FXML
+    public void onTogglePasswordVisibility(ActionEvent event) {
+        passwordVisible = !passwordVisible;
+        if (passwordVisible) {
+            // Sao chép giá trị sang TextField rồi hiện lên
+            txtPasswordVisible.setText(txtPassword.getText());
+            txtPasswordVisible.setVisible(true);
+            txtPasswordVisible.setManaged(true);
+            txtPassword.setVisible(false);
+            txtPassword.setManaged(false);
+            btnTogglePassword.setText("🙈");
+        } else {
+            // Sao chép giá trị về PasswordField
+            txtPassword.setText(txtPasswordVisible.getText());
+            txtPassword.setVisible(true);
+            txtPassword.setManaged(true);
+            txtPasswordVisible.setVisible(false);
+            txtPasswordVisible.setManaged(false);
+            btnTogglePassword.setText("👁");
+        }
+    }
+
+    /** Lấy mật khẩu từ field đang hiển thị */
+    private String getCurrentPassword() {
+        return passwordVisible ? txtPasswordVisible.getText() : txtPassword.getText();
+    }
+
     @FXML
     public void onLoginClick(ActionEvent event) {
-        String username = txtUsername.getText();
-        String password = txtPassword.getText();
+        String username = txtUsername.getText().trim();
+        String password = getCurrentPassword();
 
         if (username.isEmpty() || password.isEmpty()) {
             NotificationUtil.showToast("Vui lòng nhập tài khoản và mật khẩu!", rootPane, "warning");
             return;
         }
 
-        // Đăng ký "tai nghe" đợi Server trả lời
         NetworkClient.getInstance().setOnResponseReceived(response -> {
-
-            // 🚨 BẮT BUỘC: Đẩy việc cập nhật UI về luồng chính của JavaFX
             Platform.runLater(() -> {
                 if (response.getStatus() == StatusType.SUCCESS) {
                     try {
                         User userFromServer = (User) response.getData();
-
-                        // LƯU KÉT SẮT (SESSION)
                         AppContext.setCurrentUser(userFromServer);
-
                         NotificationUtil.showToast("Đăng nhập thành công!", rootPane, "success");
-                        // Chuyển màn hình
                         navigateToDashboard(event, userFromServer);
                     } catch (Exception e) {
-                        NotificationUtil.showToast("Lỗi nạp giao diện!", rootPane, "error");
+                        NotificationUtil.showToast("Lỗi nạp giao diện: " + e.getMessage(), rootPane, "error");
                     }
                 } else {
                     NotificationUtil.showToast(response.getMessage(), rootPane, "error");
@@ -62,31 +86,36 @@ public class LoginController {
             });
         });
 
-        // Hiện vòng xoay Loading chờ Server
-        UIUtils.showLoadingSpinner((javafx.scene.layout.StackPane) rootPane, () -> {
-            // Gọi hàm gửi yêu cầu mạng sau khi UI Loading hiện lên
-            NetworkClient.getInstance().login(username, password);
-        });
+        UIUtils.showLoadingSpinner(rootPane, () ->
+            NetworkClient.getInstance().login(username, password)
+        );
     }
-    // Hàm bổ trợ - Phân quyền và Chuyển màn hình
-    private void navigateToDashboard(ActionEvent event, com.auction.model.User user) throws IOException {
-        String fxmlPath = (user instanceof Admin) ? "/com/auction/view/AdminDashboard.fxml" : "/com/auction/view/Dashboard.fxml";
+
+    private void navigateToDashboard(ActionEvent event, User user) throws IOException {
+        String fxmlPath;
+        if (user instanceof Admin) {
+            fxmlPath = "/com/auction/view/AdminDashboard.fxml";
+        } else if (user instanceof com.auction.model.Seller) {
+            fxmlPath = "/com/auction/view/SellerDashboard.fxml";
+        } else {
+            fxmlPath = "/com/auction/view/BidderDashboard.fxml";
+        }
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
         Parent root = loader.load();
-
-        // ĐÃ XÓA logic gọi dashboardController.setUser() vì đã có AppContext lo
-
-        Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
-        stage.setScene(new Scene(root));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        stage.setScene(new Scene(root, 1280, 800));
+        stage.centerOnScreen();
     }
 
-    // Khu vực 5: Hàm bổ trợ - Hiện thông báo (Alert)
-    public void showError(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+    @FXML
+    private void onRegisterClick(ActionEvent event) {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Register.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root, 900, 620));
+        } catch (IOException e) {
+            NotificationUtil.showToast("Không thể mở trang đăng ký!", rootPane, "error");
+        }
     }
 }

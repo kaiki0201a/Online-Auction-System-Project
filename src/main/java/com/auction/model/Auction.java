@@ -3,7 +3,7 @@ package com.auction.model;
 import com.auction.exception.AuctionException;
 import com.auction.exception.InvalidBidException;
 import com.auction.exception.AuctionClosedException;
-import com.auction.exception.AuctionFinishedException;  // đã sửa level 2
+import com.auction.exception.AuctionFinishedException;
 import com.auction.exception.InsufficientBalanceException;
 import com.auction.utils.AuctionObserver;
 
@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Auction extends Entity implements Serializable {
-    // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
     // --- CÁC HẰNG SỐ CHO ANTI-SNIPING ---
@@ -33,11 +32,10 @@ public class Auction extends Entity implements Serializable {
     private AuctionStatus status;
 
     private List<BidTransaction> bidHistory;
-    // THÊM MỚI: Danh sách những người đang xem phiên đấu giá này
     private List<AuctionObserver> observers;
     private transient ExecutorService notificationPool = Executors.newCachedThreadPool();
 
-    // đã sửa level 3: Thêm scheduler để tự động kết thúc phiên khi hết thời gian
+    // Scheduler để tự động kết thúc phiên khi hết thời gian
     private transient ScheduledFuture<?> autoCloseTask;
 
     // CONSTRUCTOR
@@ -49,7 +47,8 @@ public class Auction extends Entity implements Serializable {
         this.endTime = endTime;
 
         this.currentHighestBid = item.getStartingPrice();
-        this.status = AuctionStatus.OPEN;
+        // Seller đăng sản phẩm → chờ Admin duyệt trước khi đưa vào đấu giá
+        this.status = AuctionStatus.PENDING_APPROVAL;
         this.bidHistory = new CopyOnWriteArrayList<>();
         this.autoBidRules = new CopyOnWriteArrayList<>();
         this.observers = new CopyOnWriteArrayList<>();
@@ -75,22 +74,20 @@ public class Auction extends Entity implements Serializable {
         triggerAutoBids();
     }
 
-    // Hàm hỗ trợ để làm sạch code (Clean Code) - ĐÃ BỔ SUNG EDGE CASES
+    // Hàm hỗ trợ để làm sạch code (Clean Code)
     private void validateBid(BidTransaction transaction) throws AuctionException {
-        // 1. THÊM LẠI ĐOẠN KIỂM TRA THỜI GIAN
+        // 1. Kiểm tra thời gian
         if (LocalDateTime.now().isAfter(this.endTime)) {
-            this.status = AuctionStatus.FINISHED; // Tự động đóng phiên
-            // đã sửa level 2: Sửa exception cụ thể - dùng AuctionFinishedException khi phiên kết thúc
+            this.status = AuctionStatus.FINISHED;
             throw new AuctionFinishedException("Phiên đấu giá đã kết thúc vào lúc " + this.endTime);
         }
 
-        // 2. Các kiểm tra trạng thái
-        if (this.status != AuctionStatus.RUNNING) {
-            // đã sửa level 2: Sửa exception cụ thể - dùng AuctionClosedException khi phiên không chạy
-            throw new AuctionClosedException("Phiên đấu giá không ở trạng thái RUNNING.");
+        // 2. SỬA LỖI LOGIC: Cho phép cả OPEN và RUNNING đặt giá
+        if (this.status != AuctionStatus.RUNNING && this.status != AuctionStatus.OPEN) {
+            throw new AuctionClosedException("Phiên đấu giá không ở trạng thái hoạt động. Trạng thái: " + this.status);
         }
 
-        // 3. EDGE CASE 1: Chống đặt giá âm hoặc bằng 0
+        // 3. Chống đặt giá âm hoặc bằng 0
         if (transaction.getBidAmount() <= 0) {
             throw new InvalidBidException("Giá thầu không hợp lệ. Vui lòng nhập số tiền lớn hơn 0.");
         }
@@ -117,17 +114,13 @@ public class Auction extends Entity implements Serializable {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime thresholdTime = this.endTime.minusSeconds(SNIPE_THRESHOLD_SECONDS);
 
-        // Nếu đặt giá vào những phút cuối cùng
         if (now.isAfter(thresholdTime) && now.isBefore(this.endTime)) {
             this.endTime = this.endTime.plusSeconds(EXTENSION_SECONDS);
-            //System.out.println("🛡️ [Anti-Sniping] Phiên đấu giá được gia hạn thêm " + EXTENSION_SECONDS + " giây!");
             notifyObservers("🛡️ Có người đặt giá phút chót! Phiên đấu giá gia hạn thêm " + EXTENSION_SECONDS + " giây. Kết thúc lúc: " + this.endTime);
         }
     }
 
     private void triggerAutoBids() {
-        // 1. TỐI ƯU HÓA: Sắp xếp bảng xếp hạng MỘT LẦN DUY NHẤT ở bên ngoài vòng lặp.
-        // Tạo một list copy chứa các luật đang active để tránh làm ảnh hưởng list gốc
         java.util.List<AutoBidRule> sortedRules = new java.util.ArrayList<>();
         for (AutoBidRule rule : this.autoBidRules) {
             if (rule.isActive()) {
@@ -135,7 +128,6 @@ public class Auction extends Entity implements Serializable {
             }
         }
 
-        // Sắp xếp theo đúng luật Tie-breaker của bạn
         sortedRules.sort((r1, r2) -> {
             int priceCompare = Double.compare(r2.getMaxBid(), r1.getMaxBid());
             if (priceCompare == 0) {
@@ -148,9 +140,7 @@ public class Auction extends Entity implements Serializable {
         do {
             hasNewAction = false;
 
-            // 2. DUYỆT BẢNG XẾP HẠNG: Đi từ người có ưu tiên cao nhất xuống
             for (AutoBidRule topRule : sortedRules) {
-                // Bỏ qua nếu luật đã tắt giữa chừng, hoặc người đó ĐANG LÀ người dẫn đầu
                 if (!topRule.isActive() || (this.highestBidder != null && topRule.getBidder().getId().equals(this.highestBidder.getId()))) {
                     continue;
                 }
@@ -160,28 +150,24 @@ public class Auction extends Entity implements Serializable {
                 if (targetPrice <= topRule.getMaxBid()) {
                     try {
                         BidTransaction autoTx = new BidTransaction(this, topRule.getBidder(), targetPrice);
-                        validateBid(autoTx); // Kiểm tra tiền trong ví
+                        validateBid(autoTx);
 
-                        // 🟢 CHỐT ĐƠN THÀNH CÔNG!
                         this.currentHighestBid = targetPrice;
                         this.highestBidder = topRule.getBidder();
                         this.bidHistory.add(autoTx);
                         topRule.getBidder().addTransaction(autoTx);
 
                         System.out.println("🤖 [AUTO-BID] Tự động trả giá $" + targetPrice + " thay cho " + topRule.getBidder().getUserName());
-                        notifyObservers(autoTx); // Vẽ lên biểu đồ
+                        notifyObservers(autoTx);
 
                         hasNewAction = true;
-                        // THÀNH CÔNG THÌ PHẢI BREAK ĐỂ RESET LẠI TỪ ĐẦU
                         break;
 
                     } catch (AuctionException e) {
-                        // 🔴 Lỗi (VD: Hết tiền). Tắt luật của người này.
                         System.out.println("⚠️ [AUTO-BID TẮT] Hủy lệnh của " + topRule.getBidder().getUserName() + " vì: " + e.getMessage());
                         topRule.setActive(false);
                     }
                 } else {
-                    // 🔴 Chạm trần Max Bid. Tắt luật của người này.
                     System.out.println("🏳️ [AUTO-BID TẮT] " + topRule.getBidder().getUserName() + " đã chạm trần Max Bid.");
                     topRule.setActive(false);
                 }
@@ -191,13 +177,10 @@ public class Auction extends Entity implements Serializable {
 
     // QUẢN LÝ THÔNG TIN & PHÂN QUYỀN
     public synchronized boolean updateAuctionDetails(User requestor, Item newItem, LocalDateTime newStart, LocalDateTime newEnd) {
-        // đã sửa level 1: Sửa logic điều kiện - chỉ cho phép edit khi trạng thái OPEN
         if (this.status != AuctionStatus.OPEN) {
-            //System.err.println("Lỗi: Không thể sửa thông tin khi phiên đấu giá đã chạy hoặc đã kết thúc");
             return false;
         }
 
-        // Kiểm tra quyền: Người yêu cầu phải là Chủ sản phẩm (Seller) HOẶC là Quản trị viên (Admin)
         boolean isOwner = requestor.getId().equals(this.seller.getId());
         boolean isAdmin = requestor instanceof Admin;
 
@@ -205,16 +188,13 @@ public class Auction extends Entity implements Serializable {
             this.item = newItem;
             this.startTime = newStart;
             this.endTime = newEnd;
-            //System.out.println("Cập nhật thông tin phiên đấu giá thành công!");
             return true;
         } else {
-            //System.out.println("Từ chối truy cập: Bạn không có quyền truy cập!");
             return false;
         }
     }
 
     public synchronized boolean cancelAuction(User requestor, String reason) {
-        // Phiên đã kết thúc thì không thể hủy
         if (this.status == AuctionStatus.FINISHED) {
             return false;
         }
@@ -224,7 +204,6 @@ public class Auction extends Entity implements Serializable {
 
         if (isOwner || isAdmin) {
             this.status = AuctionStatus.CANCELED;
-            //System.out.println("Phiên đấu giá đã bị hủy. Lý do: " + reason);
             return true;
         }
         return false;
@@ -234,22 +213,14 @@ public class Auction extends Entity implements Serializable {
     public synchronized void startAuction() {
         if (this.status == AuctionStatus.OPEN) {
             this.status = AuctionStatus.RUNNING;
-
-            // đã sửa level 3: Thiết lập timeout tự động kết thúc phiên
             scheduleAutoClose();
-
-            //System.out.println("Phiên đấu giá cho sản phẩm '" + this.item.getNameItem() + "' ĐÃ BẮT ĐẦU!");
-        } else {
-            //System.out.println("Không thể bắt đầu. Trạng thái hiện tại: " + this.status);
         }
     }
 
-    // đã sửa level 3: Phương thức lên lịch tự động kết thúc phiên
     private void scheduleAutoClose() {
         try {
             long secondsUntilEnd = ChronoUnit.SECONDS.between(LocalDateTime.now(), this.endTime);
 
-            // Nếu thời gian âm (phiên đã hết hạn), lấy 1 giây
             if (secondsUntilEnd <= 0) {
                 secondsUntilEnd = 1;
             }
@@ -266,53 +237,50 @@ public class Auction extends Entity implements Serializable {
     }
 
     public synchronized void closeAuction() {
-        if (this.status == AuctionStatus.RUNNING) {
+        if (this.status == AuctionStatus.RUNNING || this.status == AuctionStatus.OPEN) {
             this.status = AuctionStatus.FINISHED;
-            //System.out.println("Phiên đấu giá ĐÃ KẾT THÚC!");
-            determineWinner(); // Gọi luôn hàm công bố người thắng cuộc của bạn
+            determineWinner();
         }
     }
 
     // KQ
     public void determineWinner() {
         if (this.highestBidder != null) {
-            //System.out.println("Người chiến thắng: " + this.highestBidder.getUserName() + " với mức giá: " + this.currentHighestBid);
+            System.out.println("Người chiến thắng: " + this.highestBidder.getUserName() + " với mức giá: " + this.currentHighestBid);
         } else {
-            //System.out.println("Không có ai tham gia trả giá cho phiên đấu giá này.");
+            System.out.println("Không có ai tham gia trả giá cho phiên đấu giá này.");
         }
     }
 
-    // đã sửa level 3: Thêm hệ thống settlement - xử lý thanh toán sau khi phiên kết thúc
+    // Settlement: xử lý thanh toán sau khi phiên kết thúc
     public synchronized void settleAuction() {
         if (this.status != AuctionStatus.FINISHED) {
             System.out.println("⚠️ Lỗi: Phiên đấu giá phải ở trạng thái FINISHED mới có thể settlement!");
             return;
         }
 
-        // Nếu không có ai thắng cuộc
         if (this.highestBidder == null) {
             System.out.println("ℹ️ Lỗi: Phiên đấu giá không có người thắng cuộc!");
             return;
         }
 
         try {
-            // Kiểm tra xem phiên đã được settlement chưa
             if (this.status == AuctionStatus.PAID) {
                 System.out.println("ℹ️ Phiên đấu giá " + this.id + " đã được settlement rồi!");
                 return;
             }
 
-            // Thực hiện chuyển tiền từ người thắng sang người bán
             double bidAmount = this.currentHighestBid;
 
+            // Trừ tiền người thắng
+            this.highestBidder.setBalance(this.highestBidder.getBalance() - bidAmount);
+
             // Cộng tiền cho người bán
-            double sellerNewBalance = this.seller instanceof Seller ?
-                ((Seller)this.seller).getBalance() + bidAmount : 0;
+            this.seller.setBalance(this.seller.getBalance() + bidAmount);
 
             System.out.println("💰 [Settlement] Chuyển $" + bidAmount + " từ " +
                     this.highestBidder.getUserName() + " sang " + this.seller.getUserName());
 
-            // Đánh dấu phiên đã được settlement
             this.status = AuctionStatus.PAID;
             System.out.println("✅ [Settlement] Hoàn tất! Trạng thái: " + this.status);
         } catch (Exception e) {
@@ -322,21 +290,18 @@ public class Auction extends Entity implements Serializable {
 
     // ĐÃ FIX: THÊM CÁC RÀO CHẮN BẢO MẬT (EDGE CASES)
     public synchronized void registerAutoBid(Bidder bidder, double maxBid, double increment) throws AuctionException {
-        if(this.status == AuctionStatus.FINISHED){
+        if (this.status == AuctionStatus.FINISHED) {
             throw new AuctionClosedException("Lỗi: Không thể cài Auto-bid vì phiên đấu giá đã kết thúc!");
         }
 
-        // EDGE CASE 2: Kiểm tra tính hợp lệ của Max Bid
         if (maxBid <= this.currentHighestBid) {
             throw new InvalidBidException("Giá tối đa (Max Bid) phải lớn hơn giá hiện tại!");
         }
 
-        // EDGE CASE 3: Kiểm tra bước giá (Increment)
         if (increment <= 0) {
             throw new InvalidBidException("Bước giá (Increment) phải là một số lớn hơn 0!");
         }
 
-        // EDGE CASE 4: Ví tiền không đủ bảo lãnh mức Max Bid
         if (bidder.getBalance() < maxBid) {
             throw new InsufficientBalanceException("Số dư không đủ để thiết lập Auto-bid tới mức giá này.", bidder.getBalance(), maxBid);
         }
@@ -346,21 +311,17 @@ public class Auction extends Entity implements Serializable {
         System.out.println("✅ " + bidder.getUserName() + " đã cài Auto-bid (Max: " + maxBid + ", Bước giá: " + increment + ")");
     }
 
-    // THÊM MỚI 3 HÀM CỦA OBSERVER PATTERN:
-    // 1. Cho phép người dùng tham gia xem (Đăng ký nhận thông báo)
+    // OBSERVER PATTERN
     public synchronized void addObserver(AuctionObserver observer) {
         if (!observers.contains(observer)) {
             observers.add(observer);
-            //System.out.println("Một người dùng vừa vào xem phiên đấu giá " + this.item.getNameItem());
         }
     }
 
-    // 2. Cho phép người dùng thoát ra (Hủy nhận thông báo)
     public synchronized void removeObserver(AuctionObserver observer) {
         observers.remove(observer);
     }
 
-    // 3. Hàm cầm loa thông báo cho tất cả mọi người
     private void notifyObservers(String message) {
         for (AuctionObserver obs : observers) {
             CompletableFuture.runAsync(() -> {
@@ -377,11 +338,11 @@ public class Auction extends Entity implements Serializable {
         }
     }
 
-    // HÀM NÀY VÀO TRONG CLASS AUCTION ĐỂ CHỐT BUG TRANSIENT
+    // Fix bug transient sau khi deserialize
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-        in.defaultReadObject(); // Đọc các dữ liệu bình thường từ file
-        this.notificationPool = Executors.newCachedThreadPool(); // Khởi tạo lại Thread Pool mới sau khi hồi sinh đối tượng
-        this.autoCloseTask = null; // đã sửa level 4: Reset autoCloseTask khi deserialize
+        in.defaultReadObject();
+        this.notificationPool = Executors.newCachedThreadPool();
+        this.autoCloseTask = null;
     }
 
     // GETTERS

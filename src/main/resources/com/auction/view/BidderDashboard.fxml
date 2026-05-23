@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="rootPane" styleClass="dark-root" stylesheets="@fileCS/style.css"
+    xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.auction.controller.BidderDashboardController"
+    prefWidth="1280" prefHeight="800">
+
+    <!-- ====== TOP NAVBAR ====== -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20"
+            style="-fx-background-color: #0F0F0F; -fx-border-color: #2A2A2A; -fx-border-width: 0 0 1 0; -fx-padding: 12 25;">
+            <Label text="BIDPRECISION" style="-fx-text-fill: #F5C518; -fx-font-size: 20px; -fx-font-weight: 900; -fx-font-family: 'Arial Black';"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <VBox alignment="CENTER_RIGHT" spacing="1">
+                <Label text="SỐ DƯ" style="-fx-text-fill: #555; -fx-font-size: 9px; -fx-font-weight: bold;"/>
+                <Label fx:id="lblHeaderBalance" text="0 VNĐ" style="-fx-text-fill: #F5C518; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+            </VBox>
+            <TextField fx:id="txtSearch" promptText="🔍  Tìm sản phẩm..." prefWidth="240"
+                style="-fx-background-color: #1a1a1a; -fx-text-fill: white; -fx-border-color: #333; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 8 15; -fx-prompt-text-fill: #555;"/>
+            <Button onAction="#onSearchClick" text="Tìm" styleClass="btn-outline" style="-fx-padding: 8 16;"/>
+        </HBox>
+    </top>
+
+    <!-- ====== LEFT SIDEBAR ====== -->
+    <left>
+        <VBox style="-fx-background-color: #0a0a0a; -fx-border-color: #1E1E1E; -fx-border-width: 0 1 0 0;" prefWidth="235" spacing="4">
+            <!-- Avatar -->
+            <HBox spacing="12" alignment="CENTER_LEFT"
+                style="-fx-padding: 24 18; -fx-border-color: #1E1E1E; -fx-border-width: 0 0 1 0;">
+                <StackPane style="-fx-background-color: #F5C518; -fx-background-radius: 22;" prefWidth="44" prefHeight="44">
+                    <Label fx:id="lblAvatar" text="B" style="-fx-text-fill: #000; -fx-font-size: 18px; -fx-font-weight: bold;"/>
+                </StackPane>
+                <VBox alignment="CENTER_LEFT" spacing="2">
+                    <Label fx:id="lblUsername" text="Bidder" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+                    <Label text="Verified Bidder" style="-fx-text-fill: #F5C518; -fx-font-size: 10px;"/>
+                </VBox>
+            </HBox>
+
+            <!-- Menu -->
+            <Button text="🏛  Thị Trường"
+                style="-fx-background-color: #1A1A1A; -fx-text-fill: #F5C518; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                maxWidth="Infinity"/>
+            <Button onAction="#onProfileClick" text="👤  Trang Cá Nhân"
+                style="-fx-background-color: transparent; -fx-text-fill: #A0A0A0; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                maxWidth="Infinity"/>
+            <Button onAction="#onSettingsClick" text="⚙  Cài Đặt"
+                style="-fx-background-color: transparent; -fx-text-fill: #A0A0A0; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                maxWidth="Infinity"/>
+
+            <Separator style="-fx-background-color: #2A2A2A;"/>
+            <Label text="VÍ ĐIỆN TỬ"
+                style="-fx-text-fill: #444; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 6 20 2 20;"/>
+            <Button onAction="#onDepositClick" text="⬆  Nạp Tiền"
+                style="-fx-background-color: transparent; -fx-text-fill: #A0A0A0; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                maxWidth="Infinity"/>
+            <Button onAction="#onWithdrawClick" text="⬇  Rút Tiền"
+                style="-fx-background-color: transparent; -fx-text-fill: #A0A0A0; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                maxWidth="Infinity"/>
+
+            <Region VBox.vgrow="ALWAYS" />
+            <Button onAction="#onLogoutClick" text="⎋  Đăng Xuất"
+                style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                maxWidth="Infinity">
+                <VBox.margin><Insets bottom="15"/></VBox.margin>
+            </Button>
+        </VBox>
+    </left>
+
+    <!-- ====== CENTER CONTENT ====== -->
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="scroll-pane">
+            <VBox spacing="30" style="-fx-padding: 32 38;">
+
+                <!-- Chào mừng + Balance card -->
+                <HBox alignment="CENTER_LEFT" spacing="20">
+                    <VBox spacing="6" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblWelcome" text="Chào mừng trở lại 👋"
+                            style="-fx-text-fill: white; -fx-font-size: 26px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblStat" text="Thị trường đang hoạt động."
+                            style="-fx-text-fill: #666; -fx-font-size: 13px;"/>
+                    </VBox>
+                    <VBox spacing="8" alignment="CENTER_RIGHT"
+                        style="-fx-background-color: #171717; -fx-border-color: #F5C518; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-width: 1; -fx-padding: 16 24;">
+                        <Label text="SỐ DƯ KHẢ DỤNG"
+                            style="-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblMainBalance" text="0 VNĐ"
+                            style="-fx-text-fill: #F5C518; -fx-font-size: 26px; -fx-font-weight: bold;"/>
+                        <HBox spacing="8" alignment="CENTER">
+                            <Button onAction="#onDepositClick" text="Nạp"
+                                style="-fx-background-color: #F5C518; -fx-text-fill: #000; -fx-font-weight: bold; -fx-background-radius: 4; -fx-cursor: hand; -fx-padding: 5 14;"/>
+                            <Button onAction="#onWithdrawClick" text="Rút"
+                                style="-fx-background-color: transparent; -fx-text-fill: #F5C518; -fx-border-color: #F5C518; -fx-border-radius: 4; -fx-cursor: hand; -fx-padding: 5 14;"/>
+                        </HBox>
+                    </VBox>
+                </HBox>
+
+                <!-- ===== Phần đấu giá nổi bật (3 card) ===== -->
+                <VBox spacing="14">
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label text="🔴  ĐANG ĐẤU GIÁ - NỔI BẬT"
+                            style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;"/>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="comboCategory" promptText="Danh mục"
+                            style="-fx-background-color: #1a1a1a; -fx-text-fill: white; -fx-border-color: #333; -fx-border-radius: 4; -fx-pref-width: 140;"/>
+                        <!-- Nút "Xem tất cả" dẫn đến màn hình AuctionList -->
+                        <Button onAction="#onViewAllAuctions" text="Xem tất cả →"
+                            style="-fx-background-color: transparent; -fx-text-fill: #F5C518; -fx-border-color: #F5C518; -fx-border-radius: 4; -fx-cursor: hand; -fx-padding: 7 18; -fx-font-weight: bold;"/>
+                    </HBox>
+                    <!-- Layout: card lớn (trái ~55%) + 2 card nhỏ (phải ~45%) -->
+                    <HBox fx:id="liveAuctionsContainer" spacing="18" alignment="TOP_LEFT" minHeight="200"/>
+                </VBox>
+
+                <!-- Lịch sử đặt giá -->
+                <VBox spacing="14"
+                    style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 22;">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="📜  LỊCH SỬ ĐẶT GIÁ CỦA TÔI"
+                            style="-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button onAction="#onViewAllAuctions" text="Tất cả phiên →"
+                            style="-fx-background-color: transparent; -fx-text-fill: #F5C518; -fx-cursor: hand; -fx-font-size: 12px;"/>
+                    </HBox>
+                    <TableView fx:id="tableRecentBids" prefHeight="230"
+                        style="-fx-background-color: transparent; -fx-border-color: #2A2A2A; -fx-border-radius: 4;">
+                        <columns>
+                            <TableColumn fx:id="colItem" text="Sản Phẩm" prefWidth="250"/>
+                            <TableColumn fx:id="colDate" text="Thời Gian" prefWidth="130"/>
+                            <TableColumn fx:id="colAmount" text="Số Tiền" prefWidth="150"/>
+                            <TableColumn fx:id="colStatus" text="Kết Quả" prefWidth="160"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="Chưa có lịch sử đặt giá nào." style="-fx-text-fill: #555; -fx-font-size: 13px;"/>
+                        </placeholder>
+                    </TableView>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

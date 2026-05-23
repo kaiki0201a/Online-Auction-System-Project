@@ -33,6 +33,12 @@ public abstract class User extends Entity implements Serializable {
         }
     }
 
+    // Public wrapper để Controller/Server có thể hash password khi đổi mật khẩu
+    public String hashPasswordPublic(String plainPassword) {
+        return hashPassword(plainPassword);
+    }
+
+
     // đã sửa level 1: Hàm verify password so sánh hash thay vì plaintext
     // đã sửa level 2: Ném AuthenticationException khi login thất bại
     public boolean login(String pass) throws com.auction.exception.AuthenticationException {
