@@ -167,14 +167,12 @@ public class ClientHandler implements Runnable {
                     realBidder.placeBid(auction, bidData.getBidAmount());
                     AuctionManager.getInstance().updateAuction(auction);
 
-                    // Broadcast toàn bộ list để các client tự refresh
                     List<Auction> allAfterBid = AuctionManager.getInstance().getAllAuctions();
                     ServerApp.broadcastAuctionUpdate(allAfterBid, "UPDATE_AUCTION");
-
-                    // Lưu số dư mới của bidder
                     ServerApp.getUserDAO().saveDataToFile();
 
-                    return new Response(StatusType.SUCCESS, "Đặt giá thành công!", realBidder.getBalance());
+                    // FIX: Trả về availableBalance để client hiển thị đúng số dư khả dụng
+                    return new Response(StatusType.SUCCESS, "Đặt giá thành công!", realBidder.getAvailableBalance());
 
                 } catch (AuctionException e) {
                     return new Response(StatusType.ERROR, e.getMessage(), null);
@@ -212,6 +210,56 @@ public class ClientHandler implements Runnable {
             case GET_AUCTION_LIST:
                 return new Response(StatusType.SUCCESS, "Danh sách đấu giá",
                         AuctionManager.getInstance().getAllAuctions());
+
+            // ─── ĐĂNG KÝ AUTO-BID ─────────────────────────────────────
+            case SETUP_AUTOBID:
+                try {
+                    String autoBidData = (String) request.getPayload();
+                    // Format: auctionId|username|maxAmount|increment
+                    String[] abParts = autoBidData.split("\\|");
+                    if (abParts.length < 4) {
+                        return new Response(StatusType.ERROR, "Dữ liệu AutoBid không đủ.", null);
+                    }
+                    String auctionId = abParts[0];
+                    String bidderName = abParts[1];
+                    double maxAmount = Double.parseDouble(abParts[2]);
+                    double increment = Double.parseDouble(abParts[3]);
+
+                    Auction abAuction = AuctionManager.getInstance().getAuctionById(auctionId);
+                    if (abAuction == null)
+                        return new Response(StatusType.ERROR, "Phiên không tồn tại.", null);
+
+                    Bidder abBidder = (Bidder) UserManager.getInstance().getUser(bidderName);
+                    if (abBidder == null)
+                        return new Response(StatusType.ERROR, "Tài khoản không hợp lệ.", null);
+
+                    abBidder.setupAutoBid(abAuction, maxAmount, increment);
+                    System.out.println("🤖 [SERVER] AutoBid thiết lập: " + bidderName + " max=" + maxAmount + " inc=" + increment);
+                    return new Response(StatusType.SUCCESS, "AUTOBID_SET", abBidder.getAvailableBalance());
+
+                } catch (com.auction.exception.AuctionException e) {
+                    return new Response(StatusType.ERROR, e.getMessage(), null);
+                } catch (Exception e) {
+                    return new Response(StatusType.ERROR, "Lỗi thiết lập AutoBid: " + e.getMessage(), null);
+                }
+
+            case CANCEL_AUTOBID:
+                try {
+                    String cancelData = (String) request.getPayload();
+                    String[] cParts = cancelData.split("\\|");
+                    if (cParts.length < 2) return new Response(StatusType.ERROR, "Dữ liệu không đủ.", null);
+                    String cAuctionId = cParts[0];
+                    String cBidderName = cParts[1];
+                    Auction cAuction = AuctionManager.getInstance().getAuctionById(cAuctionId);
+                    Bidder cBidder = (Bidder) UserManager.getInstance().getUser(cBidderName);
+                    if (cAuction == null || cBidder == null)
+                        return new Response(StatusType.ERROR, "Không tìm thấy phiên hoặc bidder.", null);
+                    // Đánh dấu inactive tất cả rule của bidder trong phiên
+                    cAuction.cancelAutoBid(cBidder);
+                    return new Response(StatusType.SUCCESS, "AUTOBID_CANCELLED", null);
+                } catch (Exception e) {
+                    return new Response(StatusType.ERROR, "Lỗi hủy AutoBid.", null);
+                }
 
             // ─── LẤY DANH SÁCH USER ──────────────────────────────────────────
             case GET_USER_LIST:
@@ -357,12 +405,16 @@ public class ClientHandler implements Runnable {
 
                     User user = UserManager.getInstance().getUser(targetUser);
                     if (user instanceof Bidder bidder) {
-                        if (bidder.getBalance() < amount) {
-                            return new Response(StatusType.ERROR, "Số dư không đủ để rút tiền!", null);
+                        // FIX: Kiểm tra availableBalance (không rút được tiền đang freeze)
+                        if (bidder.getAvailableBalance() < amount) {
+                            return new Response(StatusType.ERROR,
+                                "Số dư khả dụng không đủ! \nSố dư: " + bidder.getBalance()
+                                + " | Đang khóa: " + bidder.getFrozenBalance()
+                                + " | Khả dụng: " + bidder.getAvailableBalance(), null);
                         }
                         bidder.setBalance(bidder.getBalance() - amount);
                         ServerApp.getUserDAO().saveDataToFile();
-                        return new Response(StatusType.SUCCESS, "Rút tiền thành công!", bidder.getBalance());
+                        return new Response(StatusType.SUCCESS, "Rút tiền thành công!", bidder.getAvailableBalance());
                     } else if (user instanceof Seller seller) {
                         if (seller.getBalance() < amount) {
                             return new Response(StatusType.ERROR, "Số dư không đủ để rút tiền!", null);

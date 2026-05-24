@@ -83,9 +83,29 @@ public class AuctionListController {
         String cat = comboCategory.getValue();
         String status = comboStatus.getValue();
 
+        boolean isAdmin = currentUser instanceof com.auction.model.Admin;
+        String currentSellerName = (currentUser instanceof com.auction.model.Seller)
+                ? currentUser.getUserName() : null;
+
         List<Auction> filtered = allAuctions.stream()
-            // Không hiển thị sản phẩm chưa được Admin duyệt
-            .filter(a -> a.getStatus() != AuctionStatus.PENDING_APPROVAL)
+            // FIX: Phân quyền hiển thị:
+            // - Admin thấy tất cả
+            // - Seller thấy sản phẩm của mình (kể cả PENDING/REJECTED)
+            //   + thấy các sản phẩm RUNNING/APPROVED của người khác
+            // - Bidder chỉ thấy RUNNING/APPROVED/FINISHED/PAID
+            .filter(a -> {
+                if (isAdmin) return true;
+                if (currentSellerName != null) {
+                    // Seller thấy sản phẩm của mình ở mọi trạng thái
+                    if (a.getSeller().getUserName().equals(currentSellerName)) return true;
+                    // Seller thấy sản phẩm người khác nếu đang live
+                    return a.getStatus() != AuctionStatus.PENDING_APPROVAL
+                        && a.getStatus() != AuctionStatus.REJECTED;
+                }
+                // Bidder: không thấy PENDING hoặc REJECTED
+                return a.getStatus() != AuctionStatus.PENDING_APPROVAL
+                    && a.getStatus() != AuctionStatus.REJECTED;
+            })
             .filter(a -> a.getItem().getNameItem().toLowerCase().contains(kw))
             .filter(a -> "Tất cả".equals(cat) || a.getItem().getClass().getSimpleName().equals(cat))
             .filter(a -> {
@@ -175,11 +195,14 @@ public class AuctionListController {
         Button btn = new Button();
         boolean isSeller = currentUser instanceof com.auction.model.Seller;
         boolean isOwn = isSeller && auction.getSeller().getUserName().equals(currentUser.getUserName());
+        boolean isAdmin = currentUser instanceof com.auction.model.Admin;
 
+        // FIX: Seller có thể xem sản phẩm của chính mình (kể cả PENDING/REJECTED)
         if (isOwn) {
-            btn.setText("Của tôi");
-            btn.setDisable(true);
-            btn.setStyle("-fx-background-color: #2A2A2A; -fx-text-fill: #666; -fx-background-radius: 4; -fx-padding: 6 12;");
+            btn.setText("★ Của tôi");
+            btn.setStyle("-fx-background-color: #1A1A1A; -fx-text-fill: #F5C518; "
+                + "-fx-border-color: #F5C518; -fx-border-radius: 4; -fx-cursor: hand; -fx-padding: 6 12;");
+            btn.setOnAction(e -> openDetail(auction));
         } else {
             btn.setText("Xem →");
             btn.getStyleClass().add("btn-outline");

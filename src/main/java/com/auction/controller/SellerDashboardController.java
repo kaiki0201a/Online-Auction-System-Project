@@ -26,7 +26,11 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -61,6 +65,11 @@ public class SellerDashboardController {
     @FXML private ComboBox<String> comboCategory;
     @FXML private VBox dynamicFormContainer;
 
+    // FIX: Datetime pickers cho start/end time
+    @FXML private DatePicker startDatePicker;
+    @FXML private TextField startTimeField;
+    @FXML private ComboBox<String> comboDuration;
+
     // Ảnh sản phẩm
     @FXML private StackPane imagePreviewBox;
     @FXML private ImageView imgPreview;
@@ -92,6 +101,24 @@ public class SellerDashboardController {
         if (txtStartingPrice != null) {
             txtStartingPrice.setTextFormatter(new TextFormatter<>(change ->
                 change.getControlNewText().matches("\\d*(\\.\\d*)?") ? change : null));
+        }
+
+        // FIX: Khởi tạo datetime pickers
+        if (startDatePicker != null) {
+            startDatePicker.setValue(java.time.LocalDate.now().plusDays(1));
+        }
+        if (startTimeField != null) {
+            startTimeField.setText("10:00");
+            // Chỉ cho nhập số và dấu ':'
+            startTimeField.setTextFormatter(new TextFormatter<>(change ->
+                change.getControlNewText().matches("[0-9:]{0,5}") ? change : null));
+        }
+        if (comboDuration != null) {
+            comboDuration.setItems(FXCollections.observableArrayList(
+                "1 giờ", "3 giờ", "6 giờ", "12 giờ",
+                "1 ngày", "3 ngày", "7 ngày", "14 ngày", "30 ngày"
+            ));
+            comboDuration.setValue("3 ngày");
         }
 
         // FIX: Dùng addEventListener với key "seller" — không ghi đè listener khác
@@ -426,25 +453,71 @@ public class SellerDashboardController {
             showAlert("Lỗi", "Giá tiền không hợp lệ."); return;
         }
 
+        // FIX: Parse startTime và endTime từ datetime pickers
+        LocalDateTime startTime;
+        LocalDateTime endTime;
+        try {
+            java.time.LocalDate startDate = (startDatePicker != null && startDatePicker.getValue() != null)
+                    ? startDatePicker.getValue() : java.time.LocalDate.now();
+            String timeStr = (startTimeField != null && !startTimeField.getText().trim().isEmpty())
+                    ? startTimeField.getText().trim() : "00:00";
+            // Thêm giây nếu chưa có
+            if (timeStr.length() == 5) timeStr += ":00";
+            java.time.LocalTime startLocalTime = java.time.LocalTime.parse(timeStr);
+            startTime = java.time.LocalDateTime.of(startDate, startLocalTime);
+
+            // Tính endTime từ duration
+            String duration = (comboDuration != null && comboDuration.getValue() != null)
+                    ? comboDuration.getValue() : "3 ngày";
+            endTime = calculateEndTime(startTime, duration);
+
+        } catch (java.time.format.DateTimeParseException e) {
+            showAlert("Lỗi thời gian", "Giờ bắt đầu không đúng định dạng. Hãy nhập theo dạng HH:mm (VD: 14:30).");
+            return;
+        }
+
+        // Validation: startTime phải > now (không quá quá khứ)
+        if (startTime.isBefore(LocalDateTime.now().minusMinutes(5))) {
+            showAlert("Lỗi thời gian", "Thời gian bắt đầu không được ở trong quá khứ.");
+            return;
+        }
+
         List<String> dynamics = extractDynamicInputs();
         Item newItem = buildItem(category, name, desc, price, dynamics);
         if (newItem == null) { showAlert("Lỗi", "Danh mục không hợp lệ."); return; }
 
         if (selectedImagePath != null) newItem.setImagePath(selectedImagePath);
 
-        // FIX: Tạo auction với thời gian hợp lý (startTime = now, endTime = +3 ngày)
-        Auction newAuction = new Auction(newItem, currentUser,
-                LocalDateTime.now(), LocalDateTime.now().plusDays(3));
+        // FIX: Tạo auction với startTime/endTime đúng từ form
+        Auction newAuction = new Auction(newItem, currentUser, startTime, endTime);
 
         // FIX: Chỉ gửi request, KHÔNG thay đổi listener.
         // handleResponse() sẽ nhận AUCTION_CREATED với data=List → tự renderInventory()
         NetworkClient.getInstance().sendRequest(new Request(ActionType.CREATE_AUCTION, newAuction));
 
-        // Hiển thị thông báo ngay (optimistic) — inventory sẽ cập nhật khi server response
+        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         showAlert("✅ Đang đăng sản phẩm...",
             "Sản phẩm \"" + name + "\" đang được gửi lên server.\n" +
+            "Bắt đầu: " + startTime.format(dtf) + "\n" +
+            "Kết thúc: " + endTime.format(dtf) + "\n" +
             "Kho hàng sẽ cập nhật ngay khi server xác nhận.");
         onClearFormClick(null);
+    }
+
+    // FIX: Hàm tính endTime từ startTime + duration string
+    private LocalDateTime calculateEndTime(LocalDateTime startTime, String duration) {
+        return switch (duration) {
+            case "1 giờ"   -> startTime.plusHours(1);
+            case "3 giờ"   -> startTime.plusHours(3);
+            case "6 giờ"   -> startTime.plusHours(6);
+            case "12 giờ"  -> startTime.plusHours(12);
+            case "1 ngày"   -> startTime.plusDays(1);
+            case "3 ngày"   -> startTime.plusDays(3);
+            case "7 ngày"   -> startTime.plusDays(7);
+            case "14 ngày"  -> startTime.plusDays(14);
+            case "30 ngày"  -> startTime.plusDays(30);
+            default          -> startTime.plusDays(3);
+        };
     }
 
     private List<String> extractDynamicInputs() {
@@ -486,6 +559,10 @@ public class SellerDashboardController {
         if (txtDescription != null) txtDescription.clear();
         if (comboCategory != null) comboCategory.getSelectionModel().clearSelection();
         if (dynamicFormContainer != null) dynamicFormContainer.getChildren().clear();
+        // FIX: Reset datetime pickers
+        if (startDatePicker != null) startDatePicker.setValue(java.time.LocalDate.now().plusDays(1));
+        if (startTimeField != null) startTimeField.setText("10:00");
+        if (comboDuration != null) comboDuration.setValue("3 ngày");
         selectedImagePath = null;
         if (imgPreview != null) { imgPreview.setImage(null); imgPreview.setVisible(false); }
         if (lblImageHint != null) lblImageHint.setVisible(true);

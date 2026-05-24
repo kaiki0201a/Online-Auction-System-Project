@@ -43,14 +43,18 @@ public class DepositWithdrawController {
         if (lblUsername != null) lblUsername.setText(currentUser.getUserName());
         updateBalanceDisplay();
 
-        NetworkClient.getInstance().setOnResponseReceived(response -> {
+        // FIX: Dùng addEventListener với key riêng — không ghi đè listener khác
+        NetworkClient.getInstance().addEventListener("wallet", response -> {
             Platform.runLater(() -> {
                 if (response.getStatus() == StatusType.SUCCESS) {
-                    // Cập nhật balance trong local model
                     if (response.getData() instanceof Double) {
-                        double newBalance = (Double) response.getData();
-                        if (currentUser instanceof Bidder) ((Bidder) currentUser).setBalance(newBalance);
-                        else if (currentUser instanceof Seller) ((Seller) currentUser).setBalance(newBalance);
+                        double newAvailable = (Double) response.getData();
+                        if (currentUser instanceof Bidder bidder) {
+                            // Server trả về availableBalance sau deposit (không có frozen khi deposit)
+                            bidder.setBalance(newAvailable + bidder.getFrozenBalance());
+                        } else if (currentUser instanceof Seller seller) {
+                            seller.setBalance(newAvailable);
+                        }
                         updateBalanceDisplay();
                     }
                     setMessage("✅ " + response.getMessage(), "#27ae60");
@@ -66,8 +70,14 @@ public class DepositWithdrawController {
 
     private void updateBalanceDisplay() {
         if (lblCurrentBalance == null) return;
-        if (currentUser instanceof Bidder) {
-            lblCurrentBalance.setText(CurrencyFormatter.format(((Bidder) currentUser).getBalance()));
+        if (currentUser instanceof Bidder bidder) {
+            String balStr = CurrencyFormatter.format(bidder.getBalance());
+            String availStr = CurrencyFormatter.format(bidder.getAvailableBalance());
+            if (bidder.getFrozenBalance() > 0) {
+                lblCurrentBalance.setText(availStr + " (khả dụng)");
+            } else {
+                lblCurrentBalance.setText(balStr);
+            }
         } else if (currentUser instanceof Seller) {
             lblCurrentBalance.setText(CurrencyFormatter.format(((Seller) currentUser).getBalance()));
         }
@@ -131,7 +141,8 @@ public class DepositWithdrawController {
 
     @FXML
     public void onBackClick(ActionEvent event) {
-        NetworkClient.getInstance().removeOnResponseReceived();
+        // FIX: Xóa đúng key listener khi rời trang
+        NetworkClient.getInstance().removeEventListener("wallet");
         try {
             String fxmlPath;
             if (currentUser instanceof com.auction.model.Admin) {

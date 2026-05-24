@@ -56,39 +56,36 @@ public class Auction extends Entity implements Serializable {
 
 
     public synchronized void processBid(BidTransaction transaction) throws AuctionException {
-        // 1. Tách logic kiểm tra ra một hàm riêng (SRP)
         validateBid(transaction);
-
-        // Kích hoạt anti-sniping để xem có cần gia hạn thời gian không
         applyAntiSniping();
 
-        // 2. Cập nhật dữ liệu
+        // FIX: Unfreeze tiền của bidder cũ khi bị vượt giá
+        if (this.highestBidder != null
+                && !this.highestBidder.getId().equals(transaction.getBidder().getId())) {
+            this.highestBidder.unfreeze(this.currentHighestBid);
+            System.out.println("↩️ [REFUND] Unfreeze " + this.currentHighestBid
+                + " cho " + this.highestBidder.getUserName());
+        }
+
         this.currentHighestBid = transaction.getBidAmount();
         this.highestBidder = transaction.getBidder();
         this.bidHistory.add(transaction);
 
-        // 3. Thông báo (DIP - phụ thuộc vào Interface Observer)
         notifyObservers(transaction);
-
-        // Trigger gọi auto bid xem robot có ai muốn đặt giá không
         triggerAutoBids();
     }
 
-    // Hàm hỗ trợ để làm sạch code (Clean Code)
     private void validateBid(BidTransaction transaction) throws AuctionException {
-        // 1. Kiểm tra thời gian
         if (LocalDateTime.now().isAfter(this.endTime)) {
             this.status = AuctionStatus.FINISHED;
             throw new AuctionFinishedException("Phiên đấu giá đã kết thúc vào lúc " + this.endTime);
         }
 
-        // 2. Cho phép cả OPEN, RUNNING và APPROVED đặt giá
         if (this.status != AuctionStatus.RUNNING && this.status != AuctionStatus.OPEN
                 && this.status != AuctionStatus.APPROVED) {
             throw new AuctionClosedException("Phiên đấu giá không ở trạng thái hoạt động. Trạng thái: " + this.status);
         }
 
-        // 3. Chống đặt giá âm hoặc bằng 0
         if (transaction.getBidAmount() <= 0) {
             throw new InvalidBidException("Giá thầu không hợp lệ. Vui lòng nhập số tiền lớn hơn 0.");
         }
@@ -98,13 +95,14 @@ public class Auction extends Entity implements Serializable {
                     this.currentHighestBid, transaction.getBidAmount());
         }
 
-        if (transaction.getBidder().getBalance() < transaction.getBidAmount()) {
-            throw new InsufficientBalanceException("Số dư không đủ.",
-                    transaction.getBidder().getBalance(),
-                    transaction.getBidAmount());
+        // FIX: Kiểm tra số dư KHẢ DỤNG (không tính frozen) thay vì total balance
+        Bidder bidder = transaction.getBidder();
+        double available = bidder.getAvailableBalance();
+        if (available < transaction.getBidAmount()) {
+            throw new InsufficientBalanceException("Số dư khả dụng không đủ. Khả dụng: " + available,
+                    available, transaction.getBidAmount());
         }
 
-        // 4. Chống gian lận: Người bán tự buff giá
         if (transaction.getBidder().getId().equals(this.seller.getId())) {
             throw new InvalidBidException("Người bán không được phép tự đấu giá sản phẩm của mình!");
         }
@@ -122,55 +120,59 @@ public class Auction extends Entity implements Serializable {
     }
 
     private void triggerAutoBids() {
-        java.util.List<AutoBidRule> sortedRules = new java.util.ArrayList<>();
+        List<AutoBidRule> sortedRules = new ArrayList<>();
         for (AutoBidRule rule : this.autoBidRules) {
-            if (rule.isActive()) {
-                sortedRules.add(rule);
-            }
+            if (rule.isActive()) sortedRules.add(rule);
         }
-
         sortedRules.sort((r1, r2) -> {
-            int priceCompare = Double.compare(r2.getMaxBid(), r1.getMaxBid());
-            if (priceCompare == 0) {
-                return r1.getRegisterTime().compareTo(r2.getRegisterTime());
-            }
-            return priceCompare;
+            int pc = Double.compare(r2.getMaxBid(), r1.getMaxBid());
+            return pc != 0 ? pc : r1.getRegisterTime().compareTo(r2.getRegisterTime());
         });
 
         boolean hasNewAction;
         do {
             hasNewAction = false;
+            for (AutoBidRule rule : sortedRules) {
+                if (!rule.isActive()) continue;
+                if (this.highestBidder != null
+                        && rule.getBidder().getId().equals(this.highestBidder.getId())) continue;
 
-            for (AutoBidRule topRule : sortedRules) {
-                if (!topRule.isActive() || (this.highestBidder != null && topRule.getBidder().getId().equals(this.highestBidder.getId()))) {
+                double targetPrice = this.currentHighestBid + rule.getIncrement();
+                if (targetPrice > rule.getMaxBid()) {
+                    System.out.println("🏳️ [AUTO-BID TẮt] " + rule.getBidder().getUserName() + " đã chạm trần.");
+                    rule.setActive(false);
                     continue;
                 }
+                // Kiểm tra available balance của auto-bidder
+                if (rule.getBidder().getAvailableBalance() < targetPrice) {
+                    System.out.println("⚠️ [AUTO-BID TẮt] " + rule.getBidder().getUserName() + " không đủ số dư.");
+                    rule.setActive(false);
+                    continue;
+                }
+                try {
+                    BidTransaction autoTx = new BidTransaction(this, rule.getBidder(), targetPrice);
+                    validateBid(autoTx);
 
-                double targetPrice = this.currentHighestBid + topRule.getIncrement();
-
-                if (targetPrice <= topRule.getMaxBid()) {
-                    try {
-                        BidTransaction autoTx = new BidTransaction(this, topRule.getBidder(), targetPrice);
-                        validateBid(autoTx);
-
-                        this.currentHighestBid = targetPrice;
-                        this.highestBidder = topRule.getBidder();
-                        this.bidHistory.add(autoTx);
-                        topRule.getBidder().addTransaction(autoTx);
-
-                        System.out.println("🤖 [AUTO-BID] Tự động trả giá $" + targetPrice + " thay cho " + topRule.getBidder().getUserName());
-                        notifyObservers(autoTx);
-
-                        hasNewAction = true;
-                        break;
-
-                    } catch (AuctionException e) {
-                        System.out.println("⚠️ [AUTO-BID TẮT] Hủy lệnh của " + topRule.getBidder().getUserName() + " vì: " + e.getMessage());
-                        topRule.setActive(false);
+                    // Unfreeze bidder cũ nếu bị vượt
+                    if (this.highestBidder != null
+                            && !this.highestBidder.getId().equals(rule.getBidder().getId())) {
+                        this.highestBidder.unfreeze(this.currentHighestBid);
                     }
-                } else {
-                    System.out.println("🏳️ [AUTO-BID TẮT] " + topRule.getBidder().getUserName() + " đã chạm trần Max Bid.");
-                    topRule.setActive(false);
+
+                    this.currentHighestBid = targetPrice;
+                    this.highestBidder = rule.getBidder();
+                    this.bidHistory.add(autoTx);
+                    // Freeze cho auto-bidder
+                    rule.getBidder().freeze(targetPrice);
+                    rule.getBidder().addTransaction(autoTx);
+
+                    System.out.println("🤖 [AUTO-BID] " + rule.getBidder().getUserName() + " tự động trả " + targetPrice);
+                    notifyObservers(autoTx);
+                    hasNewAction = true;
+                    break;
+                } catch (AuctionException e) {
+                    System.out.println("⚠️ [AUTO-BID TẮt] " + rule.getBidder().getUserName() + ": " + e.getMessage());
+                    rule.setActive(false);
                 }
             }
         } while (hasNewAction);
@@ -255,38 +257,48 @@ public class Auction extends Entity implements Serializable {
 
     // Settlement: xử lý thanh toán sau khi phiên kết thúc
     public synchronized void settleAuction() {
-        if (this.status != AuctionStatus.FINISHED) {
-            System.out.println("⚠️ Lỗi: Phiên đấu giá phải ở trạng thái FINISHED mới có thể settlement!");
-            return;
-        }
-
+        if (this.status != AuctionStatus.FINISHED) return;
         if (this.highestBidder == null) {
-            System.out.println("ℹ️ Lỗi: Phiên đấu giá không có người thắng cuộc!");
+            System.out.println("ℹ️ Phiên không có người thắng.");
+            return;
+        }
+        if (this.status == AuctionStatus.PAID) {
+            System.out.println("ℹ️ Đã settlement rồi.");
             return;
         }
 
-        try {
-            if (this.status == AuctionStatus.PAID) {
-                System.out.println("ℹ️ Phiên đấu giá " + this.id + " đã được settlement rồi!");
-                return;
+        double winAmount = this.currentHighestBid;
+
+        // FIX: Người thắng: dùng consumeFrozen (trừ cả balance + frozen)
+        this.highestBidder.consumeFrozen(winAmount);
+
+        // FIX: Refund tất cả bidder thua — unfreeze số tiền bid cuối cùng của họ
+        // Dựa vào bidHistory: lấy bid lớn nhất của mỗi bidder khác winner
+        java.util.Map<String, Double> loserLastBid = new java.util.HashMap<>();
+        for (BidTransaction tx : this.bidHistory) {
+            String uid = tx.getBidder().getId();
+            if (!uid.equals(this.highestBidder.getId())) {
+                loserLastBid.merge(uid, tx.getBidAmount(), Math::max);
             }
-
-            double bidAmount = this.currentHighestBid;
-
-            // Trừ tiền người thắng
-            this.highestBidder.setBalance(this.highestBidder.getBalance() - bidAmount);
-
-            // Cộng tiền cho người bán
-            this.seller.setBalance(this.seller.getBalance() + bidAmount);
-
-            System.out.println("💰 [Settlement] Chuyển $" + bidAmount + " từ " +
-                    this.highestBidder.getUserName() + " sang " + this.seller.getUserName());
-
-            this.status = AuctionStatus.PAID;
-            System.out.println("✅ [Settlement] Hoàn tất! Trạng thái: " + this.status);
-        } catch (Exception e) {
-            System.err.println("❌ [Settlement Error] " + e.getMessage());
         }
+        for (BidTransaction tx : this.bidHistory) {
+            String uid = tx.getBidder().getId();
+            Double lastBid = loserLastBid.get(uid);
+            if (lastBid != null && lastBid.equals(tx.getBidAmount())) {
+                tx.getBidder().unfreeze(lastBid);
+                System.out.println("↩️ [Refund] " + tx.getBidder().getUserName() + " +" + lastBid);
+                loserLastBid.remove(uid); // Chỉ refund một lần
+            }
+        }
+
+        // Trả tiền cho Seller
+        this.seller.setBalance(this.seller.getBalance() + winAmount);
+
+        System.out.println("💰 [Settlement] " + winAmount + " từ " +
+                this.highestBidder.getUserName() + " → " + this.seller.getUserName());
+
+        this.status = AuctionStatus.PAID;
+        System.out.println("✅ [Settlement] Xong! Trạng thái: PAID");
     }
 
     // ĐÃ FIX: THÊM CÁC RÀO CHẮN BẢO MẬT (EDGE CASES)
@@ -310,6 +322,16 @@ public class Auction extends Entity implements Serializable {
         AutoBidRule newRule = new AutoBidRule(bidder, maxBid, increment);
         this.autoBidRules.add(newRule);
         System.out.println("✅ " + bidder.getUserName() + " đã cài Auto-bid (Max: " + maxBid + ", Bước giá: " + increment + ")");
+    }
+
+    /** Hủy autobid của một bidder cụ thể */
+    public synchronized void cancelAutoBid(Bidder bidder) {
+        for (AutoBidRule rule : this.autoBidRules) {
+            if (rule.getBidder().getId().equals(bidder.getId())) {
+                rule.setActive(false);
+            }
+        }
+        System.out.println("❌ AutoBid huỷ cho: " + bidder.getUserName());
     }
 
     // OBSERVER PATTERN

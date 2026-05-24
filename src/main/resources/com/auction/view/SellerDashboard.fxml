@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 
@@ -153,6 +154,28 @@
                                 <ComboBox fx:id="comboCategory" promptText="Chọn danh mục sản phẩm..."
                                     styleClass="form-input" maxWidth="Infinity"/>
                             </VBox>
+
+                            <!-- Thời gian -->
+                            <HBox spacing="18">
+                                <VBox spacing="7" HBox.hgrow="ALWAYS">
+                                    <Label text="NGÀY BẮT ĐẦU"
+                                        style="-fx-text-fill: #A0A0A0; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                    <DatePicker fx:id="startDatePicker" styleClass="form-input" maxWidth="Infinity"
+                                        promptText="Chọn ngày..."/>
+                                </VBox>
+                                <VBox spacing="7" prefWidth="130">
+                                    <Label text="GIờ BẮT ĐẦU (HH:mm)"
+                                        style="-fx-text-fill: #A0A0A0; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                    <TextField fx:id="startTimeField" promptText="VD: 14:30"
+                                        styleClass="form-input"/>
+                                </VBox>
+                                <VBox spacing="7" prefWidth="160">
+                                    <Label text="THỜI LƯỢNG"
+                                        style="-fx-text-fill: #A0A0A0; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                    <ComboBox fx:id="comboDuration" styleClass="form-input" maxWidth="Infinity"
+                                        promptText="Chọn thời lượng..."/>
+                                </VBox>
+                            </HBox>
 
                             <!-- Form động -->
                             <VBox fx:id="dynamicFormContainer" spacing="14"/>

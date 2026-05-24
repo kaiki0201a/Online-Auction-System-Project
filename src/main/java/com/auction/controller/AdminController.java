@@ -288,12 +288,22 @@ public class AdminController {
         desc.setMaxWidth(500);
 
         GridPane meta = new GridPane();
-        meta.setHgap(25); meta.setVgap(4);
+        meta.setHgap(20); meta.setVgap(6);
         addMeta(meta, "Người bán:", auction.getSeller().getUserName(), 0);
         addMeta(meta, "Giá khởi điểm:", CurrencyFormatter.format(auction.getItem().getStartingPrice()), 1);
         addMeta(meta, "ID phiên:", auction.getAuctionId().substring(0, 8) + "...", 2);
 
-        info.getChildren().addAll(header, name, desc, meta);
+        // FIX: Hiển thị startTime/endTime để admin biết thông tin đầy đủ
+        GridPane timeMeta = new GridPane();
+        timeMeta.setHgap(20); timeMeta.setVgap(4);
+        if (auction.getStartTime() != null) {
+            addMeta(timeMeta, "Bắt đầu:", auction.getStartTime().format(DTF), 0);
+        }
+        if (auction.getEndTime() != null) {
+            addMeta(timeMeta, "Kết thúc:", auction.getEndTime().format(DTF), 1);
+        }
+
+        info.getChildren().addAll(header, name, desc, meta, timeMeta);
 
         // Nút hành động
         VBox actions = new VBox(10);
