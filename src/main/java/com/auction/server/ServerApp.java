@@ -253,6 +253,20 @@ public class ServerApp {
 
         // Broadcast với toàn bộ list
         broadcastAuctionUpdate(AuctionManager.getInstance().getAllAuctions(), "AUCTION_ENDED");
+
+        // FIX BUG #2: Sau khi settle, broadcast balance mới cho Seller để client cập nhật UI
+        // Message format: "SELLER_BALANCE_UPDATE|<username>" để client filter đúng người
+        if (auction.getHighestBidder() != null && auction.getSeller() != null) {
+            com.auction.model.Seller seller = auction.getSeller();
+            String sellerMsg = "SELLER_BALANCE_UPDATE|" + seller.getUserName();
+            broadcast(new com.auction.protocol.Response(
+                com.auction.protocol.StatusType.SUCCESS,
+                sellerMsg,
+                seller.getBalance()
+            ));
+            System.out.println("💰 [SETTLEMENT BROADCAST] Seller " + seller.getUserName()
+                + " số dư mới: " + seller.getBalance());
+        }
     }
 
     // ─── BROADCAST HELPERS ────────────────────────────────────────────────────

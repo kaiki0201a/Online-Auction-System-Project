@@ -147,8 +147,19 @@ public class SellerDashboardController {
             }
         }
 
-        // Cập nhật số dư
-        if (data instanceof Double balance) {
+        // FIX BUG #2: Cập nhật số dư Seller sau khi phiên đấu giá kết thúc và settlement
+        // Message format từ server: "SELLER_BALANCE_UPDATE|<username>"
+        if (msg != null && msg.startsWith("SELLER_BALANCE_UPDATE|") && data instanceof Double) {
+            String targetUsername = msg.split("\\|")[1];
+            if (targetUsername.equals(currentUser.getUserName())) {
+                double newBalance = (Double) data;
+                currentUser.setBalance(newBalance);
+                updateBalance();
+                System.out.println("💰 [SELLER UI] Số dư cập nhật: " + newBalance);
+            }
+        }
+        // Cập nhật số dư từ DEPOSIT/WITHDRAW (data là Double nhưng không có prefix)
+        else if (data instanceof Double balance && (msg == null || !msg.contains("|"))) {
             currentUser.setBalance(balance);
             updateBalance();
         }
@@ -568,7 +579,7 @@ public class SellerDashboardController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/DepositWithdraw.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 500, 430));
+            stage.setScene(new Scene(root, 900, 650));
         } catch (IOException e) { showAlert("Lỗi", "Không thể mở Nạp/Rút tiền."); }
     }
 

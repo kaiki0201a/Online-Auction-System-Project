@@ -400,7 +400,7 @@ public class BidderDashboardController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/DepositWithdraw.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 500, 430));
+            stage.setScene(new Scene(root, 900, 650));
         } catch (IOException e) { e.printStackTrace(); }
     }
 

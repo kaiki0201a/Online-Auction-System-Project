@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
@@ -104,6 +107,38 @@
                         <Label text="MÔ TẢ" style="-fx-text-fill: #666; -fx-font-size: 11px; -fx-font-weight: bold;"/>
                         <Label fx:id="lblDescription" text="—"
                             style="-fx-text-fill: #A0A0A0; -fx-font-size: 13px;" wrapText="true"/>
+                    </VBox>
+
+                    <!-- ===== Biểu đồ tiến trình giá (LineChart) ===== -->
+                    <VBox spacing="10"
+                        style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 18;">
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Label text="📈"
+                                style="-fx-font-size: 14px;"/>
+                            <Label text="BIỂU ĐỒ TIẾN TRÌNH GIÁ"
+                                style="-fx-text-fill: #F5C518; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblChartInfo" text="Realtime · Cập nhật theo từng lần đặt giá"
+                                style="-fx-text-fill: #444; -fx-font-size: 10px;"/>
+                        </HBox>
+                        <LineChart fx:id="priceLineChart"
+                            prefHeight="220" maxHeight="220"
+                            animated="false"
+                            createSymbols="true"
+                            style="-fx-background-color: transparent; -fx-padding: 0;">
+                            <xAxis>
+                                <CategoryAxis fx:id="chartXAxis"
+                                    label=""
+                                    tickLabelRotation="-40"
+                                    style="-fx-tick-label-fill: #555; -fx-tick-label-font-size: 9px; -fx-axis-label-fill: #555;"/>
+                            </xAxis>
+                            <yAxis>
+                                <NumberAxis fx:id="chartYAxis"
+                                    label="Giá (VNĐ)"
+                                    autoRanging="true"
+                                    style="-fx-tick-label-fill: #555; -fx-tick-label-font-size: 9px; -fx-axis-label-fill: #555;"/>
+                            </yAxis>
+                        </LineChart>
                     </VBox>
 
                     <!-- Thông báo lỗi / thành công -->

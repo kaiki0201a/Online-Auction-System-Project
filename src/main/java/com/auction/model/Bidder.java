@@ -19,12 +19,14 @@ public class Bidder extends User implements AuctionObserver {
     private static final long serialVersionUID = 1L;
 
     private double balance; 
-    private List<BidTransaction> transactionHistory; // Danh sách id các phiên đấu giá đá tham gia
+    private List<BidTransaction> transactionHistory;
+    private List<WalletTransaction> walletHistory; // Lịch sử nạp/rút tiền
 
-    public Bidder(String userName, String passWord, String email,double balance){
+    public Bidder(String userName, String passWord, String email, double balance){
         super(userName, passWord, email);
         this.balance = balance;
         this.transactionHistory = new CopyOnWriteArrayList<>();
+        this.walletHistory      = new CopyOnWriteArrayList<>();
     }
 
     public double getBalance(){
@@ -38,6 +40,14 @@ public class Bidder extends User implements AuctionObserver {
     }
     public void addTransaction(BidTransaction transaction) {
         this.transactionHistory.add(transaction);
+    }
+    public List<WalletTransaction> getWalletHistory() {
+        if (walletHistory == null) walletHistory = new CopyOnWriteArrayList<>();
+        return walletHistory;
+    }
+    public void addWalletTransaction(WalletTransaction wt) {
+        if (walletHistory == null) walletHistory = new CopyOnWriteArrayList<>();
+        walletHistory.add(0, wt); // thêm vào đầu để hiển thị mới nhất trước
     }
 
     public void getBidderInfo(){

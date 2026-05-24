@@ -143,17 +143,45 @@
 }
 
 /* =========================================
-   BIỂU ĐỒ ĐƯỜNG (LINE CHART) - REALTIME BIDDING
+   BIỂU ĐỒ ĐƯỜNG (LINE CHART) - REALTIME BIDDING — DARK THEME
    ========================================= */
 .chart-series-line {
-    -fx-stroke: #f44336; /* Màu của đường biểu đồ giá (Đỏ nổi bật) */
-    -fx-stroke-width: 3px;
+    -fx-stroke: #F5C518; /* Màu vàng gold của hệ thống */
+    -fx-stroke-width: 2.5px;
 }
 .chart-line-symbol {
-    -fx-background-color: transparent, transparent; /* Ẩn các chấm tròn trên biểu đồ cho mượt */
+    -fx-background-color: #F5C518, #0F0F0F;
+    -fx-background-radius: 4px;
+    -fx-padding: 4px;
 }
 .chart-plot-background {
-    -fx-background-color: #fafafa;
+    -fx-background-color: #0F0F0F;
+}
+.chart-vertical-grid-lines {
+    -fx-stroke: #1E1E1E;
+}
+.chart-horizontal-grid-lines {
+    -fx-stroke: #1E1E1E;
+}
+.chart-alternative-row-fill {
+    -fx-background-color: transparent;
+}
+.chart-alternative-column-fill {
+    -fx-background-color: transparent;
+}
+.chart-content {
+    -fx-padding: 5;
+}
+.axis {
+    -fx-tick-label-fill: #555;
+    -fx-tick-mark-fill: #333;
+}
+.axis-label {
+    -fx-text-fill: #444;
+    -fx-font-size: 10px;
+}
+.chart-legend {
+    -fx-background-color: transparent;
 }
 /* Login */
 .login-background-image {

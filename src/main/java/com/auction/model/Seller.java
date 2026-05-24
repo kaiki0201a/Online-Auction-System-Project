@@ -7,28 +7,27 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Seller extends User implements Serializable {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
     private float rating;
-    private double balance; // Số dư của Seller (nhận tiền khi bán thành công)
-
-    // đã sửa level 3: Thêm trường để lưu số lượng rating và tổng điểm
+    private double balance;
     private int ratingCount;
     private float totalRatingScore;
+    private List<Item> inventory;
+    private List<WalletTransaction> walletHistory; // Lịch sử nạp/rút tiền
 
-    private List<Item> inventory;   // Kho hàng lưu trữ các món hàng của người bán quản lý
-
-    // Constructor
     public Seller(String userName, String passWord, String email) {
         super(userName, passWord, email);
-        this.rating = 5.0f; // Mặc định ban đầu là 5 sao
+        this.rating = 5.0f;
         this.ratingCount = 0;
         this.totalRatingScore = 0.0f;
         this.balance = 0.0;
-        this.inventory = new ArrayList<>();  // Khởi tạo kho rỗng
+        this.inventory   = new ArrayList<>();
+        this.walletHistory = new CopyOnWriteArrayList<>();
     }
 
     // Các chức năng, nghiệp vụ
@@ -78,5 +77,14 @@ public class Seller extends User implements Serializable {
 
     public List<Item> getInventory() {
         return inventory;
+    }
+
+    public List<WalletTransaction> getWalletHistory() {
+        if (walletHistory == null) walletHistory = new CopyOnWriteArrayList<>();
+        return walletHistory;
+    }
+    public void addWalletTransaction(WalletTransaction wt) {
+        if (walletHistory == null) walletHistory = new CopyOnWriteArrayList<>();
+        walletHistory.add(0, wt);
     }
 }

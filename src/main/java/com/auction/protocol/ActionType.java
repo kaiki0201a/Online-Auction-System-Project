@@ -26,5 +26,8 @@ public enum ActionType implements Serializable {
 
     // Broadcast từ Server
     BROADCAST_BID_UPDATE,
-    BROADCAST_AUCTION_END
+    BROADCAST_AUCTION_END,
+
+    // Cập nhật số dư cho Seller sau khi phiên kết thúc và settlement xong
+    SELLER_BALANCE_UPDATE
 }

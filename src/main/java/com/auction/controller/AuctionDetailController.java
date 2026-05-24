@@ -9,6 +9,7 @@ import com.auction.protocol.Request;
 import com.auction.protocol.StatusType;
 import com.auction.utils.AppContext;
 import com.auction.utils.CurrencyFormatter;
+import com.auction.utils.PriceChartHelper;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -19,6 +20,10 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -83,6 +88,13 @@ public class AuctionDetailController {
     // Lịch sử bid
     @FXML private VBox bidHistoryContainer;
 
+    // LineChart biểu đồ tiến trình giá (FIX #3)
+    @FXML private LineChart<String, Number> priceLineChart;
+    @FXML private CategoryAxis chartXAxis;
+    @FXML private NumberAxis chartYAxis;
+    @FXML private Label lblChartInfo;
+    private XYChart.Series<String, Number> priceSeries;
+
     private Auction currentAuction;
     private User sessionUser;
     private boolean canBid = false;
@@ -131,12 +143,34 @@ public class AuctionDetailController {
         updateUI();
         startCountdown();
         renderBidHistory();
+        initPriceChart(); // FIX #3: Khởi tạo biểu đồ tiến trình giá
 
         // FIX: Đăng ký listener với key riêng — không bị ghi đè
         registerNetworkListener();
     }
 
     // ─── Cài đặt controls đặt giá ────────────────────────────────────────────
+
+    /**
+     * FIX #3: Khởi tạo biểu đồ tiến trình giá từ lịch sử bid hiện tại.
+     */
+    private void initPriceChart() {
+        if (priceLineChart == null) return;
+        priceLineChart.setLegendVisible(false);
+        priceLineChart.setAnimated(false);
+        priceSeries = PriceChartHelper.buildHistoricalChart(
+            priceLineChart, currentAuction.getBidHistory());
+        updateChartLabel();
+    }
+
+    /** Cập nhật label thống kê số lượt đặt giá trên chart */
+    private void updateChartLabel() {
+        if (lblChartInfo == null) return;
+        int count = currentAuction.getBidHistory().size();
+        lblChartInfo.setText(count == 0
+            ? "Chưa có lượt đặt giá nào"
+            : count + " lượt đặt giá · Cập nhật realtime");
+    }
 
     private void setupBidControls() {
         if (btnBid != null) {
@@ -520,6 +554,13 @@ public class AuctionDetailController {
                                 updateUI();
                                 renderBidHistory();
                                 startCountdown();
+                                // FIX #3: Cập nhật biểu đồ realtime khi có bid mới
+                                if (priceLineChart != null && priceSeries != null) {
+                                    // Rebuild chart với toàn bộ lịch sử mới nhất
+                                    priceSeries = PriceChartHelper.buildHistoricalChart(
+                                        priceLineChart, currentAuction.getBidHistory());
+                                    updateChartLabel();
+                                }
                                 if (wasExtended) setMessage("⏱️ Hệ thống vừa gia hạn thêm thời gian!", "#f39c12");
                                 // Thông báo bị vượt giá
                                 if (canBid && updated.getHighestBidder() != null
@@ -540,6 +581,12 @@ public class AuctionDetailController {
                                 currentAuction = ended;
                                 updateUI();
                                 renderBidHistory();
+                                // FIX #3: Cập nhật biểu đồ lần cuối khi phiên kết thúc
+                                if (priceLineChart != null) {
+                                    priceSeries = PriceChartHelper.buildHistoricalChart(
+                                        priceLineChart, currentAuction.getBidHistory());
+                                    updateChartLabel();
+                                }
                                 if (countdownTimeline != null) countdownTimeline.stop();
                                 if (lblTimeLeft != null) {
                                     lblTimeLeft.setText("ĐÃ KẾT THÚC");
