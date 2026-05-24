@@ -137,6 +137,36 @@
                                         styleClass="form-input"/>
                                 </VBox>
                             </HBox>
+                            <!-- THỜI GIAN ĐẤU GIÁ (thêm vào SellerDashboard.fxml) -->
+                            <HBox spacing="14" alignment="CENTER_LEFT">
+                                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                    <Label text="NGÀY BẮT ĐẦU"
+                                           style="-fx-text-fill: #A0A0A0; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                    <DatePicker fx:id="datePickerStart"
+                                                promptText="Chọn ngày bắt đầu"
+                                                style="-fx-background-color: #1A1A1A; -fx-border-color: #2A2A2A;
+                           -fx-border-radius: 4; -fx-background-radius: 4;"/>
+                                    <TextField fx:id="txtTimeStart"
+                                               promptText="Giờ bắt đầu (HH:mm, VD: 09:00)"
+                                               style="-fx-background-color: #1A1A1A; -fx-text-fill: white;
+                          -fx-border-color: #2A2A2A; -fx-border-radius: 4;
+                          -fx-background-radius: 4; -fx-padding: 8;"/>
+                                </VBox>
+                                <Label text="→" style="-fx-text-fill: #444; -fx-font-size: 20px;"/>
+                                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                    <Label text="NGÀY KẾT THÚC"
+                                           style="-fx-text-fill: #A0A0A0; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                    <DatePicker fx:id="datePickerEnd"
+                                                promptText="Chọn ngày kết thúc"
+                                                style="-fx-background-color: #1A1A1A; -fx-border-color: #2A2A2A;
+                           -fx-border-radius: 4; -fx-background-radius: 4;"/>
+                                    <TextField fx:id="txtTimeEnd"
+                                               promptText="Giờ kết thúc (HH:mm, VD: 18:00)"
+                                               style="-fx-background-color: #1A1A1A; -fx-text-fill: white;
+                          -fx-border-color: #2A2A2A; -fx-border-radius: 4;
+                          -fx-background-radius: 4; -fx-padding: 8;"/>
+                                </VBox>
+                            </HBox>
 
                             <!-- Mô tả -->
                             <VBox spacing="7">

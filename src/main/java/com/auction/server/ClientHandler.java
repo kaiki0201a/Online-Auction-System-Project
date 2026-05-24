@@ -317,8 +317,71 @@ public class ClientHandler implements Runnable {
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Lỗi khi từ chối: " + e.getMessage(), null);
                 }
+                // ─── CÀI ĐẶT AUTOBID ──────────────────────────────────────────────
+                // THÊM ĐOẠN NÀY VÀO TRONG switch(action) của ClientHandler.processRequest(),
+                // đặt ngay trước case DEPOSIT (hoặc trước "default").
+            case SET_AUTOBID:
+                try {
+                    AutoBidPayload abPayload = (AutoBidPayload) request.getPayload();
 
-            // ─── NẠP TIỀN ─────────────────────────────────────────────────────
+                    Auction abAuction = AuctionManager.getInstance()
+                            .getAuctionById(abPayload.getAuctionId());
+                    if (abAuction == null) {
+                        return new Response(StatusType.ERROR, "Phiên đấu giá không tồn tại.", null);
+                    }
+
+                    Bidder abBidder = (Bidder) UserManager.getInstance()
+                            .getUser(abPayload.getBidderId());
+                    if (abBidder == null) {
+                        return new Response(StatusType.ERROR, "Tài khoản Bidder không hợp lệ.", null);
+                    }
+
+                    if (abPayload.isEnable()) {
+                        // BẬT AutoBid: đăng ký rule vào phiên
+                        abAuction.registerAutoBid(abBidder,
+                                abPayload.getMaxAmount(),
+                                abPayload.getIncrementAmount());
+
+                        // Flush dữ liệu xuống file (rule đã nằm trong auction object)
+                        ServerApp.getAuctionDAO().saveDataToFile();
+
+                        System.out.println("🤖 [AUTOBID BẬT] " + abBidder.getUserName()
+                                + " | Max: " + abPayload.getMaxAmount()
+                                + " | Bước: " + abPayload.getIncrementAmount()
+                                + " | Phiên: " + abAuction.getItem().getNameItem());
+
+                        return new Response(StatusType.SUCCESS, "AUTOBID_OK",
+                                "Đã bật AutoBid thành công!");
+
+                    } else {
+                        // TẮT AutoBid: deactivate toàn bộ rule của bidder này trong phiên
+                        abAuction.getBidHistory(); // warm up (không cần thiết, chỉ minh hoạ)
+
+                        // Truy cập autoBidRules qua getter — cần thêm getter vào Auction
+                        // Xem hướng dẫn bên dưới nếu chưa có getAutoBidRules()
+                        if (abAuction.getAutoBidRules() != null) {
+                            abAuction.getAutoBidRules().stream()
+                                    .filter(r -> r.getBidder().getUserName()
+                                            .equals(abBidder.getUserName()))
+                                    .forEach(r -> r.setActive(false));
+                        }
+
+                        ServerApp.getAuctionDAO().saveDataToFile();
+
+                        System.out.println("🤖 [AUTOBID TẮT] " + abBidder.getUserName()
+                                + " | Phiên: " + abAuction.getItem().getNameItem());
+
+                        return new Response(StatusType.SUCCESS, "AUTOBID_OK",
+                                "Đã tắt AutoBid thành công!");
+                    }
+
+                } catch (com.auction.exception.AuctionException e) {
+                    return new Response(StatusType.ERROR, "AUTOBID_ERROR: " + e.getMessage(), null);
+                } catch (Exception e) {
+                    return new Response(StatusType.ERROR, "AUTOBID_ERROR: Lỗi hệ thống khi xử lý AutoBid.", null);
+                }
+
+                // ─── NẠP TIỀN ─────────────────────────────────────────────────────
             case DEPOSIT:
                 try {
                     String depositData = (String) request.getPayload();

@@ -13,6 +13,7 @@ public enum ActionType implements Serializable {
     UPDATE_AUCTION,
     CANCEL_AUCTION,
     PLACE_BID,
+    SET_AUTOBID,
 
     // User/Admin actions
     GET_USER_LIST,

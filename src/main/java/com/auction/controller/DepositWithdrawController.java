@@ -23,6 +23,13 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+/**
+ * DepositWithdrawController — FIX #4:
+ *
+ * Đổi setOnResponseReceived → addEventListener("deposit", ...)
+ * → Không còn ghi đè listener của AuctionDetail hay Dashboard khác.
+ * Nhớ removeEventListener("deposit") khi rời màn hình (onBackClick).
+ */
 public class DepositWithdrawController {
 
     @FXML private StackPane rootPane;
@@ -35,6 +42,9 @@ public class DepositWithdrawController {
 
     private User currentUser;
 
+    // FIX: Key riêng — không ghi đè listener của màn hình khác
+    private static final String LISTENER_KEY = "deposit";
+
     @FXML
     public void initialize() {
         currentUser = AppContext.getCurrentUser();
@@ -43,20 +53,27 @@ public class DepositWithdrawController {
         if (lblUsername != null) lblUsername.setText(currentUser.getUserName());
         updateBalanceDisplay();
 
-        NetworkClient.getInstance().setOnResponseReceived(response -> {
+        // FIX: addEventListener thay vì setOnResponseReceived
+        NetworkClient.getInstance().addEventListener(LISTENER_KEY, response -> {
             Platform.runLater(() -> {
-                if (response.getStatus() == StatusType.SUCCESS) {
+                // Chỉ xử lý response liên quan đến DEPOSIT / WITHDRAW
+                // (phân biệt bằng data type = Double = số dư mới)
+                if (response.getStatus() == StatusType.SUCCESS
+                        && response.getData() instanceof Double) {
+                    double newBalance = (Double) response.getData();
+
                     // Cập nhật balance trong local model
-                    if (response.getData() instanceof Double) {
-                        double newBalance = (Double) response.getData();
-                        if (currentUser instanceof Bidder) ((Bidder) currentUser).setBalance(newBalance);
-                        else if (currentUser instanceof Seller) ((Seller) currentUser).setBalance(newBalance);
-                        updateBalanceDisplay();
-                    }
+                    if (currentUser instanceof Bidder b) b.setBalance(newBalance);
+                    else if (currentUser instanceof Seller s) s.setBalance(newBalance);
+
+                    updateBalanceDisplay();
                     setMessage("✅ " + response.getMessage(), "#27ae60");
                     NotificationUtil.showToast(response.getMessage(), rootPane, "success");
                     if (txtAmount != null) txtAmount.clear();
-                } else {
+
+                } else if (response.getStatus() == StatusType.ERROR
+                        && isDepositWithdrawError(response.getMessage())) {
+                    // Chỉ hiện lỗi nếu là lỗi nạp/rút (tránh nhận lỗi broadcast từ màn hình khác)
                     setMessage("❌ " + response.getMessage(), "#e74c3c");
                     NotificationUtil.showToast(response.getMessage(), rootPane, "error");
                 }
@@ -64,24 +81,27 @@ public class DepositWithdrawController {
         });
     }
 
+    /**
+     * Lọc: chỉ xử lý error message liên quan đến deposit/withdraw.
+     * Tránh nhận nhầm error broadcast từ PLACE_BID, SET_AUTOBID, v.v.
+     */
+    private boolean isDepositWithdrawError(String msg) {
+        if (msg == null) return false;
+        return msg.contains("Nạp") || msg.contains("Rút") || msg.contains("Số dư")
+                || msg.contains("tiền") || msg.contains("tài khoản");
+    }
+
     private void updateBalanceDisplay() {
         if (lblCurrentBalance == null) return;
-        if (currentUser instanceof Bidder) {
-            lblCurrentBalance.setText(CurrencyFormatter.format(((Bidder) currentUser).getBalance()));
-        } else if (currentUser instanceof Seller) {
-            lblCurrentBalance.setText(CurrencyFormatter.format(((Seller) currentUser).getBalance()));
+        if (currentUser instanceof Bidder b) {
+            lblCurrentBalance.setText(CurrencyFormatter.format(b.getBalance()));
+        } else if (currentUser instanceof Seller s) {
+            lblCurrentBalance.setText(CurrencyFormatter.format(s.getBalance()));
         }
     }
 
-    @FXML
-    public void onDepositClick(ActionEvent event) {
-        processTransaction(true);
-    }
-
-    @FXML
-    public void onWithdrawClick(ActionEvent event) {
-        processTransaction(false);
-    }
+    @FXML public void onDepositClick(ActionEvent event)  { processTransaction(true); }
+    @FXML public void onWithdrawClick(ActionEvent event) { processTransaction(false); }
 
     private void processTransaction(boolean isDeposit) {
         String amountStr = txtAmount != null ? txtAmount.getText().trim() : "";
@@ -99,6 +119,16 @@ public class DepositWithdrawController {
                 setMessage("⚠️ Số tiền tối đa là 1 tỷ mỗi lần!", "#f39c12");
                 return;
             }
+            // Kiểm tra số dư trước khi rút (client-side validation nhanh)
+            if (!isDeposit) {
+                double currentBalance = (currentUser instanceof Bidder b) ? b.getBalance()
+                        : (currentUser instanceof Seller s) ? s.getBalance() : 0;
+                if (amount > currentBalance) {
+                    setMessage("❌ Số dư không đủ để rút! Bạn có: "
+                            + CurrencyFormatter.format(currentBalance), "#e74c3c");
+                    return;
+                }
+            }
 
             String payload = currentUser.getUserName() + "|" + amount;
             ActionType action = isDeposit ? ActionType.DEPOSIT : ActionType.WITHDRAW;
@@ -110,17 +140,15 @@ public class DepositWithdrawController {
         }
     }
 
+    // Nút nhanh
     @FXML public void onQuick100k() { setAmount(100_000); }
     @FXML public void onQuick500k() { setAmount(500_000); }
     @FXML public void onQuick1M()   { setAmount(1_000_000); }
     @FXML public void onQuick5M()   { setAmount(5_000_000); }
 
     private void setAmount(double amount) {
-        if (txtAmount != null) {
-            txtAmount.setText(String.valueOf((long) amount));
-        }
+        if (txtAmount != null) txtAmount.setText(String.valueOf((long) amount));
     }
-
 
     private void setMessage(String text, String color) {
         if (lblMessage != null) {
@@ -131,7 +159,8 @@ public class DepositWithdrawController {
 
     @FXML
     public void onBackClick(ActionEvent event) {
-        NetworkClient.getInstance().removeOnResponseReceived();
+        // FIX: Gỡ đúng key của màn hình này
+        NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
         try {
             String fxmlPath;
             if (currentUser instanceof com.auction.model.Admin) {

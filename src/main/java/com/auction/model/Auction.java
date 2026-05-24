@@ -34,6 +34,7 @@ public class Auction extends Entity implements Serializable {
     private List<BidTransaction> bidHistory;
     private List<AuctionObserver> observers;
     private transient ExecutorService notificationPool = Executors.newCachedThreadPool();
+    private List<AutoBid> autoBids = new ArrayList<>();  // ← THÊM MỚI
 
     // Scheduler để tự động kết thúc phiên khi hết thời gian
     private transient ScheduledFuture<?> autoCloseTask;
@@ -359,5 +360,8 @@ public class Auction extends Entity implements Serializable {
 
     public void setStatus(AuctionStatus status) {
         this.status = status;
+    }
+    public List<AutoBidRule> getAutoBidRules() {
+        return autoBidRules;
     }
 }

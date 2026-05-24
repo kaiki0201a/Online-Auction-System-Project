@@ -405,9 +405,21 @@ public class SellerDashboardController {
         return box;
     }
 
-    // FIX: onPublishClick — bỏ pattern listener tạm phức tạp
+    // ─── FIX #2: onPublishClick — thêm DateTimePicker cho thời gian ────────────
+    // THAY THẾ TOÀN BỘ hàm onPublishClick() hiện tại bằng hàm này.
+    // Cần thêm 4 field mới vào FXML (xem hướng dẫn bên dưới):
+    //   @FXML private DatePicker datePickerStart;
+    //   @FXML private TextField  txtTimeStart;      // HH:mm, VD: 09:00
+    //   @FXML private DatePicker datePickerEnd;
+    //   @FXML private TextField  txtTimeEnd;         // HH:mm, VD: 18:00
+
+    @FXML private javafx.scene.control.DatePicker datePickerStart;
+    @FXML private javafx.scene.control.TextField  txtTimeStart;
+    @FXML private javafx.scene.control.DatePicker datePickerEnd;
+    @FXML private javafx.scene.control.TextField  txtTimeEnd;
+
     @FXML
-    public void onPublishClick(ActionEvent event) {
+    public void onPublishClick(javafx.event.ActionEvent event) {
         String name     = txtName          != null ? txtName.getText().trim()          : "";
         String priceStr = txtStartingPrice != null ? txtStartingPrice.getText().trim() : "";
         String desc     = txtDescription   != null ? txtDescription.getText().trim()   : "";
@@ -426,26 +438,68 @@ public class SellerDashboardController {
             showAlert("Lỗi", "Giá tiền không hợp lệ."); return;
         }
 
+        // FIX #2: Parse thời gian bắt đầu và kết thúc từ DatePicker + TextField
+        LocalDateTime startTime = parseDateTime(datePickerStart, txtTimeStart, LocalDateTime.now());
+        LocalDateTime endTime   = parseDateTime(datePickerEnd,   txtTimeEnd,   LocalDateTime.now().plusDays(3));
+
+        // Validate thời gian
+        if (endTime.isBefore(LocalDateTime.now()) || endTime.isEqual(LocalDateTime.now())) {
+            showAlert("Lỗi thời gian", "Thời gian kết thúc phải ở trong tương lai!");
+            return;
+        }
+        if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
+            showAlert("Lỗi thời gian", "Thời gian kết thúc phải sau thời gian bắt đầu!");
+            return;
+        }
+
         List<String> dynamics = extractDynamicInputs();
         Item newItem = buildItem(category, name, desc, price, dynamics);
         if (newItem == null) { showAlert("Lỗi", "Danh mục không hợp lệ."); return; }
 
         if (selectedImagePath != null) newItem.setImagePath(selectedImagePath);
 
-        // FIX: Tạo auction với thời gian hợp lý (startTime = now, endTime = +3 ngày)
-        Auction newAuction = new Auction(newItem, currentUser,
-                LocalDateTime.now(), LocalDateTime.now().plusDays(3));
+        // Tạo Auction với thời gian user đã chọn
+        Auction newAuction = new Auction(newItem, currentUser, startTime, endTime);
 
-        // FIX: Chỉ gửi request, KHÔNG thay đổi listener.
-        // handleResponse() sẽ nhận AUCTION_CREATED với data=List → tự renderInventory()
         NetworkClient.getInstance().sendRequest(new Request(ActionType.CREATE_AUCTION, newAuction));
-
-        // Hiển thị thông báo ngay (optimistic) — inventory sẽ cập nhật khi server response
         showAlert("✅ Đang đăng sản phẩm...",
-            "Sản phẩm \"" + name + "\" đang được gửi lên server.\n" +
-            "Kho hàng sẽ cập nhật ngay khi server xác nhận.");
+                "Sản phẩm \"" + name + "\" đang được gửi lên server.\n"
+                        + "Kho hàng sẽ cập nhật ngay khi server xác nhận.");
         onClearFormClick(null);
     }
+
+    /**
+     * Helper: parse LocalDateTime từ DatePicker + TextField giờ.
+     * Nếu user không chọn → dùng giá trị mặc định.
+     *
+     * @param picker       DatePicker (có thể null nếu chưa có trong FXML)
+     * @param txtTime      TextField dạng "HH:mm"
+     * @param defaultValue Giá trị mặc định nếu input trống/lỗi
+     */
+    private LocalDateTime parseDateTime(javafx.scene.control.DatePicker picker,
+                                        javafx.scene.control.TextField txtTime,
+                                        LocalDateTime defaultValue) {
+        if (picker == null || picker.getValue() == null) return defaultValue;
+
+        java.time.LocalDate date = picker.getValue();
+        int hour = 0, minute = 0;
+
+        if (txtTime != null && !txtTime.getText().trim().isEmpty()) {
+            try {
+                String[] parts = txtTime.getText().trim().split(":");
+                hour   = Integer.parseInt(parts[0]);
+                minute = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
+                // Clamp
+                hour   = Math.max(0, Math.min(23, hour));
+                minute = Math.max(0, Math.min(59, minute));
+            } catch (NumberFormatException ignored) {
+                // Giữ 00:00
+            }
+        }
+        return LocalDateTime.of(date, java.time.LocalTime.of(hour, minute));
+    }
+
+
 
     private List<String> extractDynamicInputs() {
         List<String> inputs = new ArrayList<>();
