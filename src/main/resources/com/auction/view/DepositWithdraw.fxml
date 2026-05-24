@@ -37,7 +37,7 @@
             <VBox spacing="8.0">
                 <Label style="-fx-text-fill: #e0e0e0; -fx-font-size: 11px; -fx-font-weight: bold;" text="SỐ TIỀN GIAO DỊCH (tối đa 1,000,000,000)" />
                 <HBox alignment="CENTER_LEFT" style="-fx-background-color: #1a1a1a; -fx-border-color: #333333; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 10 0 15;">
-                    <Label style="-fx-text-fill: #F5C518; -fx-font-size: 16px; -fx-font-weight: bold;" text="$ " />
+                    <Label style="-fx-text-fill: #F5C518; -fx-font-size: 16px; -fx-font-weight: bold;" text="\$ " />
                     <TextField fx:id="txtAmount" promptText="Nhập số tiền..."
                         style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 11 10;"
                         HBox.hgrow="ALWAYS" />
