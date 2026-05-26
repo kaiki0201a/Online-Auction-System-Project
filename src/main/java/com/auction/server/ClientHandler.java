@@ -177,15 +177,13 @@ public class ClientHandler implements Runnable {
                     AuctionManager.getInstance().updateAuction(auction);
 
                     // Reschedule auto-close sau khi bid thành công
-                    // Lý do: anti-sniping có thể đã thay đổi endTime bên trong processBid()
                     ServerApp.scheduleAutoClose(auction);
 
-                    // Broadcast toàn bộ list để các client tự refresh
+                    // Broadcast ngay lập tức, lưu file chạy ngầm
                     List<Auction> allAfterBid = AuctionManager.getInstance().getAllAuctions();
                     ServerApp.broadcastAuctionUpdate(allAfterBid, "UPDATE_AUCTION");
-
-                    // Lưu số dư mới của bidder
-                    ServerApp.getUserDAO().saveDataToFile();
+                    ServerApp.saveAuctionsAsync();
+                    ServerApp.saveUsersAsync();
 
                     return new Response(StatusType.SUCCESS, "Đặt giá thành công!", realBidder.getBalance());
 
@@ -202,8 +200,8 @@ public class ClientHandler implements Runnable {
 
                     // FIX: Thêm vào RAM list trước khi broadcast
                     AuctionManager.getInstance().getAllAuctions().add(newAuction);
-                    // Flush file (RAM đã có newAuction rồi)
-                    ServerApp.getAuctionDAO().saveDataToFile();
+                    // Flush file ngầm (RAM đã có newAuction rồi)
+                    ServerApp.saveAuctionsAsync();
 
                     // FIX: Lấy toàn bộ list (đã bao gồm newAuction) để broadcast
                     List<Auction> updatedList = AuctionManager.getInstance().getAllAuctions();
@@ -211,7 +209,6 @@ public class ClientHandler implements Runnable {
                     // Broadcast với data = List<Auction> — client nhận và renderInventory ngay
                     ServerApp.broadcastAuctionUpdate(updatedList, "AUCTION_CREATED");
 
-                    // FIX: Trả về List (không phải single Auction) để client filter ngay
                     System.out.println("📦 [SERVER] Auction mới tạo: " + newAuction.getItem().getNameItem() +
                         " | Tổng: " + updatedList.size() + " phiên");
                     return new Response(StatusType.SUCCESS, "AUCTION_CREATED", updatedList);
@@ -239,7 +236,7 @@ public class ClientHandler implements Runnable {
 
                     if (targetUser != null) {
                         targetUser.setBanned(!targetUser.isBanned());
-                        ServerApp.getUserDAO().saveDataToFile();
+                        ServerApp.saveUsersAsync();
                         String act = targetUser.isBanned() ? "khóa" : "mở khóa";
                         return new Response(StatusType.SUCCESS,
                                 "Đã " + act + " tài khoản " + targetUsername + "!", null);
@@ -262,11 +259,11 @@ public class ClientHandler implements Runnable {
 
                         auctionToCancel.setStatus(AuctionStatus.CANCELED);
                         AuctionManager.getInstance().updateAuction(auctionToCancel);
-                        ServerApp.getAuctionDAO().saveDataToFile();
-                        ServerApp.getUserDAO().saveDataToFile();
 
                         List<Auction> allAfterCancel = AuctionManager.getInstance().getAllAuctions();
                         ServerApp.broadcastAuctionUpdate(allAfterCancel, "AUCTION_CANCELED");
+                        ServerApp.saveAuctionsAsync();
+                        ServerApp.saveUsersAsync();
 
                         // Broadcast số dư mới cho bidder được hoàn tiền
                         if (refundedBidder != null) {
@@ -317,11 +314,11 @@ public class ClientHandler implements Runnable {
                     }
 
                     AuctionManager.getInstance().updateAuction(toApprove);
-                    ServerApp.getAuctionDAO().saveDataToFile();
 
-                    // FIX: Broadcast với toàn bộ List<Auction> — client filter nhất quán
+                    // Broadcast ngay lập tức, lưu file ngầm
                     List<Auction> allAfterApprove = AuctionManager.getInstance().getAllAuctions();
                     ServerApp.broadcastAuctionUpdate(allAfterApprove, "AUCTION_APPROVED");
+                    ServerApp.saveAuctionsAsync();
 
                     return new Response(StatusType.SUCCESS, "DUYỆT_OK|" + approveId, allAfterApprove);
 
@@ -378,8 +375,8 @@ public class ClientHandler implements Runnable {
                                 abPayload.getMaxAmount(),
                                 abPayload.getIncrementAmount());
 
-                        // Flush dữ liệu xuống file (rule đã nằm trong auction object)
-                        ServerApp.getAuctionDAO().saveDataToFile();
+                        // Lưu ngầm
+                        ServerApp.saveAuctionsAsync();
 
                         System.out.println("🤖 [AUTOBID BẬT] " + abBidder.getUserName()
                                 + " | Max: " + abPayload.getMaxAmount()
@@ -402,7 +399,7 @@ public class ClientHandler implements Runnable {
                                     .forEach(r -> r.setActive(false));
                         }
 
-                        ServerApp.getAuctionDAO().saveDataToFile();
+                        ServerApp.saveAuctionsAsync();
 
                         System.out.println("🤖 [AUTOBID TẮT] " + abBidder.getUserName()
                                 + " | Phiên: " + abAuction.getItem().getNameItem());
@@ -431,11 +428,11 @@ public class ClientHandler implements Runnable {
                     User user = UserManager.getInstance().getUser(targetUser);
                     if (user instanceof Bidder bidder) {
                         bidder.setBalance(bidder.getBalance() + amount);
-                        ServerApp.getUserDAO().saveDataToFile();
+                        ServerApp.saveUsersAsync();
                         return new Response(StatusType.SUCCESS, "Nạp tiền thành công!", bidder.getBalance());
                     } else if (user instanceof Seller seller) {
                         seller.setBalance(seller.getBalance() + amount);
-                        ServerApp.getUserDAO().saveDataToFile();
+                        ServerApp.saveUsersAsync();
                         return new Response(StatusType.SUCCESS, "Nạp tiền thành công!", seller.getBalance());
                     }
                     return new Response(StatusType.ERROR, "Không tìm thấy tài khoản.", null);
@@ -460,14 +457,14 @@ public class ClientHandler implements Runnable {
                             return new Response(StatusType.ERROR, "Số dư không đủ để rút tiền!", null);
                         }
                         bidder.setBalance(bidder.getBalance() - amount);
-                        ServerApp.getUserDAO().saveDataToFile();
+                        ServerApp.saveUsersAsync();
                         return new Response(StatusType.SUCCESS, "Rút tiền thành công!", bidder.getBalance());
                     } else if (user instanceof Seller seller) {
                         if (seller.getBalance() < amount) {
                             return new Response(StatusType.ERROR, "Số dư không đủ để rút tiền!", null);
                         }
                         seller.setBalance(seller.getBalance() - amount);
-                        ServerApp.getUserDAO().saveDataToFile();
+                        ServerApp.saveUsersAsync();
                         return new Response(StatusType.SUCCESS, "Rút tiền thành công!", seller.getBalance());
                     }
                     return new Response(StatusType.ERROR, "Không tìm thấy tài khoản.", null);
@@ -497,7 +494,7 @@ public class ClientHandler implements Runnable {
                     if (!newPassword.isEmpty()) {
                         user.setPassWord(user.hashPasswordPublic(newPassword));
                     }
-                    ServerApp.getUserDAO().saveDataToFile();
+                    ServerApp.saveUsersAsync();
                     return new Response(StatusType.SUCCESS, "Cập nhật thông tin thành công!", user);
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Lỗi khi cập nhật: " + e.getMessage(), null);

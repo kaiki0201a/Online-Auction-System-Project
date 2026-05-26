@@ -109,6 +109,7 @@ public class NetworkClient {
     private void doConnect(String serverAddress, int port) {
         try {
             socket = new Socket(serverAddress, port);
+            socket.setTcpNoDelay(true); // Tắt Nagle — nhận/gửi packet ngay, không buffer
 
             // BẮT BUỘC khởi tạo ObjectOutputStream TRƯỚC để chống Deadlock
             out = new ObjectOutputStream(socket.getOutputStream());

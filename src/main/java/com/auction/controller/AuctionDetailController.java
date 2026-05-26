@@ -535,8 +535,9 @@ public class AuctionDetailController {
             BidPayload payload = new BidPayload(
                     currentAuction.getAuctionId(), bidder.getUserName(), amount);
             NetworkClient.getInstance().sendRequest(new Request(ActionType.PLACE_BID, payload));
-            setMessage("🚀 Đang gửi giá thầu...", "#A0A0A0");
-            if (btnBid != null) btnBid.setDisable(true);
+            // Optimistic UI: clear input ngay lập tức, không chờ server response
+            if (txtBidAmount != null) txtBidAmount.clear();
+            setMessage("🚀 Đã gửi giá thầu!", "#27ae60");
 
         } catch (NumberFormatException ex) {
             setMessage("❌ Số tiền không hợp lệ!", "#e74c3c");
@@ -657,18 +658,9 @@ public class AuctionDetailController {
                 // Response trực tiếp cho PLACE_BID thành công
                 if (response.getStatus() == StatusType.SUCCESS
                         && "Đặt giá thành công!".equals(msg)) {
-                    String bidAmountText = (txtBidAmount != null && !txtBidAmount.getText().isEmpty())
-                        ? txtBidAmount.getText().trim() : null;
-                    String bidAmountDisplay = "---";
-                    try {
-                        if (bidAmountText != null)
-                            bidAmountDisplay = CurrencyFormatter.format(Double.parseDouble(bidAmountText));
-                    } catch (NumberFormatException ignored) {}
                     showBidNotification("✅", "Đặt giá thành công!",
-                        bidAmountDisplay,
+                        "",
                         "#27ae60", 1.5);
-                    if (txtBidAmount != null) txtBidAmount.clear();
-                    if (btnBid != null) btnBid.setDisable(false);
                     // Cập nhật số dư local
                     if (response.getData() instanceof Double newBalance) {
                         ((Bidder) sessionUser).setBalance(newBalance);
@@ -676,10 +668,10 @@ public class AuctionDetailController {
                 }
 
                 // Response lỗi PLACE_BID
-                if (response.getStatus() == StatusType.ERROR) {
+                if (response.getStatus() == StatusType.ERROR
+                        && msg != null && !msg.startsWith("CONNECTION_")) {
                     showBidNotification("❌", "Đặt giá thất bại",
-                        response.getMessage(), "#e74c3c", 1.5);
-                    if (btnBid != null) btnBid.setDisable(false);
+                        msg, "#e74c3c", 2.0);
                 }
 
                 // Response cho SET_AUTOBID

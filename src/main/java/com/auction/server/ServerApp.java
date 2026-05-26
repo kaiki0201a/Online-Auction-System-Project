@@ -152,6 +152,7 @@ public class ServerApp {
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
+                clientSocket.setTcpNoDelay(true); // Tắt Nagle — gửi packet ngay, không buffer
                 System.out.println("👋 Có khách mới kết nối: " + clientSocket.getInetAddress());
 
                 ClientHandler handler = new ClientHandler(clientSocket);
@@ -228,9 +229,9 @@ public class ServerApp {
                 if (auction.getStatus() == AuctionStatus.APPROVED) {
                     auction.setStatus(AuctionStatus.RUNNING);
                     AuctionManager.getInstance().updateAuction(auction);
-                    auctionDAO.saveDataToFile();
                     scheduleAutoClose(auction);
                     broadcastAuctionUpdate(AuctionManager.getInstance().getAllAuctions(), "AUCTION_WENT_LIVE");
+                    saveAuctionsAsync(); // lưu file ngầm, không block broadcast
                     System.out.println("🔴 [AUTO-LIVE] \"" + auction.getItem().getNameItem() + "\" bắt đầu!");
                 }
             } catch (Exception e) {
@@ -257,18 +258,17 @@ public class ServerApp {
         auction.setStatus(AuctionStatus.FINISHED);
         System.out.println("⏰ [AUTO-CLOSE] Phiên \"" + auction.getItem().getNameItem() + "\" kết thúc!");
 
-        // FIX: Settle tiền — chuyển từ bidder sang seller
+        // Settle tiền — chuyển từ bidder sang seller
         auction.settleAuction();
 
         AuctionManager.getInstance().updateAuction(auction);
-        auctionDAO.saveDataToFile();
-        userDAO.saveDataToFile();
 
-        // Broadcast với toàn bộ list
+        // Broadcast ngay lập tức, lưu file chạy ngầm sau
         broadcastAuctionUpdate(AuctionManager.getInstance().getAllAuctions(), "AUCTION_ENDED");
+        saveAuctionsAsync();
+        saveUsersAsync();
 
-        // FIX BUG #2: Sau khi settle, broadcast balance mới cho Seller để client cập nhật UI
-        // Message format: "SELLER_BALANCE_UPDATE|<username>" để client filter đúng người
+        // Broadcast balance mới cho Seller
         if (auction.getHighestBidder() != null && auction.getSeller() != null) {
             com.auction.model.Seller seller = auction.getSeller();
             String sellerMsg = "SELLER_BALANCE_UPDATE|" + seller.getUserName();
@@ -280,6 +280,35 @@ public class ServerApp {
             System.out.println("💰 [SETTLEMENT BROADCAST] Seller " + seller.getUserName()
                 + " số dư mới: " + seller.getBalance());
         }
+    }
+
+    // ─── ASYNC SAVE HELPERS ───────────────────────────────────────────────────
+
+    /**
+     * Lưu file auction trên background thread — không block luồng xử lý request.
+     * An toàn vì FileDataManager.saveToFile() đã synchronized bên trong.
+     */
+    public static void saveAuctionsAsync() {
+        threadPool.execute(() -> {
+            try {
+                auctionDAO.saveDataToFile();
+            } catch (Exception e) {
+                System.err.println("❌ [ASYNC-SAVE] Lỗi lưu auction: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Lưu file user trên background thread — không block luồng xử lý request.
+     */
+    public static void saveUsersAsync() {
+        threadPool.execute(() -> {
+            try {
+                userDAO.saveDataToFile();
+            } catch (Exception e) {
+                System.err.println("❌ [ASYNC-SAVE] Lỗi lưu user: " + e.getMessage());
+            }
+        });
     }
 
     // ─── BROADCAST HELPERS ────────────────────────────────────────────────────
