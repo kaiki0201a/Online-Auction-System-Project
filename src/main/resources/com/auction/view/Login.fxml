@@ -74,7 +74,9 @@
             </VBox>
 
             <HBox alignment="CENTER_RIGHT">
-                <Label style="-fx-text-fill: #b3b3b3; -fx-font-size: 12px; -fx-cursor: hand;" text="Quên mật khẩu?" />
+                <Hyperlink fx:id="linkForgotPassword" onAction="#onForgotPasswordClick"
+                    text="Quên mật khẩu?"
+                    style="-fx-text-fill: #F5C518; -fx-border-color: transparent; -fx-underline: false; -fx-font-size: 12px;"/>
             </HBox>
 
             <Region prefHeight="5.0" />

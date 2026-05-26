@@ -7,197 +7,17 @@
     -fx-background-color: #ffffff;
 }
 
-/* Tiêu đề của các màn hình (Admin Dashboard, Đăng sản phẩm) */
-.header-title {
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #2c3e50;
-}
-
-/* Khu vực form động (Dynamic Form) */
-.form-container {
-    -fx-padding: 15;
-    -fx-border-color: #cccccc;
-    -fx-border-radius: 5;
-    -fx-background-radius: 5;
-    -fx-background-color: #f9f9f9;
-}
-
 /* =========================================
-   HIỆU ỨNG NÚT BẤM (BUTTONS) - CÓ BO GÓC & HOVER
+   DARK ROOT BASE
    ========================================= */
-
-/* Nút bấm mặc định */
-.button {
-    -fx-font-weight: bold;
-    -fx-text-fill: white;
-    -fx-background-radius: 5px; /* Bo góc */
-    -fx-padding: 8px 15px;
-    -fx-cursor: hand; /* Đổi con trỏ chuột khi chỉ vào */
-}
-
-/* Nút Thành công (Màu xanh lá - Nút Đăng bán, Unban) */
-.btn-success {
-    -fx-background-color: #4CAF50;
-}
-.btn-success:hover {
-    -fx-background-color: #45a049; /* Đổi màu đậm hơn khi hover */
-}
-
-/* Nút Cảnh báo (Màu cam - Nút Dừng phiên) */
-.btn-warning {
-    -fx-background-color: #ff9800;
-}
-.btn-warning:hover {
-    -fx-background-color: #e68a00;
-}
-
-/* Nút Nguy hiểm (Màu đỏ - Nút Ban) */
-.btn-danger {
-    -fx-background-color: #f44336;
-}
-.btn-danger:hover {
-    -fx-background-color: #da190b;
-}
-
-/* =========================================
-   TRANG TRÍ TABLE VIEW
-   ========================================= */
-.table-view {
-    -fx-background-color: transparent;
-}
-.table-view .column-header-background {
-    -fx-background-color: #ececec;
-}
-.table-view .column-header {
-    -fx-background-color: transparent;
-    -fx-font-weight: bold;
-}
-
-/* =========================================
-   TOAST MESSAGE OVERLAY
-   ========================================= */
-.toast {
-    -fx-text-fill: white;
-    -fx-padding: 15px;
-    -fx-background-radius: 5px;
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5);
-}
-
-.toast-success {
-    -fx-background-color: #4CAF50; /* Xanh lá */
-}
-
-.toast-error {
-    -fx-background-color: #f44336; /* Đỏ */
-}
-
-.toast-warning {
-    -fx-background-color: #ff9800; /* Cam */
-}
-
-.toast-default {
-    -fx-background-color: #333333; /* Xám đen */
-}
-
-/* =========================================
-   NÚT HÀNH ĐỘNG CHÍNH (PRIMARY - ĐẶT GIÁ, TÌM KIẾM)
-   ========================================= */
-.btn-primary {
-    -fx-background-color: #2196F3; /* Màu xanh dương */
-}
-.btn-primary:hover {
-    -fx-background-color: #0b7dda;
-}
-
-/* =========================================
-   Ô NHẬP LIỆU & COMBOBOX (TÌM KIẾM, BỘ LỌC)
-   ========================================= */
-.text-field, .combo-box {
-    -fx-padding: 8px;
-    -fx-background-radius: 4px;
-    -fx-border-color: #cccccc;
-    -fx-border-radius: 4px;
-}
-.text-field:focused, .combo-box:focused {
-    -fx-border-color: #2196F3; /* Đổi viền xanh khi click vào */
-    -fx-border-width: 2px;
-}
-
-/* =========================================
-   THẺ SẢN PHẨM (DASHBOARD)
-   ========================================= */
-.product-card {
-    -fx-background-color: white;
-    -fx-padding: 15px;
-    -fx-background-radius: 8px;
-    -fx-border-radius: 8px;
-    -fx-border-color: #e0e0e0;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2); /* Bóng đổ nhẹ */
-}
-.product-card:hover {
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 8, 0, 0, 4); /* Đậm hơn khi hover */
-    -fx-cursor: hand;
-}
-
-/* =========================================
-   BIỂU ĐỒ ĐƯỜNG (LINE CHART) - REALTIME BIDDING — DARK THEME
-   ========================================= */
-.chart-series-line {
-    -fx-stroke: #F5C518; /* Màu vàng gold của hệ thống */
-    -fx-stroke-width: 2.5px;
-}
-.chart-line-symbol {
-    -fx-background-color: #F5C518, #0F0F0F;
-    -fx-background-radius: 4px;
-    -fx-padding: 4px;
-}
-.chart-plot-background {
-    -fx-background-color: #0F0F0F;
-}
-.chart-vertical-grid-lines {
-    -fx-stroke: #1E1E1E;
-}
-.chart-horizontal-grid-lines {
-    -fx-stroke: #1E1E1E;
-}
-.chart-alternative-row-fill {
-    -fx-background-color: transparent;
-}
-.chart-alternative-column-fill {
-    -fx-background-color: transparent;
-}
-.chart-content {
-    -fx-padding: 5;
-}
-.axis {
-    -fx-tick-label-fill: #555;
-    -fx-tick-mark-fill: #333;
-}
-.axis-label {
-    -fx-text-fill: #444;
-    -fx-font-size: 10px;
-}
-.chart-legend {
-    -fx-background-color: transparent;
-}
-/* Login */
-.login-background-image {
-    /* Vì style.css và thư mục images ở cùng một chỗ */
-    -fx-background-image: url('images/bg_watch.jpeg');
-    -fx-background-size: cover;
-    -fx-background-position: center;
-    -fx-background-repeat: no-repeat;
-}
-/* --- DARK THEME MỚI CHO DASHBOARD --- */
 .dark-root {
     -fx-background-color: #0F0F0F;
     -fx-font-family: "Segoe UI", Arial, sans-serif;
 }
 
-/* Sidebar & Navbar */
+/* =========================================
+   SIDEBAR & NAVBAR
+   ========================================= */
 .sidebar {
     -fx-background-color: #171717;
     -fx-border-color: #2A2A2A;
@@ -209,18 +29,24 @@
     -fx-border-width: 0 0 1 0;
 }
 
-/* Text Colors */
+/* =========================================
+   TEXT COLORS
+   ========================================= */
 .text-white { -fx-text-fill: #FFFFFF; }
-.text-gray { -fx-text-fill: #A0A0A0; }
-.text-gold { -fx-text-fill: #F5C518; }
+.text-gray  { -fx-text-fill: #A0A0A0; }
+.text-gold  { -fx-text-fill: #F5C518; }
 
-/* Nút bấm Menu Sidebar */
+/* =========================================
+   NÚT SIDEBAR MENU
+   ========================================= */
 .menu-btn {
     -fx-background-color: transparent;
     -fx-text-fill: #A0A0A0;
     -fx-alignment: CENTER_LEFT;
     -fx-font-size: 14px;
     -fx-padding: 10 20;
+    -fx-cursor: hand;
+    -fx-transition: -fx-background-color 0.15s;
 }
 .menu-btn:hover {
     -fx-background-color: #2A2A2A;
@@ -230,104 +56,219 @@
     -fx-background-color: #1A1A1A;
     -fx-text-fill: #F5C518;
     -fx-border-color: #F5C518;
-    -fx-border-width: 0 0 0 4;
+    -fx-border-width: 0 0 0 3;
 }
 
-/* Nút Vàng (Primary) */
+/* =========================================
+   NÚT VÀNG GOLD (PRIMARY ACTION)
+   ========================================= */
 .btn-gold {
     -fx-background-color: #F5C518;
     -fx-text-fill: #000000;
     -fx-font-weight: bold;
-    -fx-background-radius: 4;
+    -fx-background-radius: 6;
     -fx-cursor: hand;
 }
-.btn-gold:hover { -fx-background-color: #D4AA10; }
+.btn-gold:hover {
+    -fx-background-color: #D4AA10;
+    -fx-effect: dropshadow(gaussian, rgba(245,197,24,0.45), 12, 0, 0, 0);
+}
+.btn-gold:pressed {
+    -fx-background-color: #b89300;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
 
-/* Nút Viền (Outline) */
+/* =========================================
+   NÚT VIỀN (OUTLINE / SECONDARY)
+   ========================================= */
 .btn-outline {
     -fx-background-color: transparent;
     -fx-text-fill: #A0A0A0;
     -fx-border-color: #555555;
-    -fx-border-radius: 4;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
     -fx-cursor: hand;
 }
 .btn-outline:hover {
-    -fx-border-color: #FFFFFF;
-    -fx-text-fill: #FFFFFF;
+    -fx-border-color: #F5C518;
+    -fx-text-fill: #F5C518;
+    -fx-background-color: rgba(245,197,24,0.06);
+}
+.btn-outline:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
 }
 
-/* Thẻ Sản Phẩm (Product Card) */
+/* =========================================
+   NÚT THÀNH CÔNG (GREEN)
+   ========================================= */
+.btn-success {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.btn-success:hover {
+    -fx-background-color: #219a52;
+    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.4), 10, 0, 0, 0);
+}
+.btn-success:pressed { -fx-scale-x: 0.97; -fx-scale-y: 0.97; }
+
+/* =========================================
+   NÚT NGUY HIỂM (RED)
+   ========================================= */
+.btn-danger {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.btn-danger:hover {
+    -fx-background-color: #c0392b;
+    -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.4), 10, 0, 0, 0);
+}
+.btn-danger:pressed { -fx-scale-x: 0.97; -fx-scale-y: 0.97; }
+
+/* =========================================
+   NÚT CẢNH BÁO (ORANGE)
+   ========================================= */
+.btn-warning {
+    -fx-background-color: #e67e22;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.btn-warning:hover {
+    -fx-background-color: #ca6f1e;
+    -fx-effect: dropshadow(gaussian, rgba(230,126,34,0.4), 10, 0, 0, 0);
+}
+.btn-warning:pressed { -fx-scale-x: 0.97; -fx-scale-y: 0.97; }
+
+/* =========================================
+   NÚT BLUE (SECONDARY ACTION)
+   ========================================= */
+.btn-primary {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.btn-primary:hover {
+    -fx-background-color: #2980b9;
+    -fx-effect: dropshadow(gaussian, rgba(52,152,219,0.4), 10, 0, 0, 0);
+}
+.btn-primary:pressed { -fx-scale-x: 0.97; -fx-scale-y: 0.97; }
+
+/* =========================================
+   NÚT MẶC ĐỊNH (FALLBACK)
+   ========================================= */
+.button {
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+    -fx-padding: 8 15;
+    -fx-cursor: hand;
+}
+
+/* =========================================
+   THẺ SẢN PHẨM ĐẤU GIÁ (AUCTION CARD)
+   ========================================= */
 .auction-card {
     -fx-background-color: #171717;
-    -fx-background-radius: 8;
+    -fx-background-radius: 10;
     -fx-border-color: #2A2A2A;
-    -fx-border-radius: 8;
+    -fx-border-radius: 10;
     -fx-cursor: hand;
 }
 .auction-card:hover {
     -fx-border-color: #F5C518;
-    -fx-effect: dropshadow(three-pass-box, rgba(245, 197, 24, 0.2), 10, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(245,197,24,0.25), 16, 0, 0, 0);
+    -fx-translate-y: -2;
 }
 .card-image-placeholder {
     -fx-background-color: #2A2A2A;
-    -fx-background-radius: 8 8 0 0;
-}
-.tag-live {
-    -fx-background-color: rgba(245, 197, 24, 0.2);
-    -fx-text-fill: #F5C518;
-    -fx-font-size: 11px;
-    -fx-padding: 3 8;
-    -fx-background-radius: 4;
+    -fx-background-radius: 10 10 0 0;
 }
 
-/* ScrollPane trong suốt */
-.scroll-pane {
-    -fx-background-color: transparent;
-    -fx-control-inner-background: transparent;
-}
-.scroll-pane .viewport { -fx-background-color: transparent; }
-/* --- SELLER FORM & INVENTORY CSS --- */
-.form-input {
-    -fx-background-color: transparent;
-    -fx-border-color: #333333;
-    -fx-border-radius: 4;
-    -fx-text-fill: #FFFFFF;
-    -fx-prompt-text-fill: #666666;
-    -fx-padding: 12 15;
-}
-.form-input:focused {
-    -fx-border-color: #E6B969;
-}
-.form-input .list-cell {
-    -fx-background-color: #1E1E1E;
-    -fx-text-fill: #FFFFFF;
-}
-
-/* Các trạng thái Badge trong Kho */
-.badge-draft {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
-    -fx-border-color: #AAAAAA;
-    -fx-text-fill: #AAAAAA;
-}
-.badge-sold {
-    -fx-background-color: #E6B969;
-    -fx-text-fill: #0F0F0F;
-}
+/* =========================================
+   KHO HÀNG INVENTORY CARD
+   ========================================= */
 .inventory-card {
     -fx-background-color: #171717;
-    -fx-background-radius: 8;
+    -fx-background-radius: 10;
     -fx-border-color: #2A2A2A;
-    -fx-border-radius: 8;
+    -fx-border-radius: 10;
     -fx-cursor: hand;
     -fx-min-width: 280px;
     -fx-max-width: 300px;
 }
 .inventory-card:hover {
     -fx-border-color: #E6B969;
+    -fx-effect: dropshadow(gaussian, rgba(230,185,105,0.25), 14, 0, 0, 0);
 }
 
 /* =========================================
-   DARK THEME — TABLE VIEW
+   LOGIN BACKGROUND
+   ========================================= */
+.login-background-image {
+    -fx-background-image: url('images/bg_watch.jpeg');
+    -fx-background-size: cover;
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
+}
+
+/* =========================================
+   FORM INPUT (DARK)
+   ========================================= */
+.form-input {
+    -fx-background-color: transparent;
+    -fx-border-color: #333333;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #FFFFFF;
+    -fx-prompt-text-fill: #555555;
+    -fx-padding: 10 14;
+}
+.form-input:focused {
+    -fx-border-color: #F5C518;
+    -fx-border-width: 1.5;
+}
+.form-input .list-cell {
+    -fx-background-color: #1E1E1E;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* =========================================
+   DARK TEXT FIELD & TEXT AREA
+   ========================================= */
+.dark-root .text-field,
+.dark-root .text-area,
+.dark-root .password-field {
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #333333;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #FFFFFF;
+    -fx-prompt-text-fill: #555555;
+}
+.dark-root .text-field:focused,
+.dark-root .text-area:focused,
+.dark-root .password-field:focused {
+    -fx-border-color: #F5C518;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(gaussian, rgba(245,197,24,0.15), 8, 0, 0, 0);
+}
+.dark-root .text-area .content {
+    -fx-background-color: #1A1A1A;
+}
+
+/* =========================================
+   DARK TABLE VIEW
    ========================================= */
 .dark-root .table-view,
 .table-view {
@@ -341,39 +282,54 @@
 .dark-root .table-view .column-header {
     -fx-background-color: transparent;
     -fx-font-weight: bold;
-    -fx-text-fill: #A0A0A0;
+    -fx-text-fill: #666;
     -fx-font-size: 11px;
-    -fx-border-color: #2A2A2A;
+    -fx-border-color: #1E1E1E;
+}
+.dark-root .table-view .column-header .label {
+    -fx-text-fill: #888;
 }
 .dark-root .table-view .table-row-cell {
     -fx-background-color: #171717;
-    -fx-border-color: transparent transparent #1E1E1E transparent;
+    -fx-border-color: transparent transparent #1A1A1A transparent;
+}
+.dark-root .table-view .table-row-cell:odd {
+    -fx-background-color: #141414;
 }
 .dark-root .table-view .table-row-cell:hover {
     -fx-background-color: #1E1E1E;
+    -fx-cursor: hand;
 }
 .dark-root .table-view .table-row-cell:selected {
-    -fx-background-color: rgba(245, 197, 24, 0.15);
+    -fx-background-color: rgba(245,197,24,0.12);
+    -fx-border-color: rgba(245,197,24,0.2);
 }
 .dark-root .table-view .table-cell {
     -fx-text-fill: #D0D0D0;
     -fx-font-size: 13px;
+    -fx-padding: 10 12;
 }
 .dark-root .table-view .placeholder .label {
     -fx-text-fill: #555;
+    -fx-font-size: 13px;
+    -fx-font-style: italic;
 }
 
 /* =========================================
-   DARK THEME — COMBO BOX
+   DARK COMBO BOX
    ========================================= */
 .dark-root .combo-box,
 .combo-box {
     -fx-background-color: #1A1A1A;
     -fx-border-color: #333333;
-    -fx-border-radius: 4;
-    -fx-background-radius: 4;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
     -fx-text-fill: #FFFFFF;
     -fx-font-size: 13px;
+}
+.dark-root .combo-box:focused,
+.combo-box:focused {
+    -fx-border-color: #F5C518;
 }
 .combo-box .list-cell {
     -fx-background-color: #1A1A1A;
@@ -383,6 +339,8 @@
 .combo-box-popup .list-view {
     -fx-background-color: #1A1A1A;
     -fx-border-color: #333;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 20, 0, 0, 4);
 }
 .combo-box-popup .list-cell:hover {
     -fx-background-color: #2A2A2A;
@@ -392,69 +350,158 @@
     -fx-background-color: rgba(245,197,24,0.15);
     -fx-text-fill: #F5C518;
 }
-.combo-box .arrow-button {
-    -fx-background-color: transparent;
-}
-.combo-box .arrow {
-    -fx-background-color: #666;
-}
+.combo-box .arrow-button { -fx-background-color: transparent; }
+.combo-box .arrow { -fx-background-color: #666; }
 
 /* =========================================
-   DARK THEME — TEXT FIELD & TEXT AREA
+   DARK DATE PICKER
    ========================================= */
-.dark-root .text-field,
-.dark-root .text-area {
+.dark-root .date-picker .text-field,
+.date-picker .text-field {
     -fx-background-color: #1A1A1A;
     -fx-border-color: #333333;
-    -fx-border-radius: 4;
-    -fx-background-radius: 4;
     -fx-text-fill: #FFFFFF;
-    -fx-prompt-text-fill: #555555;
+    -fx-prompt-text-fill: #555;
 }
-.dark-root .text-field:focused,
-.dark-root .text-area:focused {
-    -fx-border-color: #F5C518;
-}
-.dark-root .text-area .content {
+.dark-root .date-picker-popup,
+.date-picker-popup {
     -fx-background-color: #1A1A1A;
+    -fx-border-color: #333;
+}
+.date-picker-popup .month-year-pane {
+    -fx-background-color: #0F0F0F;
+}
+.date-picker-popup .calendar-grid {
+    -fx-background-color: #1A1A1A;
+}
+.date-picker-popup .day-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #D0D0D0;
+}
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: #F5C518;
+    -fx-background-radius: 4;
+}
+.date-picker-popup .selected {
+    -fx-background-color: #F5C518;
+    -fx-text-fill: #000;
+    -fx-background-radius: 4;
+}
+.date-picker-popup .spinner .button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #F5C518;
+    -fx-font-weight: bold;
+}
+.date-picker .arrow-button { -fx-background-color: transparent; }
+.date-picker .arrow { -fx-background-color: #666; }
+
+/* =========================================
+   DARK TITLED PANE (AUTO-BID PANEL)
+   ========================================= */
+.dark-root .titled-pane {
+    -fx-text-fill: #D0D0D0;
+}
+.dark-root .titled-pane > .title {
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10 14;
+}
+.dark-root .titled-pane > .title .label {
+    -fx-text-fill: #D0D0D0;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+.dark-root .titled-pane > .title:hover {
+    -fx-background-color: #222222;
+}
+.dark-root .titled-pane > *.content {
+    -fx-background-color: #171717;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 0 1 1 1;
+    -fx-padding: 14;
 }
 
 /* =========================================
-   DARK THEME — SCROLL BAR
+   DARK TAB PANE (ADMIN DASHBOARD)
    ========================================= */
-.dark-root .scroll-bar,
-.scroll-bar {
+.dark-root .tab-pane {
+    -fx-background-color: #0F0F0F;
+    -fx-tab-min-height: 48px;
+}
+.dark-root .tab-pane .tab-header-area {
+    -fx-background-color: #0a0a0a;
+    -fx-border-color: #1E1E1E;
+    -fx-border-width: 0 0 1 0;
+}
+.dark-root .tab-pane .tab-header-background {
+    -fx-background-color: #0a0a0a;
+}
+.dark-root .tab-pane .tab {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 10 22;
+}
+.dark-root .tab-pane .tab .tab-label {
+    -fx-text-fill: #666;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+.dark-root .tab-pane .tab:hover .tab-label {
+    -fx-text-fill: #A0A0A0;
+}
+.dark-root .tab-pane .tab:selected {
+    -fx-background-color: #0F0F0F;
+    -fx-border-color: #F5C518;
+    -fx-border-width: 0 0 2 0;
+}
+.dark-root .tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #F5C518;
+}
+.dark-root .tab-pane .tab-content-area {
+    -fx-background-color: #0F0F0F;
+}
+
+/* =========================================
+   SCROLL PANE (TRONG SUỐT)
+   ========================================= */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: #0F0F0F;
+    -fx-control-inner-background: transparent;
+}
+.scroll-pane .viewport { -fx-background-color: transparent; }
+
+/* =========================================
+   SCROLL BAR DARK
+   ========================================= */
+.dark-root .scroll-bar, .scroll-bar {
     -fx-background-color: transparent;
 }
-.dark-root .scroll-bar .track,
-.scroll-bar .track {
+.dark-root .scroll-bar .track, .scroll-bar .track {
     -fx-background-color: #1A1A1A;
     -fx-border-color: transparent;
     -fx-background-radius: 4;
 }
-.dark-root .scroll-bar .thumb,
-.scroll-bar .thumb {
-    -fx-background-color: #333333;
+.dark-root .scroll-bar .thumb, .scroll-bar .thumb {
+    -fx-background-color: #2A2A2A;
     -fx-background-radius: 4;
 }
-.dark-root .scroll-bar .thumb:hover,
-.scroll-bar .thumb:hover {
-    -fx-background-color: #555555;
+.dark-root .scroll-bar .thumb:hover, .scroll-bar .thumb:hover {
+    -fx-background-color: #444;
 }
-.dark-root .scroll-bar .increment-button,
-.dark-root .scroll-bar .decrement-button,
-.scroll-bar .increment-button,
-.scroll-bar .decrement-button {
+.scroll-bar .increment-button, .scroll-bar .decrement-button {
     -fx-background-color: transparent;
     -fx-padding: 0;
 }
 
 /* =========================================
-   DARK THEME — RADIO BUTTON
+   RADIO BUTTON DARK
    ========================================= */
 .dark-root .radio-button .radio {
     -fx-background-color: #2A2A2A;
-    -fx-border-color: #555555;
+    -fx-border-color: #555;
     -fx-border-radius: 50;
     -fx-background-radius: 50;
 }
@@ -462,99 +509,164 @@
     -fx-background-color: #F5C518;
     -fx-border-color: #F5C518;
 }
-.dark-root .radio-button .dot {
-    -fx-background-color: #000000;
-}
+.dark-root .radio-button .dot { -fx-background-color: #000; }
+.dark-root .radio-button { -fx-text-fill: #D0D0D0; }
 
 /* =========================================
-   DARK THEME — SEPARATOR
+   SEPARATOR DARK
    ========================================= */
-.dark-root .separator .line {
-    -fx-border-color: #2A2A2A;
-}
+.dark-root .separator .line { -fx-border-color: #2A2A2A; }
 
 /* =========================================
-   DARK THEME — LABEL chung
+   LABEL DARK (DEFAULT)
    ========================================= */
-.dark-root .label {
-    -fx-text-fill: #D0D0D0;
-}
+.dark-root .label { -fx-text-fill: #D0D0D0; }
 
 /* =========================================
-   PASSWORD FIELD EYE TOGGLE BUTTON
+   TOAST / FEEDBACK MESSAGE
+   ========================================= */
+.toast {
+    -fx-text-fill: white;
+    -fx-padding: 12 20;
+    -fx-background-radius: 6;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 14, 0, 0, 3);
+}
+.toast-success { -fx-background-color: rgba(39,174,96,0.9); }
+.toast-error   { -fx-background-color: rgba(231,76,60,0.9); }
+.toast-warning { -fx-background-color: rgba(230,126,34,0.9); }
+.toast-default { -fx-background-color: rgba(26,26,26,0.95); -fx-border-color: #333; -fx-border-radius: 6; }
+
+/* =========================================
+   PASSWORD FIELD EYE TOGGLE
    ========================================= */
 .btn-eye {
     -fx-background-color: transparent;
-    -fx-text-fill: #666666;
+    -fx-text-fill: #666;
     -fx-cursor: hand;
     -fx-padding: 5 10;
     -fx-font-size: 14px;
 }
-.btn-eye:hover {
+.btn-eye:hover { -fx-text-fill: #F5C518; }
+
+/* =========================================
+   BADGE TRẠNG THÁI KHO HÀNG
+   ========================================= */
+.badge-draft {
+    -fx-background-color: rgba(255,255,255,0.1);
+    -fx-border-color: #666;
+    -fx-text-fill: #666;
+}
+.badge-sold {
+    -fx-background-color: #E6B969;
+    -fx-text-fill: #0F0F0F;
+}
+.tag-live {
+    -fx-background-color: rgba(245,197,24,0.2);
     -fx-text-fill: #F5C518;
-}
-
-/* =========================================
-   SPECIAL: FLOW PANE trong AuctionList
-   ========================================= */
-.flow-pane-dark {
-    -fx-background-color: transparent;
-}
-
-/* =========================================
-   DARK MODE TABLE VIEW & SCROLL PANE
-   ========================================= */
-.dark-root.table-view {
-    -fx-background-color: #0F0F0F;
-    -fx-border-color: #1E1E1E;
-}
-.dark-root.table-view .column-header-background {
-    -fx-background-color: #1A1A1A;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #333;
-}
-.dark-root.table-view .column-header {
-    -fx-background-color: transparent;
     -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #888888;
-}
-.dark-root.table-view .column-header .label {
-    -fx-text-fill: #888888;
-}
-.dark-root.table-view .table-row-cell {
-    -fx-background-color: #0F0F0F;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #1A1A1A;
-}
-.dark-root.table-view .table-row-cell:odd {
-    -fx-background-color: #141414;
-}
-.dark-root.table-view .table-row-cell:hover {
-    -fx-background-color: #1F1F1F;
-}
-.dark-root.table-view .table-cell {
-    -fx-text-fill: #E0E0E0;
-    -fx-font-size: 13px;
-    -fx-padding: 8 12;
-    -fx-border-width: 0;
-}
-
-/* Dark Scroll Pane */
-.scroll-pane {
-    -fx-background-color: transparent;
-    -fx-background: #0F0F0F;
-}
-.scroll-pane .viewport {
-    -fx-background-color: transparent;
-}
-.scroll-bar:vertical, .scroll-bar:horizontal {
-    -fx-background-color: transparent;
-}
-.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
-    -fx-background-color: #333333;
+    -fx-padding: 3 8;
     -fx-background-radius: 4;
 }
-.scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
-    -fx-background-color: #555555;
+
+/* =========================================
+   FORM CONTAINER (DYNAMIC FORM)
+   ========================================= */
+.form-container {
+    -fx-padding: 15;
+    -fx-border-color: #2A2A2A;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-background-color: #171717;
+}
+
+/* =========================================
+   FLOW PANE (AUCTION LIST GRID)
+   ========================================= */
+.flow-pane-dark { -fx-background-color: transparent; }
+
+/* =========================================
+   LINE CHART — DARK THEME (BID PROGRESS)
+   ========================================= */
+.chart-series-line {
+    -fx-stroke: #F5C518;
+    -fx-stroke-width: 2.5px;
+}
+.chart-line-symbol {
+    -fx-background-color: #F5C518, #0F0F0F;
+    -fx-background-radius: 5px;
+    -fx-padding: 4px;
+}
+.chart-plot-background  { -fx-background-color: #0F0F0F; }
+.chart-vertical-grid-lines   { -fx-stroke: #1E1E1E; }
+.chart-horizontal-grid-lines { -fx-stroke: #1E1E1E; }
+.chart-alternative-row-fill    { -fx-background-color: transparent; }
+.chart-alternative-column-fill { -fx-background-color: transparent; }
+.chart-content { -fx-padding: 5; }
+.axis { -fx-tick-label-fill: #555; -fx-tick-mark-fill: #333; }
+.axis-label { -fx-text-fill: #444; -fx-font-size: 10px; }
+.chart-legend { -fx-background-color: transparent; }
+
+/* =========================================
+   HYPERLINK DARK
+   ========================================= */
+.dark-root .hyperlink {
+    -fx-text-fill: #F5C518;
+    -fx-border-color: transparent;
+    -fx-underline: false;
+}
+.dark-root .hyperlink:hover {
+    -fx-text-fill: #D4AA10;
+    -fx-underline: true;
+}
+.dark-root .hyperlink:visited { -fx-text-fill: #A0A0A0; }
+
+/* =========================================
+   PRODUCT CARD (LEGACY — LIGHT)
+   ========================================= */
+.product-card {
+    -fx-background-color: white;
+    -fx-padding: 15px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #e0e0e0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);
+}
+.product-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 8, 0, 0, 4);
+    -fx-cursor: hand;
+}
+
+/* =========================================
+   STAT CARD (ADMIN OVERVIEW)
+   ========================================= */
+.stat-card-dark {
+    -fx-background-color: #171717;
+    -fx-border-color: #2A2A2A;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 20;
+}
+.stat-card-dark:hover {
+    -fx-border-color: #444;
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.04), 12, 0, 0, 0);
+}
+
+/* =========================================
+   SORT BUTTON (AUCTION LIST)
+   ========================================= */
+.btn-sort {
+    -fx-background-color: #1A1A1A;
+    -fx-text-fill: #A0A0A0;
+    -fx-border-color: #2A2A2A;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+}
+.btn-sort:hover {
+    -fx-border-color: #F5C518;
+    -fx-text-fill: #F5C518;
 }

@@ -25,53 +25,56 @@
     <!-- ====== LEFT SIDEBAR ====== -->
     <left>
         <VBox style="-fx-background-color: #0a0a0a; -fx-border-color: #1E1E1E; -fx-border-width: 0 1 0 0;" prefWidth="245" spacing="4">
-            <!-- Avatar -->
+            <!-- Avatar — Click để mở Settings -->
             <HBox spacing="12" alignment="CENTER_LEFT"
-                style="-fx-padding: 24 18; -fx-border-color: #1E1E1E; -fx-border-width: 0 0 1 0;">
-                <StackPane style="-fx-background-color: #E6B969; -fx-background-radius: 22;" prefWidth="44" prefHeight="44">
+                style="-fx-padding: 24 18; -fx-border-color: #1E1E1E; -fx-border-width: 0 0 1 0; -fx-cursor: hand;"
+                onMouseClicked="#onAvatarClick">
+                <StackPane style="-fx-background-color: #E6B969; -fx-background-radius: 22; -fx-effect: dropshadow(gaussian, rgba(230,185,105,0.4), 8, 0, 0, 0);" prefWidth="44" prefHeight="44">
                     <Label fx:id="lblAvatarInitials" text="S" style="-fx-text-fill: #000; -fx-font-size: 18px; -fx-font-weight: bold;"/>
                 </StackPane>
                 <VBox alignment="CENTER_LEFT" spacing="2">
                     <Label fx:id="lblUsername" text="Seller" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"/>
-                    <Label text="Verified Seller" style="-fx-text-fill: #F5C518; -fx-font-size: 10px;"/>
+                    <Label text="⚙ Cài đặt tài khoản" style="-fx-text-fill: #F5C518; -fx-font-size: 10px;"/>
                 </VBox>
             </HBox>
 
+
             <!-- Quick action -->
             <Button onAction="#onRequestAppraisalClick" text="📸  Định Giá Sản Phẩm"
-                style="-fx-background-color: #E6B969; -fx-text-fill: #000; -fx-font-weight: bold; -fx-background-radius: 4; -fx-cursor: hand; -fx-padding: 10; -fx-font-size: 12px;"
+                style="-fx-background-color: #E6B969; -fx-text-fill: #000; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 10; -fx-font-size: 12px;"
                 maxWidth="Infinity">
                 <VBox.margin><Insets top="15" left="15" right="15" bottom="5"/></VBox.margin>
             </Button>
 
             <!-- Menu -->
-            <Button text="⊞  Dashboard"
-                style="-fx-background-color: #1A1A1A; -fx-text-fill: #F5C518; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+            <Button onAction="#onDashboardClick" text="⊞  Dashboard"
+                styleClass="menu-btn menu-btn-active"
                 maxWidth="Infinity"/>
             <Button onAction="#onProfileClick" text="👤  Trang Cá Nhân"
-                style="-fx-background-color: transparent; -fx-text-fill: #A0A0A0; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                styleClass="menu-btn"
                 maxWidth="Infinity"/>
             <Button onAction="#onViewAllAuctionsClick" text="🌐  Xem Tất Cả Đấu Giá"
-                style="-fx-background-color: transparent; -fx-text-fill: #A0A0A0; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                styleClass="menu-btn"
                 maxWidth="Infinity"/>
             <Button onAction="#onSettingsClick" text="⚙  Cài Đặt"
-                style="-fx-background-color: transparent; -fx-text-fill: #A0A0A0; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                styleClass="menu-btn"
                 maxWidth="Infinity"/>
 
             <Separator style="-fx-background-color: #2A2A2A;"/>
             <Label text="VÍ ĐIỆN TỬ" style="-fx-text-fill: #444; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 6 20 2 20;"/>
             <Button onAction="#onDepositClick" text="💰  Nạp / Rút Tiền"
-                style="-fx-background-color: transparent; -fx-text-fill: #A0A0A0; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                styleClass="menu-btn"
                 maxWidth="Infinity"/>
 
             <Region VBox.vgrow="ALWAYS" />
             <Button onAction="#onLogoutClick" text="⎋  Đăng Xuất"
-                style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
+                style="-fx-background-color: transparent; -fx-text-fill: #555; -fx-border-color: transparent; -fx-cursor: hand; -fx-alignment: CENTER_LEFT; -fx-padding: 11 20; -fx-font-size: 13px;"
                 maxWidth="Infinity">
                 <VBox.margin><Insets bottom="15"/></VBox.margin>
             </Button>
         </VBox>
     </left>
+
 
     <!-- ====== CENTER CONTENT ====== -->
     <center>
@@ -110,6 +113,30 @@
                     <Label text="Với tư cách Người Bán, bạn không thể đặt giá. Chỉ có thể xem chi tiết."
                         style="-fx-text-fill: #555; -fx-font-size: 11px; -fx-font-style: italic;"/>
                     <HBox fx:id="liveAuctionsList" spacing="16" alignment="TOP_LEFT" minHeight="80"/>
+                </VBox>
+
+                <!-- ===== Lịch Sử Thanh Toán ===== -->
+                <VBox spacing="14"
+                    style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 22;">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="💰  LỊCH SỬ NHẬN TIỀN TỪ ĐẤU GIÁ"
+                            style="-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="lblTotalEarned" text="Tổng nhận: 0 VNĐ"
+                            style="-fx-text-fill: #27ae60; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+                    </HBox>
+                    <TableView fx:id="tablePaymentHistory" prefHeight="240"
+                        style="-fx-background-color: transparent; -fx-border-color: #2A2A2A; -fx-border-radius: 4;">
+                        <columns>
+                            <TableColumn fx:id="colPayItem" text="Sản Phẩm" prefWidth="260"/>
+                            <TableColumn fx:id="colPayDate" text="Thời Gian Nhận" prefWidth="160"/>
+                            <TableColumn fx:id="colPayAmount" text="Số Tiền Nhận" prefWidth="160"/>
+                            <TableColumn fx:id="colPayStatus" text="Trạng Thái" prefWidth="120"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="Chưa có phiên đấu giá nào kết thúc." style="-fx-text-fill: #555; -fx-font-size: 13px;"/>
+                        </placeholder>
+                    </TableView>
                 </VBox>
 
                 <!-- ===== Form Tạo Phiên Đấu Giá Mới ===== -->

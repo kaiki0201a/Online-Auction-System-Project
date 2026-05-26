@@ -39,9 +39,13 @@ public class AuctionListController {
     @FXML private ComboBox<String> comboStatus;
     @FXML private FlowPane auctionGrid;
     @FXML private Label lblCount;
+    @FXML private Button btnSort; // nút sắp xếp
 
     private List<Auction> allAuctions;
     private User currentUser;
+    // 0=Mới nhất, 1=Giá cao, 2=Giá thấp
+    private int sortMode = 0;
+    private static final String[] SORT_LABELS = { "⇅  Mới nhất", "↑  Giá cao", "↓  Giá thấp" };
 
     @FXML public void initialize() {
         currentUser = AppContext.getCurrentUser();
@@ -84,9 +88,12 @@ public class AuctionListController {
         String status = comboStatus.getValue();
 
         List<Auction> filtered = allAuctions.stream()
-            // Không hiển thị sản phẩm chưa được Admin duyệt
             .filter(a -> a.getStatus() != AuctionStatus.PENDING_APPROVAL)
-            .filter(a -> a.getItem().getNameItem().toLowerCase().contains(kw))
+            .filter(a -> {
+                String name = a.getItem().getNameItem().toLowerCase();
+                String seller = a.getSeller().getUserName().toLowerCase();
+                return name.contains(kw) || seller.contains(kw);
+            })
             .filter(a -> "Tất cả".equals(cat) || a.getItem().getClass().getSimpleName().equals(cat))
             .filter(a -> {
                 if ("Đang diễn ra".equals(status)) return a.getStatus() == AuctionStatus.RUNNING
@@ -94,11 +101,29 @@ public class AuctionListController {
                 if ("Đã kết thúc".equals(status)) return a.getStatus() == AuctionStatus.FINISHED
                     || a.getStatus() == AuctionStatus.PAID;
                 return true;
-            }).collect(Collectors.toList());
+            })
+            .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+
+        // Sắp xếp
+        switch (sortMode) {
+            case 1 -> filtered.sort((a, b) -> Double.compare(b.getCurrentHighestBid(), a.getCurrentHighestBid()));
+            case 2 -> filtered.sort((a, b) -> Double.compare(a.getCurrentHighestBid(), b.getCurrentHighestBid()));
+            default -> filtered.sort((a, b) -> b.getStartTime().compareTo(a.getStartTime()));
+        }
 
         if (lblCount != null) lblCount.setText("(" + filtered.size() + " phiên)");
         renderGrid(filtered);
     }
+
+    /** Nút Sort — toggle giữa các mode sắp xếp. */
+    @FXML public void onSortClick(ActionEvent event) {
+        sortMode = (sortMode + 1) % 3;
+        if (btnSort != null) btnSort.setText(SORT_LABELS[sortMode]);
+        applyFilter();
+    }
+
+    /** Nút Search — kích hoạt filter tìm kiếm ngườ i cũng có thể tìm bằng Enter. */
+    @FXML public void onSearchClick(ActionEvent event) { applyFilter(); }
 
     private void renderGrid(List<Auction> list) {
         auctionGrid.getChildren().clear();
@@ -224,7 +249,7 @@ public class AuctionListController {
 
     private void openDetail(Auction auction) {
         try {
-            NetworkClient.getInstance().removeOnResponseReceived();
+            NetworkClient.getInstance().removeEventListener("auctionList");
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/AuctionDetail.fxml"));
             Parent root = loader.load();
             AuctionDetailController ctrl = loader.getController();

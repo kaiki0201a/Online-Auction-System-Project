@@ -596,12 +596,42 @@ public class AuctionDetailController {
                                 if (canBid && ended.getHighestBidder() != null) {
                                     boolean won = ended.getHighestBidder().getUserName()
                                             .equals(sessionUser.getUserName());
-                                    setMessage(won
-                                                    ? "🏆 Chúc mừng! Bạn đã THẮNG phiên đấu giá này!"
-                                                    : "😔 Phiên kết thúc. Bạn không thắng lần này.",
-                                            won ? "#27ae60" : "#e74c3c");
+                                    if (won) {
+                                        // 🏆 Popup chiến thắng đặc biệt
+                                        showWinDialog(ended);
+                                    } else {
+                                        setMessage("😔 Phiên kết thúc. Bạn không thắng lần này. Chúc may mắn!", "#e74c3c");
+                                    }
+                                } else if (ended.getHighestBidder() == null
+                                        && (ended.getStatus() == AuctionStatus.FINISHED
+                                         || ended.getStatus() == AuctionStatus.PAID)) {
+                                    setMessage("📭 Phiên đấu giá kết thúc mà không có ai đặt giá.", "#A0A0A0");
                                 }
                                 // Tắt controls
+                                canBid = false;
+                                setupBidControls();
+                                if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
+
+                            });
+                }
+
+                // Phiên bị hủy giữa chừng — broadcast
+                if ("AUCTION_CANCELED".equals(msg) && response.getData() instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<Auction> list = (List<Auction>) response.getData();
+                    list.stream()
+                            .filter(a -> a.getAuctionId().equals(currentAuction.getAuctionId()))
+                            .findFirst()
+                            .ifPresent(canceled -> {
+                                currentAuction = canceled;
+                                updateUI();
+                                if (countdownTimeline != null) countdownTimeline.stop();
+                                if (lblTimeLeft != null) {
+                                    lblTimeLeft.setText("ĐÃ HỦY");
+                                    lblTimeLeft.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold; -fx-font-size: 18px;");
+                                }
+                                // Thông báo cho tất cả user đang xem phiên này
+                                setMessage("🚫 Phiên đấu giá đã bị Admin hủy. Tiền đặt cọc đã được hoàn lại.", "#7f8c8d");
                                 canBid = false;
                                 setupBidControls();
                                 if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
@@ -647,6 +677,100 @@ public class AuctionDetailController {
                 }
             });
         });
+    }
+
+    /**
+     * Hiển thị popup chiến thắng đẹp mắt khi bidder thắng phiên đấu giá.
+     * Dùng JavaFX Stage riêng để không block UI thread.
+     */
+    private void showWinDialog(Auction ended) {
+        // Cập nhật message ngắn trong màn hình chính
+        setMessage("🏆 Chúc mừng! Bạn đã THẮNG phiên đấu giá này!", "#27ae60");
+
+        // Tạo popup Stage riêng
+        Stage popup = new Stage();
+        popup.initOwner(lblProductName != null && lblProductName.getScene() != null
+                ? lblProductName.getScene().getWindow() : null);
+        popup.initStyle(javafx.stage.StageStyle.UNDECORATED);
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        // ─── Root container ───────────────────────────────────────────────────
+        VBox root = new VBox(18);
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(40, 50, 36, 50));
+        root.setStyle("-fx-background-color: #0D0D0D; "
+                + "-fx-border-color: #F5C518; -fx-border-width: 2; "
+                + "-fx-border-radius: 16; -fx-background-radius: 16; "
+                + "-fx-effect: dropshadow(gaussian, rgba(245,197,24,0.6), 30, 0, 0, 0);");
+        root.setPrefWidth(480);
+
+        // ─── Confetti emoji row ────────────────────────────────────────────────
+        Label confetti = new Label("🎊 🏆 🎉");
+        confetti.setStyle("-fx-font-size: 40px;");
+
+        // ─── Tiêu đề ──────────────────────────────────────────────────────────
+        Label title = new Label("CHÚC MỪNG CHIẾN THẮNG!");
+        title.setStyle("-fx-text-fill: #F5C518; -fx-font-size: 26px; -fx-font-weight: bold; "
+                + "-fx-font-family: 'Arial Black';");
+        title.setAlignment(Pos.CENTER);
+
+        Label subtitle = new Label("Bạn đã trở thành chủ nhân của:");
+        subtitle.setStyle("-fx-text-fill: #888; -fx-font-size: 13px;");
+
+        // ─── Tên sản phẩm ─────────────────────────────────────────────────────
+        Label itemName = new Label(ended.getItem().getNameItem());
+        itemName.setStyle("-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;");
+        itemName.setAlignment(Pos.CENTER);
+        itemName.setWrapText(true);
+        itemName.setMaxWidth(380);
+
+        // ─── Separator ────────────────────────────────────────────────────────
+        javafx.scene.control.Separator sep = new javafx.scene.control.Separator();
+        sep.setStyle("-fx-background-color: #2A2A2A;");
+
+        // ─── Giá chốt ─────────────────────────────────────────────────────────
+        VBox priceBox = new VBox(4);
+        priceBox.setAlignment(Pos.CENTER);
+        priceBox.setStyle("-fx-background-color: rgba(245,197,24,0.08); "
+                + "-fx-border-color: rgba(245,197,24,0.3); -fx-border-radius: 10; "
+                + "-fx-background-radius: 10; -fx-padding: 16 32;");
+        Label priceLabel = new Label("GIÁ THẮNG CUỐI CÙNG");
+        priceLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Label priceValue = new Label(CurrencyFormatter.format(ended.getCurrentHighestBid()));
+        priceValue.setStyle("-fx-text-fill: #F5C518; -fx-font-size: 32px; -fx-font-weight: bold;");
+        priceBox.getChildren().addAll(priceLabel, priceValue);
+
+        // ─── Nút đóng ─────────────────────────────────────────────────────────
+        Button btnClose = new Button("🎊  Tuyệt vời! Đóng");
+        btnClose.setStyle("-fx-background-color: #F5C518; -fx-text-fill: #000; "
+                + "-fx-font-weight: bold; -fx-font-size: 14px; "
+                + "-fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 12 36;");
+        btnClose.setMaxWidth(Double.MAX_VALUE);
+        btnClose.setOnAction(e -> popup.close());
+
+        root.getChildren().addAll(confetti, title, subtitle, itemName, sep, priceBox, btnClose);
+
+        // ─── Scene ────────────────────────────────────────────────────────────
+        javafx.scene.Scene scene = new javafx.scene.Scene(root);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        popup.setScene(scene);
+
+        // ─── Animation scale-in ──────────────────────────────────────────────
+        root.setScaleX(0.6); root.setScaleY(0.6); root.setOpacity(0);
+        popup.show();
+
+        javafx.animation.ScaleTransition scale = new javafx.animation.ScaleTransition(
+                Duration.millis(350), root);
+        scale.setFromX(0.6); scale.setFromY(0.6);
+        scale.setToX(1.0);   scale.setToY(1.0);
+        scale.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+
+        javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(
+                Duration.millis(300), root);
+        fade.setFromValue(0); fade.setToValue(1);
+
+        javafx.animation.ParallelTransition anim = new javafx.animation.ParallelTransition(scale, fade);
+        anim.play();
     }
 
     private void setMessage(String text, String color) {

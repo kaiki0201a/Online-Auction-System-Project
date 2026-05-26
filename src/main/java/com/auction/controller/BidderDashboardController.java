@@ -124,6 +124,24 @@ public class BidderDashboardController {
             return;
         }
 
+        // FIX: Hoàn tiền khi phiên bị hủy giữa chừng
+        if (msg != null && msg.startsWith("BIDDER_REFUND|") && response.getData() instanceof Double) {
+            String targetUsername = msg.split("\\|")[1];
+            if (targetUsername.equals(currentUser.getUserName())) {
+                double newBalance = (Double) response.getData();
+                currentUser.setBalance(newBalance);
+                updateBalance();
+                showConnectionAlert("💸 Hoàn tiền",
+                        "Phiên đấu giá vừa bị Admin hủy.\n"
+                        + "Số tiền đặt cọc đã được hoàn lại vào ví của bạn!\n"
+                        + "Số dư hiện tại: " + com.auction.utils.CurrencyFormatter.format(newBalance),
+                        javafx.scene.control.Alert.AlertType.INFORMATION);
+                // Tải lại danh sách để ẩn phiên đã bị hủy
+                NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
+            }
+            return;
+        }
+
         if (response.getStatus() != StatusType.SUCCESS) return;
 
         Object data = response.getData();
@@ -149,7 +167,8 @@ public class BidderDashboardController {
         // Nếu nhận broadcast nhưng data không phải List → gửi GET_AUCTION_LIST
         if (("AUCTION_APPROVED".equals(msg) || "AUCTION_CREATED".equals(msg)
                 || "UPDATE_AUCTION".equals(msg) || "AUCTION_REJECTED".equals(msg)
-                || "AUCTION_WENT_LIVE".equals(msg) || "AUCTION_ENDED".equals(msg))
+                || "AUCTION_WENT_LIVE".equals(msg) || "AUCTION_ENDED".equals(msg)
+                || "AUCTION_CANCELED".equals(msg))
                 && !(data instanceof List)) {
             NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
         }
@@ -160,6 +179,7 @@ public class BidderDashboardController {
             updateBalance();
         }
     }
+
 
     /** Hiện Alert thông báo trạng thái kết nối. */
     private void showConnectionAlert(String title, String content,
@@ -417,7 +437,16 @@ public class BidderDashboardController {
 
     // ─── Hành động FXML ───────────────────────────────────────────────────────
 
+    /** Nút "Thị Trường" — refresh danh sách và cuộn về đầu trang. */
+    @FXML public void onMarketClick(ActionEvent event) {
+        // Reload auction data từ server
+        NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
+        // Clear search filter nếu có
+        if (txtSearch != null) txtSearch.clear();
+    }
+
     @FXML public void onSearchClick(ActionEvent event) { renderFeaturedAuctions(); }
+
 
     @FXML public void onViewAllAuctions(ActionEvent event) {
         try {
@@ -445,6 +474,16 @@ public class BidderDashboardController {
             stage.setScene(new Scene(root, 600, 530));
         } catch (IOException e) { e.printStackTrace(); }
     }
+
+    /** Click vào avatar → mở màn hình Settings (dùng MouseEvent vì trigger từ HBox). */
+    @FXML public void onAvatarClick(javafx.scene.input.MouseEvent event) {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Settings.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root, 600, 530));
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
 
     @FXML public void onProfileClick(ActionEvent event) {
         try {

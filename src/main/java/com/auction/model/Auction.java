@@ -285,7 +285,19 @@ public class Auction extends Entity implements Serializable {
 
             // FIX: KHÔNG trừ tiền bidder — tiền đã bị trừ khi họ gọi placeBid().
             // Chỉ cộng tiền cho Seller.
-            this.seller.setBalance(this.seller.getBalance() + bidAmount);
+            double newBalance = this.seller.getBalance() + bidAmount;
+            this.seller.setBalance(newBalance);
+
+            // Ghi lịch sử nhận tiền cho Seller
+            AuctionEarning earning = new AuctionEarning(
+                    this.getAuctionId(),
+                    this.item.getNameItem(),
+                    this.highestBidder.getUserName(),
+                    bidAmount,
+                    newBalance,
+                    "PAID"
+            );
+            this.seller.addEarning(earning);
 
             System.out.println("💰 [Settlement] Cộng $" + bidAmount + " vào tài khoản Seller "
                     + this.seller.getUserName() + " (Bidder " + this.highestBidder.getUserName()
@@ -297,6 +309,27 @@ public class Auction extends Entity implements Serializable {
             System.err.println("❌ [Settlement Error] " + e.getMessage());
         }
     }
+
+    /**
+     * Hoàn tiền cho highestBidder khi phiên bị hủy giữa chừng.
+     * Trả lại đúng số tiền đã bị trừ khi họ đặt giá thắng.
+     * Không làm gì nếu không có ai đặt giá (highestBidder = null).
+     */
+    public synchronized void refundOnCancel() {
+        if (this.highestBidder == null) {
+            System.out.println("ℹ️ [CANCEL REFUND] Không có bidder nào để hoàn tiền.");
+            return;
+        }
+
+        double refundAmount = this.currentHighestBid;
+        double newBalance   = this.highestBidder.getBalance() + refundAmount;
+        this.highestBidder.setBalance(newBalance);
+
+        System.out.println("💸 [CANCEL REFUND] Hoàn " + refundAmount
+                + " cho bidder " + this.highestBidder.getUserName()
+                + " (Số dư mới: " + newBalance + ")");
+    }
+
 
     // ĐÃ FIX: THÊM CÁC RÀO CHẮN BẢO MẬT (EDGE CASES)
     public synchronized void registerAutoBid(Bidder bidder, double maxBid, double increment) throws AuctionException {

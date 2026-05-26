@@ -30,11 +30,13 @@ public class SettingsController {
     @FXML private Label lblEmail;
     @FXML private Label lblRole;
     @FXML private Label lblBalance;
+    @FXML private Label lblAvatarInitials; // Avatar initials circle
     @FXML private TextField txtNewEmail;
     @FXML private PasswordField txtCurrentPassword;
     @FXML private PasswordField txtNewPassword;
     @FXML private PasswordField txtConfirmNewPassword;
 
+    private static final String LISTENER_KEY = "settings";
     private User currentUser;
 
     @FXML
@@ -42,31 +44,38 @@ public class SettingsController {
         currentUser = AppContext.getCurrentUser();
         if (currentUser == null) return;
 
-        if (lblUsername != null) lblUsername.setText(currentUser.getUserName());
-        if (lblEmail != null) lblEmail.setText(currentUser.getEmail());
+        String name = currentUser.getUserName();
+        if (lblUsername    != null) lblUsername.setText(name);
+        if (lblEmail       != null) lblEmail.setText(currentUser.getEmail());
+        if (lblAvatarInitials != null)
+            lblAvatarInitials.setText(name.substring(0, 1).toUpperCase());
+
         if (lblRole != null) {
             String role = (currentUser instanceof com.auction.model.Admin) ? "Quản trị viên" :
                           (currentUser instanceof Seller) ? "Người bán" : "Người mua";
             lblRole.setText(role);
         }
         if (lblBalance != null) {
-            if (currentUser instanceof Bidder) {
-                lblBalance.setText(CurrencyFormatter.format(((Bidder) currentUser).getBalance()));
-            } else if (currentUser instanceof Seller) {
-                lblBalance.setText(CurrencyFormatter.format(((Seller) currentUser).getBalance()));
+            if (currentUser instanceof Bidder bid) {
+                lblBalance.setText(CurrencyFormatter.format(bid.getBalance()));
+            } else if (currentUser instanceof Seller sel) {
+                lblBalance.setText(CurrencyFormatter.format(sel.getBalance()));
             } else {
-                lblBalance.setText("N/A");
+                lblBalance.setText("N/A (Admin)");
             }
         }
 
-        NetworkClient.getInstance().setOnResponseReceived(response -> {
+        // Dùng addEventListener (không ghi đè listener khác)
+        NetworkClient.getInstance().addEventListener(LISTENER_KEY, response -> {
             Platform.runLater(() -> {
                 if (response.getStatus() == StatusType.SUCCESS) {
-                    if (response.getData() instanceof User) {
-                        User updatedUser = (User) response.getData();
+                    if (response.getData() instanceof User updatedUser) {
                         AppContext.setCurrentUser(updatedUser);
                         currentUser = updatedUser;
                         if (lblEmail != null) lblEmail.setText(currentUser.getEmail());
+                        // Cập nhật avatar initials sau khi đổi tên (nếu có)
+                        if (lblAvatarInitials != null)
+                            lblAvatarInitials.setText(currentUser.getUserName().substring(0,1).toUpperCase());
                     }
                     NotificationUtil.showToast(response.getMessage(), rootPane, "success");
                 } else {
@@ -119,11 +128,13 @@ public class SettingsController {
 
     @FXML
     public void onBackClick(ActionEvent event) {
-        NetworkClient.getInstance().removeOnResponseReceived();
+        NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
         try {
             String fxmlPath;
+            int w = 1280, h = 800;
             if (currentUser instanceof com.auction.model.Admin) {
                 fxmlPath = "/com/auction/view/AdminDashboard.fxml";
+                w = 1350; h = 900;
             } else if (currentUser instanceof Seller) {
                 fxmlPath = "/com/auction/view/SellerDashboard.fxml";
             } else {
@@ -131,7 +142,7 @@ public class SettingsController {
             }
             Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 1200, 800));
+            stage.setScene(new Scene(root, w, h));
         } catch (IOException e) {
             e.printStackTrace();
         }

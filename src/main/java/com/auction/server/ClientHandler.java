@@ -3,6 +3,8 @@ package com.auction.server;
 import com.auction.exception.AuctionException;
 import com.auction.model.*;
 import com.auction.protocol.*;
+import com.auction.strategy.BidContext;
+import com.auction.strategy.ManualBidStrategy;
 import com.auction.utils.AuctionManager;
 import com.auction.utils.UserManager;
 
@@ -164,12 +166,18 @@ public class ClientHandler implements Runnable {
                         return new Response(StatusType.ERROR, "Tài khoản không hợp lệ.", null);
                     }
 
-                    realBidder.placeBid(auction, bidData.getBidAmount());
+                    // ─── Áp dụng Strategy Pattern: Manual Bid ───
+                    // Thay thế cách gọi trực tiếp realBidder.placeBid() bằng BidContext
+                    // ⇒ Cho phép hoán đổi sang AutoBidStrategy hoặc strategy khác không sửa code này
+                    BidTransaction manualTx = new BidTransaction(auction, realBidder, bidData.getBidAmount());
+                    BidContext bidContext = new BidContext(ManualBidStrategy.getInstance());
+                    bidContext.executeBid(auction, manualTx);
+                    realBidder.addTransaction(manualTx);
+
                     AuctionManager.getInstance().updateAuction(auction);
 
-                    // FIX BUG #2: Reschedule auto-close sau khi bid thành công
-                    // Lý do: anti-sniping hoặc autobid có thể đã thay đổi endTime bên trong
-                    // Auction.processBid(). scheduleAutoClose() sẽ cancel task cũ và tạo task mới.
+                    // Reschedule auto-close sau khi bid thành công
+                    // Lý do: anti-sniping có thể đã thay đổi endTime bên trong processBid()
                     ServerApp.scheduleAutoClose(auction);
 
                     // Broadcast toàn bộ list để các client tự refresh
@@ -248,16 +256,39 @@ public class ClientHandler implements Runnable {
                     Auction auctionToCancel = AuctionManager.getInstance().getAuctionById(targetAuctionId);
 
                     if (auctionToCancel != null) {
+                        // FIX: Hoàn tiền cho bidder đang thắng (nếu có) trước khi hủy
+                        Bidder refundedBidder = auctionToCancel.getHighestBidder();
+                        auctionToCancel.refundOnCancel();
+
                         auctionToCancel.setStatus(AuctionStatus.CANCELED);
                         AuctionManager.getInstance().updateAuction(auctionToCancel);
+                        ServerApp.getAuctionDAO().saveDataToFile();
+                        ServerApp.getUserDAO().saveDataToFile();
+
                         List<Auction> allAfterCancel = AuctionManager.getInstance().getAllAuctions();
-                        ServerApp.broadcastAuctionUpdate(allAfterCancel, "UPDATE_AUCTION");
-                        return new Response(StatusType.SUCCESS, "Đã ép dừng phiên đấu giá!", allAfterCancel);
+                        ServerApp.broadcastAuctionUpdate(allAfterCancel, "AUCTION_CANCELED");
+
+                        // Broadcast số dư mới cho bidder được hoàn tiền
+                        if (refundedBidder != null) {
+                            String bidderMsg = "BIDDER_REFUND|" + refundedBidder.getUserName();
+                            ServerApp.broadcast(new com.auction.protocol.Response(
+                                    com.auction.protocol.StatusType.SUCCESS,
+                                    bidderMsg,
+                                    refundedBidder.getBalance()
+                            ));
+                            System.out.println("💸 [CANCEL] Đã hoàn tiền cho bidder "
+                                    + refundedBidder.getUserName() + ": "
+                                    + refundedBidder.getBalance());
+                        }
+
+                        return new Response(StatusType.SUCCESS,
+                                "Đã hủy phiên và hoàn tiền cho người tham gia!", allAfterCancel);
                     }
                     return new Response(StatusType.ERROR, "Không tìm thấy phiên đấu giá.", null);
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Lỗi khi hủy phiên.", null);
                 }
+
 
             // ─── ADMIN DUYỆT SẢN PHẨM ────────────────────────────────────────
             case APPROVE_AUCTION:

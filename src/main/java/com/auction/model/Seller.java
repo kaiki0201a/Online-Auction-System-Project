@@ -19,6 +19,7 @@ public class Seller extends User implements Serializable {
     private float totalRatingScore;
     private List<Item> inventory;
     private List<WalletTransaction> walletHistory; // Lịch sử nạp/rút tiền
+    private List<AuctionEarning> earningHistory;   // Lịch sử nhận tiền từ đấu giá
 
     public Seller(String userName, String passWord, String email) {
         super(userName, passWord, email);
@@ -26,8 +27,9 @@ public class Seller extends User implements Serializable {
         this.ratingCount = 0;
         this.totalRatingScore = 0.0f;
         this.balance = 0.0;
-        this.inventory   = new ArrayList<>();
-        this.walletHistory = new CopyOnWriteArrayList<>();
+        this.inventory     = new ArrayList<>();
+        this.walletHistory  = new CopyOnWriteArrayList<>();
+        this.earningHistory = new CopyOnWriteArrayList<>();
     }
 
     // Các chức năng, nghiệp vụ
@@ -86,5 +88,16 @@ public class Seller extends User implements Serializable {
     public void addWalletTransaction(WalletTransaction wt) {
         if (walletHistory == null) walletHistory = new CopyOnWriteArrayList<>();
         walletHistory.add(0, wt);
+    }
+
+    /** Lịch sử nhận tiền từ các phiên đấu giá kết thúc thành công. */
+    public List<AuctionEarning> getEarningHistory() {
+        if (earningHistory == null) earningHistory = new CopyOnWriteArrayList<>();
+        return earningHistory;
+    }
+
+    public void addEarning(AuctionEarning earning) {
+        if (earningHistory == null) earningHistory = new CopyOnWriteArrayList<>();
+        earningHistory.add(0, earning); // mới nhất lên đầu
     }
 }

@@ -8,6 +8,7 @@ import com.auction.protocol.Response;
 import com.auction.protocol.StatusType;
 import com.auction.utils.AppContext;
 import com.auction.utils.CurrencyFormatter;
+import com.auction.utils.NotificationUtil;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -157,13 +158,28 @@ public class AdminController {
             }
 
             // Ban/Unban
-            if (msg != null && msg.contains("khoản")) {
-                setFeedback("✅ " + msg, "#27ae60");
+            if (msg != null && (msg.toLowerCase().contains("khoá") || msg.toLowerCase().contains("khóa")
+                    || msg.toLowerCase().contains("mở khóa") || msg.toLowerCase().contains("khoản"))) {
+                boolean isBan = !msg.toLowerCase().contains("mở");
+                setFeedback((isBan ? "🔒 " : "🔓 ") + msg, isBan ? "#e74c3c" : "#27ae60");
+                // Toast nổi bật hơn setFeedback
+                NotificationUtil.showToastOnWindow(
+                    (isBan ? "🔒 " : "🔓 ") + msg,
+                    rootPane != null && rootPane.getScene() != null
+                        ? rootPane.getScene().getWindow() : null,
+                    isBan ? "error" : "success"
+                );
                 NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
             }
 
         } else {
             setFeedback("❌ " + response.getMessage(), "#e74c3c");
+            NotificationUtil.showToastOnWindow(
+                "❌ " + response.getMessage(),
+                rootPane != null && rootPane.getScene() != null
+                    ? rootPane.getScene().getWindow() : null,
+                "error"
+            );
         }
     }
 
@@ -343,13 +359,17 @@ public class AdminController {
     }
 
     private void onRejectAuction(Auction auction, Button btn) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Xác nhận từ chối");
-        confirm.setHeaderText(null);
-        confirm.setContentText("Bạn có chắc muốn TỪ CHỐI sản phẩm:\n\"" +
-            auction.getItem().getNameItem() + "\"?");
-        confirm.showAndWait().ifPresent(result -> {
-            if (result == ButtonType.OK) {
+        // Confirm dialog dark theme thay vì Alert mặc định
+        java.util.Optional<Boolean> confirmed = NotificationUtil.showConfirm(
+            rootPane != null && rootPane.getScene() != null ? rootPane.getScene().getWindow() : null,
+            "Từ chối sản phẩm",
+            "Bạn có chắc muốn TỪ CHỐI sản phẩm:\n\"" + auction.getItem().getNameItem() + "\"?\n\n"
+                + "Hành động này sẽ thông báo cho Seller biết.",
+            "❌  Từ Chối",
+            "Hủy"
+        );
+        confirmed.ifPresent(yes -> {
+            if (yes) {
                 btn.setDisable(true);
                 setFeedback("⏳ Đang từ chối " + auction.getItem().getNameItem() + "...", "#e74c3c");
                 NetworkClient.getInstance().sendRequest(
@@ -404,8 +424,22 @@ public class AdminController {
                                         "-fx-padding: 4 10; -fx-background-radius: 4; -fx-font-size: 11px;");
                     btnCancel.setOnAction(e -> {
                         Auction a = getTableView().getItems().get(getIndex());
-                        NetworkClient.getInstance().sendRequest(
-                            new Request(ActionType.CANCEL_AUCTION, a.getAuctionId()));
+                        // Confirm trước khi hủy phiên — thao tác không thể hoàn tác
+                        java.util.Optional<Boolean> confirmed = NotificationUtil.showConfirm(
+                            getScene() != null ? getScene().getWindow() : null,
+                            "Dừng phiên đấu giá",
+                            "Bạn có chắc muốn DỪNG phiên:\n\"" + a.getItem().getNameItem() + "\"?\n\n"
+                                + "Tiền đặt cọc sẽ được hoàn lại cho bidder đang dẫn đầu.",
+                            "🚫  Dừng Phiên",
+                            "Hủy"
+                        );
+                        confirmed.ifPresent(yes -> {
+                            if (yes) {
+                                setFeedback("⏳ Đang dừng phiên " + a.getItem().getNameItem() + "...", "#e74c3c");
+                                NetworkClient.getInstance().sendRequest(
+                                    new Request(ActionType.CANCEL_AUCTION, a.getAuctionId()));
+                            }
+                        });
                     });
                     btnApprove.setOnAction(e -> {
                         Auction a = getTableView().getItems().get(getIndex());
@@ -463,8 +497,24 @@ public class AdminController {
                 {
                     btn.setOnAction(e -> {
                         User user = getTableView().getItems().get(getIndex());
-                        NetworkClient.getInstance().sendRequest(
-                            new Request(ActionType.BAN_USER, user.getUserName()));
+                        boolean isBanned = user.isBanned();
+                        // Confirm dialog trước khi ban/unban
+                        String confirmTitle = isBanned ? "Mở Khóa Tài Khoản" : "Khóa Tài Khoản";
+                        String confirmMsg   = isBanned
+                            ? "Mở khóa tài khoản \"" + user.getUserName() + "\"?\nNgười dùng sẽ đăng nhập được trở lại."
+                            : "Khóa tài khoản \"" + user.getUserName() + "\"?\nNgười dùng sẽ không thể đăng nhập.";
+                        String yesLabel     = isBanned ? "🔓  Mở Khóa" : "🔒  Khóa Tài Khoản";
+
+                        java.util.Optional<Boolean> confirmed = NotificationUtil.showConfirm(
+                            getScene() != null ? getScene().getWindow() : null,
+                            confirmTitle, confirmMsg, yesLabel, "Hủy"
+                        );
+                        confirmed.ifPresent(yes -> {
+                            if (yes) {
+                                NetworkClient.getInstance().sendRequest(
+                                    new Request(ActionType.BAN_USER, user.getUserName()));
+                            }
+                        });
                     });
                 }
 

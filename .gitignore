@@ -24,3 +24,12 @@ hs_err_pid*
 replay_pid*
 target/
 .vscode/
+
+# Serialized data files — do not commit, regenerated automatically at runtime
+*.dat
+auctions_data.dat
+users_data.dat
+
+# IDE
+.idea/
+*.iml

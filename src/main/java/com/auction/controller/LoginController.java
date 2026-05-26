@@ -118,4 +118,21 @@ public class LoginController {
             NotificationUtil.showToast("Không thể mở trang đăng ký!", rootPane, "error");
         }
     }
+
+    /** Xử lý khi nhấn "Quên mật khẩu?" */
+    @FXML
+    private void onForgotPasswordClick(ActionEvent event) {
+        Alert dlg = new Alert(Alert.AlertType.INFORMATION);
+        dlg.setTitle("Quên mật khẩu?");
+        dlg.setHeaderText("Hướng dẫn khôi phục tài khoản");
+        dlg.setContentText(
+            "Để đặt lại mật khẩu, vui lòng:\n\n" +
+            "1. Liên hệ Admin hệ thống BIDPRECISION\n" +
+            "2. Cung cấp tên đăng nhập và email đã đăng ký\n" +
+            "3. Admin sẽ reset mật khẩu và gửi lại cho bạn\n\n" +
+            "📧 Liên hệ: admin@bidprecision.vn\n" +
+            "📞 Hotline: 1800-BIDPRECISION"
+        );
+        dlg.showAndWait();
+    }
 }

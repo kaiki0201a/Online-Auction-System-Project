@@ -7,6 +7,7 @@ import com.auction.protocol.Request;
 import com.auction.protocol.StatusType;
 import com.auction.utils.AppContext;
 import com.auction.utils.CurrencyFormatter;
+import com.auction.utils.NotificationUtil;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -27,6 +28,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,6 +71,14 @@ public class SellerDashboardController {
     // Live auctions panel
     @FXML private HBox liveAuctionsList;
 
+    // Lịch sử thanh toán (Feature 3)
+    @FXML private TableView<AuctionEarning> tablePaymentHistory;
+    @FXML private TableColumn<AuctionEarning, String>  colPayItem;
+    @FXML private TableColumn<AuctionEarning, String>  colPayDate;
+    @FXML private TableColumn<AuctionEarning, String>  colPayAmount;
+    @FXML private TableColumn<AuctionEarning, String>  colPayStatus;
+    @FXML private Label lblTotalEarned;
+
     private Seller currentUser;
     private String selectedImagePath = null;
     private List<Auction> allAuctions = new ArrayList<>();
@@ -98,6 +108,10 @@ public class SellerDashboardController {
         NetworkClient.getInstance().addEventListener(LISTENER_KEY, response -> {
             Platform.runLater(() -> handleResponse(response));
         });
+
+        // Khởi tạo bảng lịch sử thanh toán
+        setupPaymentTable();
+        loadPaymentHistory();
 
         // Tải danh sách auction ban đầu
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
@@ -164,17 +178,102 @@ public class SellerDashboardController {
             updateBalance();
         }
 
+        // Thông báo cho Seller khi phiên của họ bị hủy giữa chừng
+        if ("AUCTION_CANCELED".equals(msg)) {
+            if (data instanceof List<?> lst && !lst.isEmpty() && lst.get(0) instanceof Auction) {
+                @SuppressWarnings("unchecked")
+                List<Auction> updatedList = (List<Auction>) data;
+                allAuctions = updatedList;
+                renderInventory();
+                renderLiveAuctions();
+                // Kiểm tra có phiên nào của seller bị hủy không
+                updatedList.stream()
+                    .filter(a -> a.getStatus() == AuctionStatus.CANCELED
+                              && a.getSeller().getUserName().equals(currentUser.getUserName()))
+                    .findFirst()
+                    .ifPresent(canceled -> showAlert("🚫 Phiên bị hủy",
+                            "Phiên đấu giá \"" + canceled.getItem().getNameItem()
+                            + "\" đã bị Admin hủy.\n"
+                            + "Sản phẩm của bạn hiện đã được trả về kho.\n"
+                            + "Tiền của bidder đã được hoàn lại cho họ."));
+            }
+            return;
+        }
+
         // Nếu nhận được response với message nhưng data không phải List → refresh thủ công
         if (("AUCTION_CREATED".equals(msg) || "UPDATE_AUCTION".equals(msg)
-                || "AUCTION_WENT_LIVE".equals(msg) || "AUCTION_ENDED".equals(msg))
+                || "AUCTION_WENT_LIVE".equals(msg) || "AUCTION_ENDED".equals(msg)
+                || "AUCTION_CANCELED".equals(msg))
                 && !(data instanceof List)) {
             NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
         }
+
+        // Khi phịn kết thúc → tải lại lịch sử thanh toán
+        if ("AUCTION_ENDED".equals(msg) || "SELLER_BALANCE_UPDATE|".equals(
+                msg != null && msg.contains("|") ? msg.substring(0, msg.indexOf('|') + 1) : "")) {
+            Platform.runLater(this::loadPaymentHistory);
+        }
     }
+
 
     private void updateBalance() {
         if (lblHeaderBalance != null)
             lblHeaderBalance.setText(CurrencyFormatter.format(currentUser.getBalance()));
+    }
+
+    // ─── Lịch sử thanh toán ──────────────────────────────────────────────────
+
+    /** Cài đặt các cột TableView cho lịch sử nhận tiền. */
+    private void setupPaymentTable() {
+        if (tablePaymentHistory == null) return;
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        if (colPayItem   != null) colPayItem.setCellValueFactory(
+                d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getItemName()));
+        if (colPayDate   != null) colPayDate.setCellValueFactory(
+                d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getFormattedTime()));
+        if (colPayAmount != null) colPayAmount.setCellValueFactory(
+                d -> new javafx.beans.property.SimpleStringProperty(
+                        CurrencyFormatter.format(d.getValue().getAmount())));
+        if (colPayStatus != null) {
+            colPayStatus.setCellValueFactory(
+                    d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getStatus()));
+            colPayStatus.setCellFactory(tc -> new javafx.scene.control.TableCell<>() {
+                @Override protected void updateItem(String status, boolean empty) {
+                    super.updateItem(status, empty);
+                    if (empty || status == null) { setGraphic(null); return; }
+                    Label badge = new Label();
+                    if ("PAID".equals(status)) {
+                        badge.setText("✅ Đã nhận");
+                        badge.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+                    } else {
+                        badge.setText(status);
+                        badge.setStyle("-fx-text-fill: #A0A0A0;");
+                    }
+                    setGraphic(badge);
+                }
+            });
+        }
+
+        // Style bảng dark
+        tablePaymentHistory.setStyle("-fx-background-color: transparent; "
+                + "-fx-border-color: #2A2A2A; -fx-border-radius: 4; -fx-table-cell-border-color: #1A1A1A;");
+    }
+
+    /** Tải và hiển thị lịch sử nhận tiền của Seller. */
+    private void loadPaymentHistory() {
+        if (tablePaymentHistory == null) return;
+
+        java.util.List<AuctionEarning> history = currentUser.getEarningHistory();
+        tablePaymentHistory.setItems(
+                javafx.collections.FXCollections.observableArrayList(history));
+
+        // Tính tổng đã nhận
+        double total = history.stream().mapToDouble(AuctionEarning::getAmount).sum();
+        if (lblTotalEarned != null) {
+            lblTotalEarned.setText("Tổng nhận: " + CurrencyFormatter.format(total));
+        }
     }
 
     // ─── Kho hàng ─────────────────────────────────────────────────────────────
@@ -575,6 +674,16 @@ public class SellerDashboardController {
         } catch (IOException e) { showAlert("Lỗi", "Không thể mở Cài đặt."); }
     }
 
+    /** Click vào avatar → mở màn hình Settings (MouseEvent từ HBox.onMouseClicked). */
+    @FXML public void onAvatarClick(javafx.scene.input.MouseEvent event) {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Settings.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root, 600, 530));
+        } catch (IOException e) { showAlert("Lỗi", "Không thể mở Cài đặt."); }
+    }
+
+
     @FXML public void onDepositClick(ActionEvent event) {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/DepositWithdraw.fxml"));
@@ -594,9 +703,33 @@ public class SellerDashboardController {
         } catch (IOException e) { e.printStackTrace(); }
     }
 
-    @FXML public void onRequestAppraisalClick(ActionEvent event) {
-        showAlert("Định Giá", "Tính năng định giá online đang được phát triển.");
+    /** Nút Dashboard — scroll về top, refresh kho hàng và live auctions. */
+    @FXML public void onDashboardClick(ActionEvent event) {
+        NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
+        loadPaymentHistory();
     }
+
+    @FXML public void onRequestAppraisalClick(ActionEvent event) {
+        Alert dlg = new Alert(Alert.AlertType.INFORMATION);
+        dlg.setTitle("📸 Định Giá Sản Phẩm");
+        dlg.setHeaderText("Hướng dẫn định giá sản phẩm đấu giá");
+        dlg.setContentText(
+            "💡 Gợi ý định giá theo danh mục:\n\n" +
+            "🎨 Nghệ thuật (Art):\n" +
+            "   • Tác phẩm nổi tiếng: từ 10.000.000 VNĐ\n" +
+            "   • Nghệ sĩ mới nổi: từ 500.000 VNĐ\n\n" +
+            "💻 Điện tử (Electronics):\n" +
+            "   • Dựa theo giá thị trường hiện tại\n" +
+            "   • Khởi điểm = 60-70% giá mới\n\n" +
+            "🚗 Phương tiện (Vehicle):\n" +
+            "   • Dựa theo năm sản xuất và km đã đi\n" +
+            "   • Tham khảo chợ xe oto trực tuyến\n\n" +
+            "✅ Lời khuyên: Đặt giá khởi điểm thấp để thu hút\n" +
+            "   nhiều bidder, giá cuối thường cao hơn dự kiến!"
+        );
+        dlg.showAndWait();
+    }
+
 
     // FIX: removeEventListener thay vì removeOnResponseReceived
     @FXML public void onLogoutClick(ActionEvent event) {
@@ -621,9 +754,40 @@ public class SellerDashboardController {
         } catch (IOException e) { showAlert("Lỗi", "Không thể mở chi tiết phiên."); }
     }
 
+    /**
+     * Hiển thị thông báo.
+     * — Nếu title có "✅" → toast success
+     * — Nếu title có "❌" hoặc "Lỗi" → toast error
+     * — Nếu title có "⚠" hoặc "Thiếu" → toast warning
+     * — Mặc định → toast default
+     */
     private void showAlert(String title, String content) {
-        Alert a = new Alert(Alert.AlertType.INFORMATION);
-        a.setTitle(title); a.setHeaderText(null); a.setContentText(content);
-        a.showAndWait();
+        String type;
+        String t = title.toLowerCase();
+        if (t.contains("✅") || t.contains("thành công") || t.contains("đăng")) {
+            type = "success";
+        } else if (t.contains("❌") || t.contains("lỗi") || t.contains("không thể") || t.contains("bị từ") || t.contains("🚫")) {
+            type = "error";
+        } else if (t.contains("⚠") || t.contains("thiếu") || t.contains("hạn")) {
+            type = "warning";
+        } else {
+            type = null;
+        }
+
+        // Dùng Toast thầm lặng (góc dưới phải) cho các thông báo nhỏ
+        // Dùng Dialog cho lỗi nghiêm trọng cần user xác nhận
+        boolean isCritical = "error".equals(type)
+                && (content.length() > 60 || title.contains("Lỗi thời gian") || title.contains("Không thể"));
+
+        if (isCritical) {
+            NotificationUtil.showAlert(
+                rootPane != null && rootPane.getScene() != null ? rootPane.getScene().getWindow() : null,
+                title, content, type
+            );
+        } else {
+            // Toast: hiển thị message ngắn gọn
+            String toastMsg = content.length() > 80 ? title : title + " — " + content;
+            NotificationUtil.showToast(toastMsg, rootPane, type);
+        }
     }
 }
