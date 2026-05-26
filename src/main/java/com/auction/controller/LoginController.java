@@ -16,12 +16,17 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.Node;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import java.io.IOException;
 
 public class LoginController {
 
     @FXML private StackPane rootPane;
+    @FXML private HBox hboxUsername;
+    @FXML private HBox hboxPassword;
+    @FXML private Label lblUsernameError;
+    @FXML private Label lblPasswordError;
     @FXML private TextField txtUsername;
     @FXML private PasswordField txtPassword;
     @FXML private TextField txtPasswordVisible;   // TextField hiện mật khẩu
@@ -30,6 +35,52 @@ public class LoginController {
     @FXML private Button btnRegister;
 
     private boolean passwordVisible = false;
+
+    @FXML
+    public void initialize() {
+        // Xóa lỗi khi người dùng bắt đầu gõ lại
+        txtUsername.textProperty().addListener((obs, o, n) -> clearUsernameError());
+        txtPassword.textProperty().addListener((obs, o, n) -> clearPasswordError());
+        txtPasswordVisible.textProperty().addListener((obs, o, n) -> clearPasswordError());
+    }
+
+    // ==================== Helper hiển thị / ẩn lỗi ====================
+
+    private static final String STYLE_BORDER_NORMAL = "-fx-background-color: #1a1a1a; -fx-border-color: #333333; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 10 0 15;";
+    private static final String STYLE_BORDER_ERROR  = "-fx-background-color: #1a1a1a; -fx-border-color: #FF4444; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 10 0 15;";
+    private static final String STYLE_BORDER_PASS_NORMAL = "-fx-background-color: #1a1a1a; -fx-border-color: #333333; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 5 0 15;";
+    private static final String STYLE_BORDER_PASS_ERROR  = "-fx-background-color: #1a1a1a; -fx-border-color: #FF4444; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 5 0 15;";
+
+    private void showUsernameError(String msg) {
+        lblUsernameError.setText(msg);
+        lblUsernameError.setVisible(true);
+        lblUsernameError.setManaged(true);
+        hboxUsername.setStyle(STYLE_BORDER_ERROR);
+    }
+
+    private void clearUsernameError() {
+        lblUsernameError.setVisible(false);
+        lblUsernameError.setManaged(false);
+        hboxUsername.setStyle(STYLE_BORDER_NORMAL);
+    }
+
+    private void showPasswordError(String msg) {
+        lblPasswordError.setText(msg);
+        lblPasswordError.setVisible(true);
+        lblPasswordError.setManaged(true);
+        hboxPassword.setStyle(STYLE_BORDER_PASS_ERROR);
+    }
+
+    private void clearPasswordError() {
+        lblPasswordError.setVisible(false);
+        lblPasswordError.setManaged(false);
+        hboxPassword.setStyle(STYLE_BORDER_PASS_NORMAL);
+    }
+
+    private void clearAllErrors() {
+        clearUsernameError();
+        clearPasswordError();
+    }
 
     /** Toggle hiển thị / ẩn mật khẩu */
     @FXML
@@ -63,11 +114,19 @@ public class LoginController {
     public void onLoginClick(ActionEvent event) {
         String username = txtUsername.getText().trim();
         String password = getCurrentPassword();
+        clearAllErrors();
 
-        if (username.isEmpty() || password.isEmpty()) {
-            NotificationUtil.showToast("Vui lòng nhập tài khoản và mật khẩu!", rootPane, "warning");
-            return;
+        // Kiểm tra trường rỗng
+        boolean hasError = false;
+        if (username.isEmpty()) {
+            showUsernameError("Vui lòng nhập tên đăng nhập");
+            hasError = true;
         }
+        if (password.isEmpty()) {
+            showPasswordError("Vui lòng nhập mật khẩu");
+            hasError = true;
+        }
+        if (hasError) return;
 
         NetworkClient.getInstance().setOnResponseReceived(response -> {
             Platform.runLater(() -> {
@@ -81,7 +140,23 @@ public class LoginController {
                         NotificationUtil.showToast("Lỗi nạp giao diện: " + e.getMessage(), rootPane, "error");
                     }
                 } else {
-                    NotificationUtil.showToast(response.getMessage(), rootPane, "error");
+                    // Phân loại lỗi từ server → hiển thị inline đúng chỗ
+                    String msg = response.getMessage();
+                    if (msg == null) msg = "Lỗi không xác định";
+                    String msgLower = msg.toLowerCase();
+                    if (msgLower.contains("không tồn tại")
+                            || msgLower.contains("not found")
+                            || msgLower.contains("username")
+                            || msgLower.contains("tài khoản") && !msgLower.contains("mật khẩu")) {
+                        showUsernameError("Tài khoản không tồn tại");
+                    } else if (msgLower.contains("mật khẩu")
+                            || msgLower.contains("password")
+                            || msgLower.contains("sai")) {
+                        showPasswordError("Mật khẩu chưa chính xác");
+                    } else {
+                        // Lỗi khác: hiển thị ở password
+                        showPasswordError(msg);
+                    }
                 }
             });
         });
