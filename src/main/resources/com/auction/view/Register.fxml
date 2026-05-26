@@ -84,8 +84,8 @@
                             style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 13px; -fx-padding: 10 10;"
                             visible="false" managed="false" />
                     </StackPane>
-                    <Button fx:id="btnTogglePassword" onAction="#onTogglePassword" text="👁"
-                        style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-cursor: hand; -fx-padding: 5 8;" />
+                    <Button fx:id="btnTogglePassword" onAction="#onTogglePassword" text="🔒"
+                        style="-fx-background-color: transparent; -fx-text-fill: #888; -fx-cursor: hand; -fx-font-size: 15px; -fx-padding: 5 8;" />
                 </HBox>
             </VBox>
 
@@ -102,8 +102,8 @@
                             style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 13px; -fx-padding: 10 10;"
                             visible="false" managed="false" />
                     </StackPane>
-                    <Button fx:id="btnToggleConfirm" onAction="#onToggleConfirm" text="👁"
-                        style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-cursor: hand; -fx-padding: 5 8;" />
+                    <Button fx:id="btnToggleConfirm" onAction="#onToggleConfirm" text="🔒"
+                        style="-fx-background-color: transparent; -fx-text-fill: #888; -fx-cursor: hand; -fx-font-size: 15px; -fx-padding: 5 8;" />
                 </HBox>
             </VBox>
 

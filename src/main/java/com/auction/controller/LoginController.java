@@ -16,6 +16,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.Node;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import java.io.IOException;
 
@@ -28,6 +29,10 @@ public class LoginController {
     @FXML private Button btnTogglePassword;       // Nút mắt
     @FXML private Button btnLogin;
     @FXML private Button btnRegister;
+    @FXML private Label  lblUsernameError;        // Lỗi inline dưới ô username
+    @FXML private Label  lblPasswordError;        // Lỗi inline dưới ô password
+    @FXML private HBox   hboxUsername;            // Border đỏ khi username lỗi
+    @FXML private HBox   hboxPassword;            // Border đỏ khi password lỗi
 
     private boolean passwordVisible = false;
 
@@ -36,21 +41,54 @@ public class LoginController {
     public void onTogglePasswordVisibility(ActionEvent event) {
         passwordVisible = !passwordVisible;
         if (passwordVisible) {
-            // Sao chép giá trị sang TextField rồi hiện lên
             txtPasswordVisible.setText(txtPassword.getText());
             txtPasswordVisible.setVisible(true);
             txtPasswordVisible.setManaged(true);
             txtPassword.setVisible(false);
             txtPassword.setManaged(false);
-            btnTogglePassword.setText("🙈");
+            btnTogglePassword.setText("👁");   // mắt mở = đang hiện
         } else {
-            // Sao chép giá trị về PasswordField
             txtPassword.setText(txtPasswordVisible.getText());
             txtPassword.setVisible(true);
             txtPassword.setManaged(true);
             txtPasswordVisible.setVisible(false);
             txtPasswordVisible.setManaged(false);
-            btnTogglePassword.setText("👁");
+            btnTogglePassword.setText("🔒");  // khoá = đang ẩn
+        }
+    }
+
+    /** Xoá toàn bộ lỗi inline */
+    private void clearErrors() {
+        setFieldError(lblUsernameError, hboxUsername, null);
+        setFieldError(lblPasswordError, hboxPassword, null);
+    }
+
+    /** Hiện / ẩn lỗi inline dưới một field.
+     *  msg == null → xoá lỗi; msg != null → hiện lỗi đỏ. */
+    private void setFieldError(Label lbl, HBox box, String msg) {
+        if (lbl != null) {
+            if (msg != null) {
+                lbl.setText("⚠ " + msg);
+                lbl.setVisible(true);
+                lbl.setManaged(true);
+            } else {
+                lbl.setText("");
+                lbl.setVisible(false);
+                lbl.setManaged(false);
+            }
+        }
+        if (box != null) {
+            if (msg != null) {
+                box.setStyle(box.getStyle()
+                    .replace("-fx-border-color: #333333", "")
+                    .replace("-fx-border-color:#333333", "")
+                    + "; -fx-border-color: #e74c3c;");
+            } else {
+                String s = box.getStyle()
+                    .replaceAll(";?\\s*-fx-border-color:\\s*#e74c3c", "")
+                    .trim();
+                box.setStyle(s + "; -fx-border-color: #333333;");
+            }
         }
     }
 
@@ -64,8 +102,14 @@ public class LoginController {
         String username = txtUsername.getText().trim();
         String password = getCurrentPassword();
 
-        if (username.isEmpty() || password.isEmpty()) {
-            NotificationUtil.showToast("Vui lòng nhập tài khoản và mật khẩu!", rootPane, "warning");
+        clearErrors();
+
+        if (username.isEmpty()) {
+            setFieldError(lblUsernameError, hboxUsername, "Vui lòng nhập tên đăng nhập");
+            return;
+        }
+        if (password.isEmpty()) {
+            setFieldError(lblPasswordError, hboxPassword, "Vui lòng nhập mật khẩu");
             return;
         }
 
@@ -81,7 +125,15 @@ public class LoginController {
                         NotificationUtil.showToast("Lỗi nạp giao diện: " + e.getMessage(), rootPane, "error");
                     }
                 } else {
-                    NotificationUtil.showToast(response.getMessage(), rootPane, "error");
+                    String msg = response.getMessage();
+                    // Phân biệt loại lỗi để hiện đúng chỗ
+                    if (msg != null && (msg.toLowerCase().contains("không tồn tại")
+                            || msg.toLowerCase().contains("not found")
+                            || msg.toLowerCase().contains("không tìm thấy"))) {
+                        setFieldError(lblUsernameError, hboxUsername, "Tài khoản không tồn tại");
+                    } else {
+                        setFieldError(lblPasswordError, hboxPassword, "Sai mật khẩu");
+                    }
                 }
             });
         });

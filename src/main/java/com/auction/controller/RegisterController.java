@@ -67,12 +67,12 @@ public class RegisterController {
             txtPasswordVisible.setText(txtPassword.getText());
             txtPasswordVisible.setVisible(true);  txtPasswordVisible.setManaged(true);
             txtPassword.setVisible(false);         txtPassword.setManaged(false);
-            btnTogglePassword.setText("🙈");
+            btnTogglePassword.setText("👁");   // mắt mở = đang hiện
         } else {
             txtPassword.setText(txtPasswordVisible.getText());
             txtPassword.setVisible(true);          txtPassword.setManaged(true);
             txtPasswordVisible.setVisible(false);  txtPasswordVisible.setManaged(false);
-            btnTogglePassword.setText("👁");
+            btnTogglePassword.setText("🔒");  // khoá = đang ẩn
         }
     }
 
@@ -82,12 +82,12 @@ public class RegisterController {
             txtConfirmVisible.setText(txtConfirmPassword.getText());
             txtConfirmVisible.setVisible(true);  txtConfirmVisible.setManaged(true);
             txtConfirmPassword.setVisible(false); txtConfirmPassword.setManaged(false);
-            btnToggleConfirm.setText("🙈");
+            btnToggleConfirm.setText("👁");   // mắt mở = đang hiện
         } else {
             txtConfirmPassword.setText(txtConfirmVisible.getText());
             txtConfirmPassword.setVisible(true);  txtConfirmPassword.setManaged(true);
             txtConfirmVisible.setVisible(false);  txtConfirmVisible.setManaged(false);
-            btnToggleConfirm.setText("👁");
+            btnToggleConfirm.setText("🔒");  // khoá = đang ẩn
         }
     }
 

@@ -8,9 +8,12 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 
-<BorderPane styleClass="dark-root" stylesheets="@fileCS/style.css"
-    xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
     fx:controller="com.auction.controller.AuctionDetailController"
+    stylesheets="@fileCS/style.css"
+    prefWidth="1280" prefHeight="820">
+
+<BorderPane fx:id="rootBorderPane" styleClass="dark-root" stylesheets="@fileCS/style.css"
     prefWidth="1280" prefHeight="820">
 
     <!-- Navbar -->
@@ -141,9 +144,9 @@
                         </LineChart>
                     </VBox>
 
-                    <!-- Thông báo lỗi / thành công -->
+                    <!-- Thông báo lỗi nhẹ (validate) -->
                     <Label fx:id="lblMessage" text=""
-                        style="-fx-font-size: 14px; -fx-font-weight: bold;" wrapText="true"/>
+                        style="-fx-font-size: 12px; -fx-font-weight: bold;" wrapText="true"/>
 
                 </VBox>
 
@@ -279,3 +282,44 @@ tăng dần theo Bước nhảy cho đến mức Giá tối đa."
         </ScrollPane>
     </center>
 </BorderPane>
+
+<!-- ===== NOTIFICATION TOAST — góc dưới phải, nhỏ gọn, không che UI ===== -->
+<StackPane fx:id="notificationOverlay"
+    mouseTransparent="true"
+    StackPane.alignment="BOTTOM_RIGHT"
+    style="-fx-padding: 0 20 24 0;">
+
+    <!-- Toast nhỏ: HBox ngang icon + text, tự co theo nội dung -->
+    <HBox fx:id="notificationBanner"
+        alignment="CENTER_LEFT" spacing="8"
+        visible="false" managed="false"
+        StackPane.alignment="BOTTOM_RIGHT"
+        style="-fx-background-color: #1A1A1A;
+               -fx-background-radius: 6;
+               -fx-padding: 6 12 6 0;
+               -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75), 12, 0, 0, 3);">
+
+        <!-- Thanh màu accent bên trái -->
+        <Region fx:id="notifAccentBar"
+            minWidth="3" maxWidth="3"
+            minHeight="24" maxHeight="24"
+            style="-fx-background-color: #F5C518; -fx-background-radius: 0 2 2 0;"/>
+
+        <!-- Icon emoji -->
+        <Label fx:id="lblNotifIcon" text=""
+            style="-fx-font-size: 13px;"/>
+
+        <!-- Text: title + sub -->
+        <VBox spacing="0">
+            <Label fx:id="lblNotifTitle" text=""
+                style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+            <Label fx:id="lblNotifSub" text=""
+                style="-fx-text-fill: #888; -fx-font-size: 10px;"/>
+        </VBox>
+
+        <!-- Padding phải -->
+        <Region minWidth="8" maxWidth="8"/>
+    </HBox>
+</StackPane>
+
+</StackPane>

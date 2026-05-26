@@ -10,8 +10,13 @@ import com.auction.protocol.StatusType;
 import com.auction.utils.AppContext;
 import com.auction.utils.CurrencyFormatter;
 import com.auction.utils.PriceChartHelper;
+import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
+import javafx.animation.ParallelTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -94,6 +99,15 @@ public class AuctionDetailController {
     @FXML private NumberAxis chartYAxis;
     @FXML private Label lblChartInfo;
     private XYChart.Series<String, Number> priceSeries;
+
+    // Notification toast — góc dưới phải
+    @FXML private HBox   notificationBanner;
+    @FXML private Region notifAccentBar;
+    @FXML private Label  lblNotifIcon;
+    @FXML private Label  lblNotifTitle;
+    @FXML private Label  lblNotifSub;
+
+    private PauseTransition notifPause;
 
     private Auction currentAuction;
     private User sessionUser;
@@ -556,16 +570,19 @@ public class AuctionDetailController {
                                 startCountdown();
                                 // FIX #3: Cập nhật biểu đồ realtime khi có bid mới
                                 if (priceLineChart != null && priceSeries != null) {
-                                    // Rebuild chart với toàn bộ lịch sử mới nhất
                                     priceSeries = PriceChartHelper.buildHistoricalChart(
                                         priceLineChart, currentAuction.getBidHistory());
                                     updateChartLabel();
                                 }
-                                if (wasExtended) setMessage("⏱️ Hệ thống vừa gia hạn thêm thời gian!", "#f39c12");
-                                // Thông báo bị vượt giá
-                                if (canBid && updated.getHighestBidder() != null
+                                if (wasExtended) {
+                                    showBidNotification("⏱️", "Gia hạn thêm thời gian",
+                                        "Phiên được mở rộng thêm",
+                                        "#f39c12", 2.0);
+                                } else if (canBid && updated.getHighestBidder() != null
                                         && !updated.getHighestBidder().getUserName().equals(sessionUser.getUserName())) {
-                                    setMessage("🔥 Ai đó vừa trả giá cao hơn bạn!", "#e74c3c");
+                                    showBidNotification("🔥", "Bạn vừa bị vượt giá!",
+                                        CurrencyFormatter.format(updated.getCurrentHighestBid()),
+                                        "#e74c3c", 1.5);
                                 }
                             });
                 }
@@ -597,21 +614,19 @@ public class AuctionDetailController {
                                     boolean won = ended.getHighestBidder().getUserName()
                                             .equals(sessionUser.getUserName());
                                     if (won) {
-                                        // 🏆 Popup chiến thắng đặc biệt
                                         showWinDialog(ended);
                                     } else {
-                                        setMessage("😔 Phiên kết thúc. Bạn không thắng lần này. Chúc may mắn!", "#e74c3c");
+                                        showLoseDialog(ended);
                                     }
                                 } else if (ended.getHighestBidder() == null
                                         && (ended.getStatus() == AuctionStatus.FINISHED
                                          || ended.getStatus() == AuctionStatus.PAID)) {
-                                    setMessage("📭 Phiên đấu giá kết thúc mà không có ai đặt giá.", "#A0A0A0");
+                                    showEndedNoWinnerDialog();
                                 }
                                 // Tắt controls
                                 canBid = false;
                                 setupBidControls();
                                 if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
-
                             });
                 }
 
@@ -630,8 +645,9 @@ public class AuctionDetailController {
                                     lblTimeLeft.setText("ĐÃ HỦY");
                                     lblTimeLeft.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold; -fx-font-size: 18px;");
                                 }
-                                // Thông báo cho tất cả user đang xem phiên này
-                                setMessage("🚫 Phiên đấu giá đã bị Admin hủy. Tiền đặt cọc đã được hoàn lại.", "#7f8c8d");
+                                showBidNotification("🚫", "Phiên đã bị hủy",
+                                    "Tiền đặt cọc đã được hoàn lại",
+                                    "#7f8c8d", 3.0);
                                 canBid = false;
                                 setupBidControls();
                                 if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
@@ -641,7 +657,16 @@ public class AuctionDetailController {
                 // Response trực tiếp cho PLACE_BID thành công
                 if (response.getStatus() == StatusType.SUCCESS
                         && "Đặt giá thành công!".equals(msg)) {
-                    setMessage("✅ Đặt giá thành công!", "#27ae60");
+                    String bidAmountText = (txtBidAmount != null && !txtBidAmount.getText().isEmpty())
+                        ? txtBidAmount.getText().trim() : null;
+                    String bidAmountDisplay = "---";
+                    try {
+                        if (bidAmountText != null)
+                            bidAmountDisplay = CurrencyFormatter.format(Double.parseDouble(bidAmountText));
+                    } catch (NumberFormatException ignored) {}
+                    showBidNotification("✅", "Đặt giá thành công!",
+                        bidAmountDisplay,
+                        "#27ae60", 1.5);
                     if (txtBidAmount != null) txtBidAmount.clear();
                     if (btnBid != null) btnBid.setDisable(false);
                     // Cập nhật số dư local
@@ -652,7 +677,8 @@ public class AuctionDetailController {
 
                 // Response lỗi PLACE_BID
                 if (response.getStatus() == StatusType.ERROR) {
-                    setMessage("❌ " + response.getMessage(), "#e74c3c");
+                    showBidNotification("❌", "Đặt giá thất bại",
+                        response.getMessage(), "#e74c3c", 1.5);
                     if (btnBid != null) btnBid.setDisable(false);
                 }
 
@@ -662,7 +688,8 @@ public class AuctionDetailController {
                     updateAutoBidButtonStyle(nowActive);
                     if (nowActive) {
                         setAutoBidStatus("🤖 AutoBid đang hoạt động! Hệ thống sẽ tự trả giá thay bạn.", "#27ae60");
-                        setMessage("✅ AutoBid đã bật thành công!", "#27ae60");
+                        showBidNotification("🤖", "AutoBid đã bật",
+                            "Tự đặt giá khi bị vượt", "#8e44ad", 1.5);
                     } else {
                         setAutoBidStatus("AutoBid đã TẮT.", "#666");
                         if (txtAutoBidMax       != null) txtAutoBidMax.setDisable(false);
@@ -773,10 +800,233 @@ public class AuctionDetailController {
         anim.play();
     }
 
+    /**
+     * Popup kết quả THUA — to đẹp ở giữa màn hình, tương tự win dialog.
+     */
+    private void showLoseDialog(Auction ended) {
+        Platform.runLater(() -> {
+            Stage popup = new Stage();
+            popup.initOwner(lblProductName != null && lblProductName.getScene() != null
+                    ? lblProductName.getScene().getWindow() : null);
+            popup.initStyle(javafx.stage.StageStyle.UNDECORATED);
+            popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+            VBox root = new VBox(16);
+            root.setAlignment(Pos.CENTER);
+            root.setPadding(new Insets(38, 48, 32, 48));
+            root.setStyle("-fx-background-color: #0D0D0D; "
+                    + "-fx-border-color: #4a4a4a; -fx-border-width: 2; "
+                    + "-fx-border-radius: 16; -fx-background-radius: 16; "
+                    + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 30, 0, 0, 0);");
+            root.setPrefWidth(440);
+
+            Label icon = new Label("😔");
+            icon.setStyle("-fx-font-size: 52px;");
+
+            Label title = new Label("PHÊN ĐẤU GIÁ ĐÃ KẾT THÚC");
+            title.setStyle("-fx-text-fill: #aaa; -fx-font-size: 20px; -fx-font-weight: bold; "
+                    + "-fx-font-family: 'Arial Black';");
+            title.setAlignment(Pos.CENTER);
+
+            Label msg = new Label("Bạn không giành được lần này.");
+            msg.setStyle("-fx-text-fill: #666; -fx-font-size: 14px;");
+
+            // Tên sản phẩm
+            Label itemName = new Label(ended.getItem().getNameItem());
+            itemName.setStyle("-fx-text-fill: #ccc; -fx-font-size: 16px; -fx-font-weight: bold;");
+            itemName.setAlignment(Pos.CENTER);
+            itemName.setWrapText(true);
+            itemName.setMaxWidth(340);
+
+            javafx.scene.control.Separator sep = new javafx.scene.control.Separator();
+            sep.setStyle("-fx-background-color: #2A2A2A;");
+
+            // Giá chốt
+            VBox priceBox = new VBox(4);
+            priceBox.setAlignment(Pos.CENTER);
+            priceBox.setStyle("-fx-background-color: rgba(80,80,80,0.15); "
+                    + "-fx-border-color: rgba(100,100,100,0.3); -fx-border-radius: 10; "
+                    + "-fx-background-radius: 10; -fx-padding: 14 28;");
+            Label priceLbl = new Label("GIÁ THẬNG CUỐI CÙNG");
+            priceLbl.setStyle("-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;");
+            Label priceVal = new Label(CurrencyFormatter.format(ended.getCurrentHighestBid()));
+            priceVal.setStyle("-fx-text-fill: #aaa; -fx-font-size: 28px; -fx-font-weight: bold;");
+            priceBox.getChildren().addAll(priceLbl, priceVal);
+
+            Label encourage = new Label("💪 Hãy thử lại lần sau!");
+            encourage.setStyle("-fx-text-fill: #555; -fx-font-size: 12px;");
+
+            Button btnClose = new Button("✕  Đóng");
+            btnClose.setStyle("-fx-background-color: #2A2A2A; -fx-text-fill: #aaa; "
+                    + "-fx-font-weight: bold; -fx-font-size: 13px; "
+                    + "-fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 10 36;");
+            btnClose.setMaxWidth(Double.MAX_VALUE);
+            btnClose.setOnAction(e -> popup.close());
+
+            root.getChildren().addAll(icon, title, msg, itemName, sep, priceBox, encourage, btnClose);
+
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            popup.setScene(scene);
+
+            root.setScaleX(0.65); root.setScaleY(0.65); root.setOpacity(0);
+            popup.show();
+            popup.centerOnScreen();
+
+            javafx.animation.ScaleTransition scale = new javafx.animation.ScaleTransition(
+                    Duration.millis(320), root);
+            scale.setFromX(0.65); scale.setFromY(0.65);
+            scale.setToX(1.0);   scale.setToY(1.0);
+            scale.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+            javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(
+                    Duration.millis(280), root);
+            fade.setFromValue(0); fade.setToValue(1);
+            new javafx.animation.ParallelTransition(scale, fade).play();
+        });
+    }
+
+    /**
+     * Popup khi phiên kết thúc mà không có ai đặt giá.
+     */
+    private void showEndedNoWinnerDialog() {
+        Platform.runLater(() -> {
+            Stage popup = new Stage();
+            popup.initOwner(lblProductName != null && lblProductName.getScene() != null
+                    ? lblProductName.getScene().getWindow() : null);
+            popup.initStyle(javafx.stage.StageStyle.UNDECORATED);
+            popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+            VBox root = new VBox(14);
+            root.setAlignment(Pos.CENTER);
+            root.setPadding(new Insets(36, 48, 30, 48));
+            root.setStyle("-fx-background-color: #0D0D0D; "
+                    + "-fx-border-color: #333; -fx-border-width: 2; "
+                    + "-fx-border-radius: 16; -fx-background-radius: 16; "
+                    + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 24, 0, 0, 0);");
+            root.setPrefWidth(380);
+
+            Label icon = new Label("📫");
+            icon.setStyle("-fx-font-size: 48px;");
+
+            Label title = new Label("PHIÊN KẾT THÚC");
+            title.setStyle("-fx-text-fill: #777; -fx-font-size: 18px; -fx-font-weight: bold;");
+
+            Label msg = new Label("Không có ai đặt giá trong phiên này.");
+            msg.setStyle("-fx-text-fill: #555; -fx-font-size: 13px;");
+            msg.setWrapText(true);
+
+            Button btnClose = new Button("✕  Đóng");
+            btnClose.setStyle("-fx-background-color: #222; -fx-text-fill: #888; "
+                    + "-fx-font-weight: bold; -fx-font-size: 13px; "
+                    + "-fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 10 36;");
+            btnClose.setMaxWidth(Double.MAX_VALUE);
+            btnClose.setOnAction(e -> popup.close());
+
+            root.getChildren().addAll(icon, title, msg, btnClose);
+
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            popup.setScene(scene);
+
+            root.setScaleX(0.7); root.setScaleY(0.7); root.setOpacity(0);
+            popup.show();
+            popup.centerOnScreen();
+
+            javafx.animation.ScaleTransition scale = new javafx.animation.ScaleTransition(
+                    Duration.millis(280), root);
+            scale.setFromX(0.7); scale.setFromY(0.7);
+            scale.setToX(1.0);  scale.setToY(1.0);
+            scale.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+            javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(
+                    Duration.millis(250), root);
+            fade.setFromValue(0); fade.setToValue(1);
+            new javafx.animation.ParallelTransition(scale, fade).play();
+        });
+    }
+
+    // ─── Toast thông báo nhỏ gọn — góc dưới phải, tự ẩn sau 1.5s ────────────────────
+
+    /**
+     * Hiển toast thông báo nhỏ gọn góc dưới phải.
+     *
+     * @param icon        Emoji icon nhỏ
+     * @param title       Dòng chầu in đậm
+     * @param sub         Dòng phụ (null = ẩn)
+     * @param accentColor Màu thanh accent trái (hex)
+     * @param durationSec Thời gian tải hiện, thường 1.5
+     */
+    private void showBidNotification(String icon, String title, String sub,
+                                     String accentColor, double durationSec) {
+        if (notificationBanner == null) return;
+
+        // Hủy pause cũ nếu đang chạy (tránh chồng)
+        if (notifPause != null) notifPause.stop();
+
+        // ― Cập nhật nội dung ―――――――――――――――――――――――――――――――――――――――
+        if (lblNotifIcon  != null) lblNotifIcon.setText(icon);
+        if (lblNotifTitle != null) lblNotifTitle.setText(title);
+        if (lblNotifSub != null) {
+            boolean hasSub = sub != null && !sub.isBlank();
+            lblNotifSub.setText(hasSub ? sub : "");
+            lblNotifSub.setVisible(hasSub);
+            lblNotifSub.setManaged(hasSub);
+        }
+
+        // ― Đổi màu accent bar ―――――――――――――――――――――――――――――――――――
+        if (notifAccentBar != null)
+            notifAccentBar.setStyle("-fx-background-color: " + accentColor
+                + "; -fx-background-radius: 0 2 2 0;");
+
+        // ― Buộc HBox co đúng theo nội dung — không để StackPane kéo căng cả 2 chiều ―
+        notificationBanner.setMaxWidth(Region.USE_PREF_SIZE);
+        notificationBanner.setMaxHeight(Region.USE_PREF_SIZE);
+
+        // ― Chuẩn bị: reset translateX + opacity ――――――――――――――――――――――――
+        notificationBanner.setTranslateX(340);
+        notificationBanner.setOpacity(0);
+        notificationBanner.setVisible(true);
+        notificationBanner.setManaged(true);
+
+        // ― Slide-in từ phải + fade-in (200ms) ――――――――――――――――――――――
+        TranslateTransition slideIn = new TranslateTransition(Duration.millis(200), notificationBanner);
+        slideIn.setFromX(340);
+        slideIn.setToX(0);
+        slideIn.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(180), notificationBanner);
+        fadeIn.setFromValue(0);
+        fadeIn.setToValue(1);
+
+        ParallelTransition showAnim = new ParallelTransition(slideIn, fadeIn);
+
+        // ― Tự ẩn sau durationSec giây ――――――――――――――――――――――――――――――
+        notifPause = new PauseTransition(Duration.seconds(durationSec));
+        notifPause.setOnFinished(e -> {
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(250), notificationBanner);
+            fadeOut.setFromValue(1);
+            fadeOut.setToValue(0);
+
+            TranslateTransition slideOut = new TranslateTransition(Duration.millis(220), notificationBanner);
+            slideOut.setFromX(0);
+            slideOut.setToX(340);
+            slideOut.setInterpolator(javafx.animation.Interpolator.EASE_IN);
+
+            ParallelTransition hideAnim = new ParallelTransition(fadeOut, slideOut);
+            hideAnim.setOnFinished(ev -> {
+                notificationBanner.setVisible(false);
+                notificationBanner.setManaged(false);
+            });
+            hideAnim.play();
+        });
+
+        showAnim.setOnFinished(ev -> notifPause.play());
+        showAnim.play();
+    }
+
     private void setMessage(String text, String color) {
         if (lblMessage != null) {
             lblMessage.setText(text);
-            lblMessage.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 13px; -fx-font-weight: bold;");
+            lblMessage.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 12px; -fx-font-weight: bold;");
         }
     }
 

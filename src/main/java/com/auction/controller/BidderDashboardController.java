@@ -431,7 +431,8 @@ public class BidderDashboardController {
             AuctionDetailController ctrl = loader.getController();
             ctrl.setAuctionData(auction);
             Stage stage = (Stage) rootPane.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.setScene(new Scene(root, 1280, 820));
+            stage.centerOnScreen();
         } catch (IOException e) { e.printStackTrace(); }
     }
 
