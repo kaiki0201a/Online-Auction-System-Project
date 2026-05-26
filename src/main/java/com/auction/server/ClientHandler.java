@@ -167,6 +167,11 @@ public class ClientHandler implements Runnable {
                     realBidder.placeBid(auction, bidData.getBidAmount());
                     AuctionManager.getInstance().updateAuction(auction);
 
+                    // FIX BUG #2: Reschedule auto-close sau khi bid thành công
+                    // Lý do: anti-sniping hoặc autobid có thể đã thay đổi endTime bên trong
+                    // Auction.processBid(). scheduleAutoClose() sẽ cancel task cũ và tạo task mới.
+                    ServerApp.scheduleAutoClose(auction);
+
                     // Broadcast toàn bộ list để các client tự refresh
                     List<Auction> allAfterBid = AuctionManager.getInstance().getAllAuctions();
                     ServerApp.broadcastAuctionUpdate(allAfterBid, "UPDATE_AUCTION");

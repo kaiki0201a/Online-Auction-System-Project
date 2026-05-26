@@ -25,8 +25,7 @@ public class Admin extends User{
         }
     }
     // Method 2: Khoá tài khoản người dùng vi phạm
-    public void banUser(User user, String reason){
-        // TODO: Cần thêm thuộc tính 'boolean isBanned" vào lớp cha User
+    public void banUser(User user, String reason) {
         user.setBanned(true);
         System.out.println("!!! Admin [" + this.getUserName() + "] đã BAN tài khoản: " + user.getUserName());
         System.out.println("Lý do: " + reason);

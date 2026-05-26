@@ -262,6 +262,8 @@ public class Auction extends Entity implements Serializable {
     }
 
     // Settlement: xử lý thanh toán sau khi phiên kết thúc
+    // FIX BUG #1: Bidder đã bị trừ tiền trong placeBid() khi đặt giá.
+    // settleAuction() CHỈ cộng tiền cho Seller, KHÔNG trừ lại bidder tránh trừ 2 lần.
     public synchronized void settleAuction() {
         if (this.status != AuctionStatus.FINISHED) {
             System.out.println("⚠️ Lỗi: Phiên đấu giá phải ở trạng thái FINISHED mới có thể settlement!");
@@ -281,14 +283,13 @@ public class Auction extends Entity implements Serializable {
 
             double bidAmount = this.currentHighestBid;
 
-            // Trừ tiền người thắng
-            this.highestBidder.setBalance(this.highestBidder.getBalance() - bidAmount);
-
-            // Cộng tiền cho người bán
+            // FIX: KHÔNG trừ tiền bidder — tiền đã bị trừ khi họ gọi placeBid().
+            // Chỉ cộng tiền cho Seller.
             this.seller.setBalance(this.seller.getBalance() + bidAmount);
 
-            System.out.println("💰 [Settlement] Chuyển $" + bidAmount + " từ " +
-                    this.highestBidder.getUserName() + " sang " + this.seller.getUserName());
+            System.out.println("💰 [Settlement] Cộng $" + bidAmount + " vào tài khoản Seller "
+                    + this.seller.getUserName() + " (Bidder " + this.highestBidder.getUserName()
+                    + " đã bị trừ tiền khi đặt giá)");
 
             this.status = AuctionStatus.PAID;
             System.out.println("✅ [Settlement] Hoàn tất! Trạng thái: " + this.status);
@@ -395,6 +396,12 @@ public class Auction extends Entity implements Serializable {
 
     public void setStatus(AuctionStatus status) {
         this.status = status;
+    }
+
+    // FIX BUG #2: Thêm setter endTime để ServerApp có thể đọc thời gian mới
+    // sau khi anti-sniping trong autobid thay đổi endTime
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
     }
 
     public List<AutoBidRule> getAutoBidRules() {

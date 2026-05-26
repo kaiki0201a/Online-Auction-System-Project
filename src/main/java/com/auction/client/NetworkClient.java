@@ -3,6 +3,7 @@ package com.auction.client;
 import com.auction.protocol.ActionType;
 import com.auction.protocol.Request;
 import com.auction.protocol.Response;
+import com.auction.protocol.StatusType;
 import javafx.application.Platform;
 
 import java.io.IOException;
@@ -16,9 +17,12 @@ import java.util.function.Consumer;
 /**
  * NetworkClient — Singleton TCP client với multi-listener EventBus.
  *
- * FIX CRITICAL: Thay thế single-listener (currentListener) bằng ConcurrentHashMap.
- * Mỗi màn hình đăng ký với key riêng → không còn ghi đè nhau.
- * Tất cả listeners đều nhận BROADCAST từ server (AUCTION_CREATED, AUCTION_APPROVED, v.v.)
+ * FIXES:
+ * 1. Dùng ConcurrentHashMap thay vì single listener — nhiều màn hình đăng ký key riêng,
+ *    không còn bị ghi đè lẫn nhau.
+ * 2. Auto-reconnect: khi mất kết nối, thử lại tối đa MAX_RETRY lần với delay RETRY_DELAY_MS.
+ * 3. Broadcast "CONNECTION_LOST" / "CONNECTION_RESTORED" / "CONNECTION_FAILED"
+ *    để UI hiển thị thông báo cho người dùng (xử lý lỗi kết nối).
  */
 public class NetworkClient {
 
@@ -28,11 +32,24 @@ public class NetworkClient {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    // FIX: Dùng Map thay vì 1 listener duy nhất — mỗi screen giữ key riêng
+    // Dùng Map thay vì 1 listener — mỗi màn hình giữ key riêng
     private final Map<String, Consumer<Response>> listeners = new ConcurrentHashMap<>();
 
     // Key mặc định cho backward compatibility
     private static final String DEFAULT_KEY = "default";
+
+    // ─── Auto-reconnect config ────────────────────────────────────────────────
+    /** Số lần tối đa thử kết nối lại khi mất mạng */
+    private static final int MAX_RETRY      = 3;
+    /** Thời gian chờ giữa mỗi lần thử (ms) */
+    private static final int RETRY_DELAY_MS = 2000;
+
+    /** Lưu lại địa chỉ server để có thể reconnect */
+    private String  savedAddress;
+    private int     savedPort;
+
+    /** Cờ ngăn nhiều luồng reconnect chạy song song */
+    private volatile boolean isReconnecting = false;
 
     private NetworkClient() {}
 
@@ -57,38 +74,39 @@ public class NetworkClient {
         listeners.put(key, callback);
     }
 
-    /**
-     * Gỡ listener theo key khi màn hình đóng/navigate đi.
-     */
+    /** Gỡ listener theo key khi màn hình đóng/navigate đi. */
     public void removeEventListener(String key) {
         listeners.remove(key);
     }
 
-    /**
-     * Backward compatibility: setOnResponseReceived → ghi vào key "default".
-     * Các màn hình cũ dùng API này vẫn hoạt động bình thường.
-     */
+    /** Backward compatibility: setOnResponseReceived → ghi vào key "default". */
     public void setOnResponseReceived(Consumer<Response> callback) {
         listeners.put(DEFAULT_KEY, callback);
     }
 
-    /**
-     * Backward compatibility: removeOnResponseReceived → xóa key "default".
-     */
+    /** Backward compatibility: removeOnResponseReceived → xóa key "default". */
     public void removeOnResponseReceived() {
         listeners.remove(DEFAULT_KEY);
     }
 
-    /**
-     * Xóa toàn bộ listeners (khi disconnect hoàn toàn).
-     */
+    /** Xóa toàn bộ listeners (khi disconnect hoàn toàn). */
     public void removeAllListeners() {
         listeners.clear();
     }
 
     // ─── Network API ─────────────────────────────────────────────────────────
 
+    /**
+     * Kết nối tới server. Lưu lại địa chỉ để auto-reconnect sau này.
+     */
     public void connect(String serverAddress, int port) {
+        this.savedAddress = serverAddress;
+        this.savedPort    = port;
+        doConnect(serverAddress, port);
+    }
+
+    /** Thực hiện kết nối thực sự — dùng cho cả lần đầu lẫn khi reconnect. */
+    private void doConnect(String serverAddress, int port) {
         try {
             socket = new Socket(serverAddress, port);
 
@@ -97,6 +115,7 @@ public class NetworkClient {
             out.flush();
             in = new ObjectInputStream(socket.getInputStream());
 
+            isReconnecting = false;
             System.out.println("✅ Đã kết nối thành công tới Server!");
             startListening();
 
@@ -159,10 +178,9 @@ public class NetworkClient {
                 try {
                     Response response = (Response) in.readObject();
 
-                    // FIX: Dispatch đến TẤT CẢ listeners (không chỉ 1)
+                    // Dispatch đến TẤT CẢ listeners (không chỉ 1)
                     Platform.runLater(() -> {
                         if (!listeners.isEmpty()) {
-                            // Snapshot để tránh ConcurrentModificationException
                             for (Consumer<Response> listener : listeners.values()) {
                                 try {
                                     listener.accept(response);
@@ -174,21 +192,88 @@ public class NetworkClient {
                     });
 
                 } catch (Exception e) {
-                    System.out.println("⚠️ Mất kết nối tới Server.");
+                    System.out.println("⚠️ Mất kết nối tới Server: " + e.getMessage());
                     break;
                 }
             }
+
+            // Vòng lặp thoát ra → thử auto-reconnect
+            attemptReconnect();
         });
 
         listenThread.setDaemon(true);
         listenThread.start();
     }
 
+    /**
+     * Tự động thử kết nối lại tối đa MAX_RETRY lần khi mất mạng.
+     * Broadcast sự kiện kết nối để tất cả màn hình có thể phản ứng (hiện dialog, disable nút...).
+     */
+    private void attemptReconnect() {
+        // Tránh nhiều luồng reconnect chạy cùng lúc; savedAddress=null khi chủ động disconnect
+        if (isReconnecting || savedAddress == null) return;
+        isReconnecting = true;
+
+        // Thông báo UI mất kết nối ngay lập tức
+        broadcastConnectionEvent("CONNECTION_LOST",
+                "⚠️ Mất kết nối tới server. Đang thử kết nối lại...");
+
+        Thread retryThread = new Thread(() -> {
+            for (int attempt = 1; attempt <= MAX_RETRY; attempt++) {
+                System.out.printf("🔄 [RECONNECT] Lần thử %d/%d — chờ %dms...%n",
+                        attempt, MAX_RETRY, RETRY_DELAY_MS);
+                try {
+                    Thread.sleep(RETRY_DELAY_MS);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+
+                try {
+                    doConnect(savedAddress, savedPort);
+                    if (isConnected()) {
+                        broadcastConnectionEvent("CONNECTION_RESTORED",
+                                "✅ Đã kết nối lại với server thành công!");
+                        System.out.println("✅ [RECONNECT] Kết nối lại thành công!");
+                        return;
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ [RECONNECT] Lần " + attempt + " thất bại: " + e.getMessage());
+                }
+            }
+
+            // Hết số lần thử → báo thất bại
+            isReconnecting = false;
+            broadcastConnectionEvent("CONNECTION_FAILED",
+                    "❌ Không thể kết nối lại sau " + MAX_RETRY
+                            + " lần thử. Vui lòng khởi động lại ứng dụng.");
+            System.err.println("❌ [RECONNECT] Đã thử " + MAX_RETRY + " lần, không thành công.");
+        });
+
+        retryThread.setDaemon(true);
+        retryThread.start();
+    }
+
+    /** Gửi sự kiện kết nối đến tất cả listener để UI hiển thị thông báo. */
+    private void broadcastConnectionEvent(String eventType, String message) {
+        Response event = new Response(StatusType.ERROR, eventType, message);
+        Platform.runLater(() -> {
+            for (Consumer<Response> listener : listeners.values()) {
+                try {
+                    listener.accept(event);
+                } catch (Exception ex) {
+                    // Bỏ qua lỗi trong listener khi broadcast connection event
+                }
+            }
+        });
+    }
+
     public void disconnect() {
         try {
+            savedAddress = null; // Ngăn auto-reconnect khi chủ động disconnect
             listeners.clear();
-            if (in != null) in.close();
-            if (out != null) out.close();
+            if (in     != null) in.close();
+            if (out    != null) out.close();
             if (socket != null) socket.close();
             System.out.println("Đã đóng kết nối.");
         } catch (IOException e) {

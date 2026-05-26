@@ -102,10 +102,31 @@ public class BidderDashboardController {
 
     @SuppressWarnings("unchecked")
     private void handleResponse(com.auction.protocol.Response response) {
+        // FIX: Xử lý sự kiện mất kết nối / kết nối lại từ NetworkClient auto-reconnect
+        String msg = response.getMessage();
+        if ("CONNECTION_LOST".equals(msg)) {
+            showConnectionAlert("⚠️ Mất kết nối", "Đang thử kết nối lại với server...",
+                    javafx.scene.control.Alert.AlertType.WARNING);
+            return;
+        }
+        if ("CONNECTION_RESTORED".equals(msg)) {
+            // Kết nối lại thành công → tải lại dữ liệu ngay
+            NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
+            showConnectionAlert("✅ Đã kết nối lại", "Kết nối tới server đã được khôi phục.",
+                    javafx.scene.control.Alert.AlertType.INFORMATION);
+            return;
+        }
+        if ("CONNECTION_FAILED".equals(msg)) {
+            showConnectionAlert("❌ Mất kết nối", response.getData() != null
+                    ? response.getData().toString()
+                    : "Không thể kết nối tới server. Vui lòng khởi động lại ứng dụng.",
+                    javafx.scene.control.Alert.AlertType.ERROR);
+            return;
+        }
+
         if (response.getStatus() != StatusType.SUCCESS) return;
 
         Object data = response.getData();
-        String msg  = response.getMessage();
 
         // FIX: Nhận bất kỳ response nào có data là List<Auction> → cập nhật ngay
         if (data instanceof List<?> dataList && !dataList.isEmpty()
@@ -139,6 +160,17 @@ public class BidderDashboardController {
             updateBalance();
         }
     }
+
+    /** Hiện Alert thông báo trạng thái kết nối. */
+    private void showConnectionAlert(String title, String content,
+                                     javafx.scene.control.Alert.AlertType type) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.show(); // show() thay vì showAndWait() để không block UI thread
+    }
+
 
     // ─── Cài đặt UI ──────────────────────────────────────────────────────────
 

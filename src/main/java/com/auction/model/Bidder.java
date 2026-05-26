@@ -90,8 +90,8 @@ public class Bidder extends User implements AuctionObserver {
 
     @Override
     public void update(String message) {
-        // Tạm thời in ra màn hình.
-        // Sau này ở Tuần 9 (Client-Server), hàm này sẽ dùng Socket đẩy text về màn hình của người dùng.
+        // Observer callback: nhận thông báo dạng văn bản từ Auction.
+        // Phía client, NetworkClient sẽ push message này xuống màn hình tương ứng.
         System.out.println("[Thông báo tới " + this.getUserName() + "]: " + message);
     }
     @Override

@@ -40,8 +40,11 @@ public class ServerApp {
 
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
-    // FIX: Scheduler cho auto-live và auto-close
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    // FIX BUG #2: Scheduler cho auto-live và auto-close
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+
+    // FIX BUG #2: Map lưu ScheduledFuture cho từng auction để cancel + reschedule khi endTime đổi
+    private static final ConcurrentHashMap<String, ScheduledFuture<?>> autoCloseTasks = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         System.out.println("🚀 Đang khởi động Server Đấu Giá...");
@@ -161,12 +164,11 @@ public class ServerApp {
         }
     }
 
-    // ─── AUTO-CLOSE ───────────────────────────────────────────────────────────
-
     /**
-     * FIX: Lên lịch tự động kết thúc phiên khi hết thời gian.
-     * Gọi ngay sau khi admin approve (set RUNNING) hoặc sau khi auto-live.
-     * Sau khi kết thúc: settle, broadcast AUCTION_ENDED, flush file.
+     * FIX BUG #2: Lên lịch tự động kết thúc phiên.
+     * Nếu đã có task cũ cho auction này → cancel trước rồi mới schedule mới.
+     * Đảm bảo khi anti-sniping/autobid kéo dài endTime, task cũ bị hủy,
+     * task mới sẽ fire đúng theo endTime mới.
      */
     public static void scheduleAutoClose(Auction auction) {
         if (auction.getEndTime() == null) return;
@@ -180,13 +182,24 @@ public class ServerApp {
             return;
         }
 
-        scheduler.schedule(() -> {
+        // FIX: Cancel task cũ nếu có (tránh double-finish khi reschedule)
+        ScheduledFuture<?> oldTask = autoCloseTasks.get(auction.getAuctionId());
+        if (oldTask != null && !oldTask.isDone()) {
+            oldTask.cancel(false);
+            System.out.println("🔁 [AUTO-CLOSE] Hủy lịch cũ cho \"" + auction.getItem().getNameItem()
+                + "\" — reschedule theo endTime mới.");
+        }
+
+        ScheduledFuture<?> newTask = scheduler.schedule(() -> {
             try {
                 finishAuction(auction);
             } catch (Exception e) {
                 System.err.println("❌ Lỗi auto-close: " + e.getMessage());
             }
         }, secondsUntilEnd, TimeUnit.SECONDS);
+
+        // Lưu task mới vào map
+        autoCloseTasks.put(auction.getAuctionId(), newTask);
 
         System.out.println("⏰ [AUTO-CLOSE] Phiên \"" + auction.getItem().getNameItem() +
             "\" sẽ kết thúc sau " + secondsUntilEnd + " giây.");
