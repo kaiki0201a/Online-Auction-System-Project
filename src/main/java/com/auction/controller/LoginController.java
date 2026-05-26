@@ -5,8 +5,6 @@ import com.auction.model.Admin;
 import com.auction.model.User;
 import com.auction.protocol.StatusType;
 import com.auction.utils.AppContext;
-import com.auction.utils.NotificationUtil;
-import com.auction.utils.UIUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
@@ -16,6 +14,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.Node;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import java.io.IOException;
 
@@ -29,14 +28,86 @@ public class LoginController {
     @FXML private Button btnLogin;
     @FXML private Button btnRegister;
 
+    // Labels lỗi inline
+    @FXML private HBox usernameBox;
+    @FXML private HBox passwordBox;
+    @FXML private Label lblUsernameError;
+    @FXML private Label lblPasswordError;
+    @FXML private Label lblLoginError;
+
     private boolean passwordVisible = false;
 
-    /** Toggle hiển thị / ẩn mật khẩu */
+    @FXML
+    public void initialize() {
+        // Xóa lỗi khi người dùng bắt đầu nhập lại
+        txtUsername.textProperty().addListener((obs, oldVal, newVal) -> clearUsernameError());
+        txtPassword.textProperty().addListener((obs, oldVal, newVal) -> clearPasswordError());
+        txtPasswordVisible.textProperty().addListener((obs, oldVal, newVal) -> clearPasswordError());
+    }
+
+    // ── Hiển thị / xóa lỗi ────────────────────────────────────────────────────
+
+    private void showUsernameError(String message) {
+        lblUsernameError.setText(message);
+        lblUsernameError.setVisible(true);
+        lblUsernameError.setManaged(true);
+        usernameBox.setStyle(usernameBox.getStyle().replace("-fx-border-color: #333333", "")
+            + "-fx-border-color: #FF5252; -fx-border-radius: 4; -fx-background-radius: 4; "
+            + "-fx-background-color: #1a1a1a; -fx-padding: 0 10 0 15;");
+    }
+
+    private void clearUsernameError() {
+        lblUsernameError.setVisible(false);
+        lblUsernameError.setManaged(false);
+        usernameBox.setStyle("-fx-background-color: #1a1a1a; -fx-border-color: #333333; "
+            + "-fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 10 0 15;");
+        clearLoginError();
+    }
+
+    private void showPasswordError(String message) {
+        lblPasswordError.setText(message);
+        lblPasswordError.setVisible(true);
+        lblPasswordError.setManaged(true);
+        passwordBox.setStyle("-fx-background-color: #1a1a1a; -fx-border-color: #FF5252; "
+            + "-fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 5 0 15;");
+    }
+
+    private void clearPasswordError() {
+        lblPasswordError.setVisible(false);
+        lblPasswordError.setManaged(false);
+        passwordBox.setStyle("-fx-background-color: #1a1a1a; -fx-border-color: #333333; "
+            + "-fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 5 0 15;");
+        clearLoginError();
+    }
+
+    private void showLoginError(String message) {
+        lblLoginError.setText(message);
+        lblLoginError.setVisible(true);
+        lblLoginError.setManaged(true);
+        // Highlight cả 2 box khi sai thông tin đăng nhập
+        usernameBox.setStyle("-fx-background-color: #1a1a1a; -fx-border-color: #FF5252; "
+            + "-fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 10 0 15;");
+        passwordBox.setStyle("-fx-background-color: #1a1a1a; -fx-border-color: #FF5252; "
+            + "-fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 5 0 15;");
+    }
+
+    private void clearLoginError() {
+        lblLoginError.setVisible(false);
+        lblLoginError.setManaged(false);
+    }
+
+    private void clearAllErrors() {
+        clearUsernameError();
+        clearPasswordError();
+        clearLoginError();
+    }
+
+    // ── Toggle hiển thị mật khẩu ──────────────────────────────────────────────
+
     @FXML
     public void onTogglePasswordVisibility(ActionEvent event) {
         passwordVisible = !passwordVisible;
         if (passwordVisible) {
-            // Sao chép giá trị sang TextField rồi hiện lên
             txtPasswordVisible.setText(txtPassword.getText());
             txtPasswordVisible.setVisible(true);
             txtPasswordVisible.setManaged(true);
@@ -44,7 +115,6 @@ public class LoginController {
             txtPassword.setManaged(false);
             btnTogglePassword.setText("🙈");
         } else {
-            // Sao chép giá trị về PasswordField
             txtPassword.setText(txtPasswordVisible.getText());
             txtPassword.setVisible(true);
             txtPassword.setManaged(true);
@@ -59,36 +129,58 @@ public class LoginController {
         return passwordVisible ? txtPasswordVisible.getText() : txtPassword.getText();
     }
 
+    // ── Xử lý đăng nhập ───────────────────────────────────────────────────────
+
     @FXML
     public void onLoginClick(ActionEvent event) {
+        clearAllErrors();
+
         String username = txtUsername.getText().trim();
         String password = getCurrentPassword();
 
-        if (username.isEmpty() || password.isEmpty()) {
-            NotificationUtil.showToast("Vui lòng nhập tài khoản và mật khẩu!", rootPane, "warning");
-            return;
+        // Validate từng trường — hiển thị lỗi inline
+        boolean hasError = false;
+        if (username.isEmpty()) {
+            showUsernameError("Vui lòng nhập tên đăng nhập");
+            hasError = true;
         }
+        if (password.isEmpty()) {
+            showPasswordError("Vui lòng nhập mật khẩu");
+            hasError = true;
+        }
+        if (hasError) return;
+
+        // Disable nút, đổi text để báo đang xử lý
+        btnLogin.setDisable(true);
+        btnLogin.setText("Đang đăng nhập...");
 
         NetworkClient.getInstance().setOnResponseReceived(response -> {
             Platform.runLater(() -> {
+                // Khôi phục nút
+                btnLogin.setDisable(false);
+                btnLogin.setText("ĐĂNG NHẬP  ➔");
+
                 if (response.getStatus() == StatusType.SUCCESS) {
                     try {
                         User userFromServer = (User) response.getData();
                         AppContext.setCurrentUser(userFromServer);
-                        NotificationUtil.showToast("Đăng nhập thành công!", rootPane, "success");
                         navigateToDashboard(event, userFromServer);
                     } catch (Exception e) {
-                        NotificationUtil.showToast("Lỗi nạp giao diện: " + e.getMessage(), rootPane, "error");
+                        showLoginError("Lỗi nạp giao diện: " + e.getMessage());
                     }
                 } else {
-                    NotificationUtil.showToast(response.getMessage(), rootPane, "error");
+                    // Hiển thị lỗi server (sai tài khoản / mật khẩu) ngay trên form
+                    String msg = response.getMessage();
+                    if (msg == null || msg.isBlank()) {
+                        msg = "Tên đăng nhập hoặc mật khẩu không đúng";
+                    }
+                    showLoginError(msg);
                 }
             });
         });
 
-        UIUtils.showLoadingSpinner(rootPane, () ->
-            NetworkClient.getInstance().login(username, password)
-        );
+        // Gọi login trực tiếp — không dùng spinner overlay để tránh che label lỗi
+        NetworkClient.getInstance().login(username, password);
     }
 
     private void navigateToDashboard(ActionEvent event, User user) throws IOException {
@@ -115,7 +207,7 @@ public class LoginController {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root, 900, 620));
         } catch (IOException e) {
-            NotificationUtil.showToast("Không thể mở trang đăng ký!", rootPane, "error");
+            showLoginError("Không thể mở trang đăng ký!");
         }
     }
 

@@ -378,14 +378,36 @@ public class ClientHandler implements Runnable {
                                 abPayload.getMaxAmount(),
                                 abPayload.getIncrementAmount());
 
-                        // Flush dữ liệu xuống file (rule đã nằm trong auction object)
-                        ServerApp.getAuctionDAO().saveDataToFile();
+                        // Chạy vòng AutoBid + broadcast TRÊN BACKGROUND THREAD.
+                        // Lý do: triggerAutoBids() có thể lặp hàng trăm vòng (nhiều bot cạnh nhau)
+                        // → không được chạy trên thread ClientHandler (gây freeze toàn bộ app).
+                        final Auction finalAuction = abAuction;
+                        final Bidder finalBidder = abBidder;
+                        java.util.concurrent.CompletableFuture.runAsync(() -> {
+                            try {
+                                // Kích hoạt vòng autobid (synchronized bên trong)
+                                finalAuction.kickstartAutoBid();
 
-                        System.out.println("🤖 [AUTOBID BẬT] " + abBidder.getUserName()
-                                + " | Max: " + abPayload.getMaxAmount()
-                                + " | Bước: " + abPayload.getIncrementAmount()
-                                + " | Phiên: " + abAuction.getItem().getNameItem());
+                                // Lưu sau khi vòng autobid hoàn tất
+                                AuctionManager.getInstance().updateAuction(finalAuction);
+                                ServerApp.getAuctionDAO().saveDataToFile();
+                                ServerApp.getUserDAO().saveDataToFile();
 
+                                // Broadcast kết quả mới nhất lên tất cả client
+                                List<Auction> allAfterAB = AuctionManager.getInstance().getAllAuctions();
+                                ServerApp.broadcastAuctionUpdate(allAfterAB, "UPDATE_AUCTION");
+
+                                System.out.printf("🤖 [AUTOBID BẬT] %s | Max: %.0f | Bước: %.0f | Phiên: %s%n",
+                                        finalBidder.getUserName(),
+                                        abPayload.getMaxAmount(),
+                                        abPayload.getIncrementAmount(),
+                                        finalAuction.getItem().getNameItem());
+                            } catch (Exception ex) {
+                                System.err.println("❌ [AUTOBID BG] Lỗi: " + ex.getMessage());
+                            }
+                        });
+
+                        // Trả kết quả ngay cho client — không chờ vòng autobid xong
                         return new Response(StatusType.SUCCESS, "AUTOBID_OK",
                                 "Đã bật AutoBid thành công!");
 

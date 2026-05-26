@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
 
 /**
@@ -105,6 +106,12 @@ public class AuctionDetailController {
     private static final String LISTENER_KEY = "auctionDetail";
     private static final DateTimeFormatter DTF     = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM");
     private static final DateTimeFormatter DTF_FULL = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+
+    // THROTTLE: Chống freeze khi AutoBid bắn hàng trăm UPDATE liên tục
+    // Chỉ cho phép refresh UI tối đa 1 lần / 500ms
+    private final AtomicBoolean pendingUpdate = new AtomicBoolean(false);
+    private volatile long lastUIUpdate = 0;
+    private static final long UI_THROTTLE_MS = 500;
 
     @FXML
     public void initialize() {
@@ -536,12 +543,60 @@ public class AuctionDetailController {
      * Đảm bảo màn hình này nhận được response ngay cả khi đang hiển thị cùng lúc
      * với các listener khác (bidder dashboard, seller dashboard...).
      */
+    /**
+     * Throttle UI refresh: bỏ qua các update đến quá nhanh (< UI_THROTTLE_MS).
+     * Nếu đã có update đang chờ, update mới sẽ override (luôn dùng data mới nhất).
+     */
+    private void scheduleUIUpdate(Auction updated, boolean wasExtended) {
+        currentAuction = updated; // Luôn cập nhật data mới nhất ngay lập tức
+
+        long now = System.currentTimeMillis();
+        if (now - lastUIUpdate < UI_THROTTLE_MS) {
+            // Đang trong thời gian throttle: đánh dấu có update chờ rồi return
+            if (pendingUpdate.compareAndSet(false, true)) {
+                // Lên lịch refresh sau UI_THROTTLE_MS ms
+                javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(
+                    javafx.util.Duration.millis(UI_THROTTLE_MS));
+                delay.setOnFinished(e -> {
+                    pendingUpdate.set(false);
+                    lastUIUpdate = System.currentTimeMillis();
+                    doUIRefresh(wasExtended);
+                });
+                delay.play();
+            }
+            return;
+        }
+
+        // Đủ thời gian giữa 2 update — refresh ngay
+        lastUIUpdate = now;
+        doUIRefresh(wasExtended);
+    }
+
+    /** Thực hiện refresh UI thực sự — chỉ gọi từ scheduleUIUpdate(). */
+    private void doUIRefresh(boolean wasExtended) {
+        updateUI();
+        renderBidHistory();
+        // Chỉ rebuild chart mỗi 5 bid (không rebuild mỗi bid để tránh lag)
+        int bidCount = currentAuction.getBidHistory().size();
+        if (priceLineChart != null && bidCount % 5 == 0) {
+            priceSeries = PriceChartHelper.buildHistoricalChart(
+                priceLineChart, currentAuction.getBidHistory());
+            updateChartLabel();
+        }
+        if (wasExtended) setMessage("⏱️ Hệ thống vừa gia hạn thêm thời gian!", "#f39c12");
+        if (canBid && currentAuction.getHighestBidder() != null
+                && !currentAuction.getHighestBidder().getUserName().equals(sessionUser.getUserName())) {
+            setMessage("🔥 Ai đó vừa trả giá cao hơn bạn!", "#e74c3c");
+        }
+    }
+
     private void registerNetworkListener() {
         NetworkClient.getInstance().addEventListener(LISTENER_KEY, response -> {
             Platform.runLater(() -> {
                 String msg = response.getMessage();
 
                 // Cập nhật khi có bid mới (broadcast UPDATE_AUCTION kèm List<Auction>)
+                // THROTTLE: nếu AutoBid bắn liên tục, UI chỉ refresh tối đa 1 lần/500ms
                 if ("UPDATE_AUCTION".equals(msg) && response.getData() instanceof List) {
                     @SuppressWarnings("unchecked")
                     List<Auction> list = (List<Auction>) response.getData();
@@ -550,25 +605,9 @@ public class AuctionDetailController {
                             .findFirst()
                             .ifPresent(updated -> {
                                 boolean wasExtended = updated.getEndTime().isAfter(currentAuction.getEndTime());
-                                currentAuction = updated;
-                                updateUI();
-                                renderBidHistory();
-                                startCountdown();
-                                // FIX #3: Cập nhật biểu đồ realtime khi có bid mới
-                                if (priceLineChart != null && priceSeries != null) {
-                                    // Rebuild chart với toàn bộ lịch sử mới nhất
-                                    priceSeries = PriceChartHelper.buildHistoricalChart(
-                                        priceLineChart, currentAuction.getBidHistory());
-                                    updateChartLabel();
-                                }
-                                if (wasExtended) setMessage("⏱️ Hệ thống vừa gia hạn thêm thời gian!", "#f39c12");
-                                // Thông báo bị vượt giá
-                                if (canBid && updated.getHighestBidder() != null
-                                        && !updated.getHighestBidder().getUserName().equals(sessionUser.getUserName())) {
-                                    setMessage("🔥 Ai đó vừa trả giá cao hơn bạn!", "#e74c3c");
-                                }
+                                scheduleUIUpdate(updated, wasExtended);
                             });
-                }
+                } // end UPDATE_AUCTION
 
                 // Phiên kết thúc broadcast
                 if ("AUCTION_ENDED".equals(msg) && response.getData() instanceof List) {
@@ -581,7 +620,7 @@ public class AuctionDetailController {
                                 currentAuction = ended;
                                 updateUI();
                                 renderBidHistory();
-                                // FIX #3: Cập nhật biểu đồ lần cuối khi phiên kết thúc
+                                // Rebuild chart lần cuối đầy đủ khi phiên kết thúc
                                 if (priceLineChart != null) {
                                     priceSeries = PriceChartHelper.buildHistoricalChart(
                                         priceLineChart, currentAuction.getBidHistory());
@@ -597,7 +636,6 @@ public class AuctionDetailController {
                                     boolean won = ended.getHighestBidder().getUserName()
                                             .equals(sessionUser.getUserName());
                                     if (won) {
-                                        // 🏆 Popup chiến thắng đặc biệt
                                         showWinDialog(ended);
                                     } else {
                                         setMessage("😔 Phiên kết thúc. Bạn không thắng lần này. Chúc may mắn!", "#e74c3c");
@@ -607,11 +645,9 @@ public class AuctionDetailController {
                                          || ended.getStatus() == AuctionStatus.PAID)) {
                                     setMessage("📭 Phiên đấu giá kết thúc mà không có ai đặt giá.", "#A0A0A0");
                                 }
-                                // Tắt controls
                                 canBid = false;
                                 setupBidControls();
                                 if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
-
                             });
                 }
 

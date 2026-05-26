@@ -354,6 +354,16 @@ public class Auction extends Entity implements Serializable {
         this.autoBidRules.add(newRule);
         System.out.println(
                 "✅ " + bidder.getUserName() + " đã cài Auto-bid (Max: " + maxBid + ", Bước giá: " + increment + ")");
+        // Không gọi triggerAutoBids() ở đây để tránh block synchronized lock.
+        // Gọi kickstartAutoBid() từ ClientHandler trên background thread.
+    }
+
+    /**
+     * Kích hoạt vòng AutoBid ngay lập tức (dùng khi mới đăng ký rule).
+     * Phải được gọi từ background thread để tránh block ClientHandler.
+     */
+    public synchronized void kickstartAutoBid() {
+        triggerAutoBids();
     }
 
     // OBSERVER PATTERN
