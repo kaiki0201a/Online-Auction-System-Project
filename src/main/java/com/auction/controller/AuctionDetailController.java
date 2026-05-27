@@ -9,6 +9,7 @@ import com.auction.protocol.Request;
 import com.auction.protocol.StatusType;
 import com.auction.utils.AppContext;
 import com.auction.utils.CurrencyFormatter;
+import com.auction.utils.NotificationUtil;
 import com.auction.utils.PriceChartHelper;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -548,24 +549,37 @@ public class AuctionDetailController {
                     list.stream()
                             .filter(a -> a.getAuctionId().equals(currentAuction.getAuctionId()))
                             .findFirst()
-                            .ifPresent(updated -> {
+                                            .ifPresent(updated -> {
                                 boolean wasExtended = updated.getEndTime().isAfter(currentAuction.getEndTime());
+
+                                // Snapshot trước khi update: mình đang dẫn đầu?
+                                boolean leadingBefore = canBid
+                                        && currentAuction.getHighestBidder() != null
+                                        && currentAuction.getHighestBidder().getUserName()
+                                                         .equals(sessionUser.getUserName());
+
                                 currentAuction = updated;
                                 updateUI();
                                 renderBidHistory();
                                 startCountdown();
                                 // FIX #3: Cập nhật biểu đồ realtime khi có bid mới
                                 if (priceLineChart != null && priceSeries != null) {
-                                    // Rebuild chart với toàn bộ lịch sử mới nhất
                                     priceSeries = PriceChartHelper.buildHistoricalChart(
                                         priceLineChart, currentAuction.getBidHistory());
                                     updateChartLabel();
                                 }
                                 if (wasExtended) setMessage("⏱️ Hệ thống vừa gia hạn thêm thời gian!", "#f39c12");
-                                // Thông báo bị vượt giá
-                                if (canBid && updated.getHighestBidder() != null
-                                        && !updated.getHighestBidder().getUserName().equals(sessionUser.getUserName())) {
+
+                                // Thông báo bị vượt giá:
+                                // Chỉ hiện khi TRƯỚC ĐÓ mình đang dận đầu, và BÂY GIờ không còn là cao nhất nữa
+                                boolean nowLeading = updated.getHighestBidder() != null
+                                        && updated.getHighestBidder().getUserName()
+                                                  .equals(sessionUser.getUserName());
+                                if (leadingBefore && !nowLeading && canBid) {
                                     setMessage("🔥 Ai đó vừa trả giá cao hơn bạn!", "#e74c3c");
+                                    NotificationUtil.showBidToast(
+                                        "🔔  Bạn đã bị vượt giá!",
+                                        getWindowFromScene(), "outbid");
                                 }
                             });
                 }
@@ -592,20 +606,36 @@ public class AuctionDetailController {
                                     lblTimeLeft.setText("ĐÃ KẾT THÚC");
                                     lblTimeLeft.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-font-size: 18px;");
                                 }
-                                // Thông báo kết quả
-                                if (canBid && ended.getHighestBidder() != null) {
-                                    boolean won = ended.getHighestBidder().getUserName()
-                                            .equals(sessionUser.getUserName());
-                                    if (won) {
-                                        // 🏆 Popup chiến thắng đặc biệt
-                                        showWinDialog(ended);
+                                // Thông báo kết quả khi kết thúc phên
+                                if (canBid) {
+                                    String itemName = ended.getItem().getNameItem();
+                                    javafx.stage.Window win = getWindowFromScene();
+
+                                    if (ended.getHighestBidder() != null) {
+                                        boolean won = ended.getHighestBidder().getUserName()
+                                                .equals(sessionUser.getUserName());
+                                        if (won) {
+                                            // 🏆 CHÚC MỮNG THỬNG
+                                            setMessage("🏆 Chúc mừng! Bạn đã THẮNG phiên đấu giá này!", "#27ae60");
+                                            NotificationUtil.showAuctionResultDialog(
+                                                win, "WIN", itemName,
+                                                ended.getCurrentHighestBid());
+                                        } else {
+                                            // 😔 THUA
+                                            setMessage("😔 Phiên kết thúc. Bạn không thắng lần này.", "#e74c3c");
+                                            NotificationUtil.showAuctionResultDialog(
+                                                win, "LOSE", itemName, 0);
+                                        }
                                     } else {
-                                        setMessage("😔 Phiên kết thúc. Bạn không thắng lần này. Chúc may mắn!", "#e74c3c");
+                                        // 📭 KHAI KHÔNG THAM GIA
+                                        setMessage("📭 Phên đấu giá kết thúc mà không có ai đặt giá.", "#A0A0A0");
+                                        NotificationUtil.showAuctionResultDialog(
+                                            win, "NO_BID", itemName, 0);
                                     }
                                 } else if (ended.getHighestBidder() == null
                                         && (ended.getStatus() == AuctionStatus.FINISHED
                                          || ended.getStatus() == AuctionStatus.PAID)) {
-                                    setMessage("📭 Phiên đấu giá kết thúc mà không có ai đặt giá.", "#A0A0A0");
+                                    setMessage("📭 Phên đấu giá kết thúc mà không có ai đặt giá.", "#A0A0A0");
                                 }
                                 // Tắt controls
                                 canBid = false;
@@ -638,10 +668,13 @@ public class AuctionDetailController {
                             });
                 }
 
-                // Response trực tiếp cho PLACE_BID thành công
+                // Response trực tiếp cho PLACE_BID thành công — toast góc trên phải 1.5s
                 if (response.getStatus() == StatusType.SUCCESS
                         && "Đặt giá thành công!".equals(msg)) {
                     setMessage("✅ Đặt giá thành công!", "#27ae60");
+                    NotificationUtil.showBidToast(
+                        "✅  Đặt giá thành công!",
+                        getWindowFromScene(), "success");
                     if (txtBidAmount != null) txtBidAmount.clear();
                     if (btnBid != null) btnBid.setDisable(false);
                     // Cập nhật số dư local
@@ -679,11 +712,19 @@ public class AuctionDetailController {
         });
     }
 
-    /**
-     * Hiển thị popup chiến thắng đẹp mắt khi bidder thắng phiên đấu giá.
-     * Dùng JavaFX Stage riêng để không block UI thread.
-     */
-    private void showWinDialog(Auction ended) {
+    /** Lấy Window hiện tại của màn hình này (dùng cho toast/dialog) */
+    private javafx.stage.Window getWindowFromScene() {
+        if (lblProductName != null && lblProductName.getScene() != null)
+            return lblProductName.getScene().getWindow();
+        if (lblCurrentPrice != null && lblCurrentPrice.getScene() != null)
+            return lblCurrentPrice.getScene().getWindow();
+        return null;
+    }
+
+    // ─── showWinDialog removed — replaced by NotificationUtil.showAuctionResultDialog ─
+
+    @SuppressWarnings("unused")
+    private void showWinDialog_REMOVED(Auction ended) {
         // Cập nhật message ngắn trong màn hình chính
         setMessage("🏆 Chúc mừng! Bạn đã THẮNG phiên đấu giá này!", "#27ae60");
 
