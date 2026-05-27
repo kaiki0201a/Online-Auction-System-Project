@@ -136,8 +136,30 @@ public class BidderDashboardController {
                         + "Số tiền đặt cọc đã được hoàn lại vào ví của bạn!\n"
                         + "Số dư hiện tại: " + com.auction.utils.CurrencyFormatter.format(newBalance),
                         javafx.scene.control.Alert.AlertType.INFORMATION);
-                // Tải lại danh sách để ẩn phiên đã bị hủy
                 NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
+            }
+            return;
+        }
+
+        // BUG #8 FIX: Nhận FORCE_LOGOUT → tự đăng xuất nếu username khớp
+        if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
+            String logoutTarget = msg.split("\\|")[1];
+            if (logoutTarget.equals(currentUser.getUserName())) {
+                if (masterTimer != null) masterTimer.stop();
+                NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+                AppContext.logout();
+                try {
+                    Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+                    Stage stage = (Stage) rootPane.getScene().getWindow();
+                    stage.setScene(new Scene(root, 900, 600));
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                        javafx.scene.control.Alert.AlertType.WARNING);
+                    alert.setTitle("⚠️ Tài khoản bị khóa");
+                    alert.setHeaderText(null);
+                    alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\n"
+                        + "Bạn đã được đăng xuất tự động.");
+                    alert.show();
+                } catch (IOException ex) { ex.printStackTrace(); }
             }
             return;
         }

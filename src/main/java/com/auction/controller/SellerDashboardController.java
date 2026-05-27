@@ -213,6 +213,40 @@ public class SellerDashboardController {
                 (msg != null && msg.startsWith("SELLER_BALANCE_UPDATE|"))) {
             Platform.runLater(this::loadPaymentHistory);
         }
+
+        // BUG #3 FIX: Thông báo khi phiên của seller kết thúc không có người mua
+        if (msg != null && msg.startsWith("AUCTION_NO_BUYER|")) {
+            String[] parts = msg.split("\\|");
+            String sellerName = parts.length > 1 ? parts[1] : "";
+            String itemName   = parts.length > 2 ? parts[2] : "sản phẩm";
+            if (sellerName.equals(currentUser.getUserName())) {
+                showAlert("📭 Phiên không có người tham gia",
+                    "Phiên đấu giá sản phẩm \"" + itemName + "\" đã kết thúc\n"
+                    + "nhưng không có ai đặt giá.\n"
+                    + "Bạn có thể đăng lại sản phẩm với mức giá hấp dẫn hơn!");
+            }
+        }
+
+        // BUG #8 FIX: Nhận FORCE_LOGOUT → tự đăng xuất nếu username khớp
+        if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
+            String logoutTarget = msg.split("\\|")[1];
+            if (logoutTarget.equals(currentUser.getUserName())) {
+                NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+                AppContext.logout();
+                try {
+                    Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+                    Stage stage = (Stage) rootPane.getScene().getWindow();
+                    stage.setScene(new Scene(root, 900, 600));
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                        javafx.scene.control.Alert.AlertType.WARNING);
+                    alert.setTitle("⚠️ Tài khoản bị khóa");
+                    alert.setHeaderText(null);
+                    alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\n"
+                        + "Bạn đã được đăng xuất tự động.");
+                    alert.show();
+                } catch (IOException ex) { ex.printStackTrace(); }
+            }
+        }
     }
 
 

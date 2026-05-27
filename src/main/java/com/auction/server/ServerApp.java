@@ -279,6 +279,17 @@ public class ServerApp {
             ));
             System.out.println("💰 [SETTLEMENT BROADCAST] Seller " + seller.getUserName()
                 + " số dư mới: " + seller.getBalance());
+        } else if (auction.getHighestBidder() == null && auction.getSeller() != null) {
+            // BUG #3 FIX: Phiên kết thúc không có người mua — thông báo cho Seller
+            String nobuyer = "AUCTION_NO_BUYER|" + auction.getSeller().getUserName()
+                + "|" + auction.getItem().getNameItem();
+            broadcast(new com.auction.protocol.Response(
+                com.auction.protocol.StatusType.SUCCESS,
+                nobuyer,
+                null
+            ));
+            System.out.println("📭 [NO BUYER] Phiên \"" + auction.getItem().getNameItem()
+                + "\" kết thúc không có người mua. Đã thông báo Seller.");
         }
     }
 

@@ -52,7 +52,7 @@ public class SettingsController {
 
         if (lblRole != null) {
             String role = (currentUser instanceof com.auction.model.Admin) ? "Quản trị viên" :
-                          (currentUser instanceof Seller) ? "Người bán" : "Người mua";
+                    (currentUser instanceof Seller) ? "Người bán" : "Người mua";
             lblRole.setText(role);
         }
         if (lblBalance != null) {
@@ -68,6 +68,32 @@ public class SettingsController {
         // Dùng addEventListener (không ghi đè listener khác)
         NetworkClient.getInstance().addEventListener(LISTENER_KEY, response -> {
             Platform.runLater(() -> {
+                String msg = response.getMessage();
+
+                // FIX: Xử lý FORCE_LOGOUT — user bị admin khóa khi đang ở Settings
+                if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
+                    String logoutTarget = msg.split("\\|")[1];
+                    if (currentUser != null && logoutTarget.equals(currentUser.getUserName())) {
+                        NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+                        AppContext.logout();
+                        try {
+                            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+                            Stage stage = (Stage) (rootPane.getScene() != null
+                                    ? rootPane.getScene().getWindow() : null);
+                            if (stage != null) {
+                                stage.setScene(new Scene(root, 900, 600));
+                                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                                        javafx.scene.control.Alert.AlertType.WARNING);
+                                alert.setTitle("⚠️ Tài khoản bị khóa");
+                                alert.setHeaderText(null);
+                                alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\nBạn đã được đăng xuất tự động.");
+                                alert.show();
+                            }
+                        } catch (java.io.IOException ex) { ex.printStackTrace(); }
+                    }
+                    return;
+                }
+
                 if (response.getStatus() == StatusType.SUCCESS) {
                     if (response.getData() instanceof User updatedUser) {
                         AppContext.setCurrentUser(updatedUser);

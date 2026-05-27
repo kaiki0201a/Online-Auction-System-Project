@@ -108,7 +108,7 @@ public class AdminController {
 
         // FIX: Dùng addEventListener với key "admin"
         NetworkClient.getInstance().addEventListener(LISTENER_KEY, response ->
-            Platform.runLater(() -> handleResponse(response)));
+                Platform.runLater(() -> handleResponse(response)));
 
         // Tải dữ liệu ban đầu
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
@@ -142,7 +142,7 @@ public class AdminController {
                     || "AUCTION_APPROVED".equals(msg) || "AUCTION_REJECTED".equals(msg))) {
                 boolean isApprove = msg.startsWith("DUYỆT_OK|") || "AUCTION_APPROVED".equals(msg);
                 setFeedback(isApprove ? "✅ Đã duyệt sản phẩm thành công!" : "❌ Đã từ chối sản phẩm!",
-                    isApprove ? "#27ae60" : "#e74c3c");
+                        isApprove ? "#27ae60" : "#e74c3c");
                 // Nếu data không phải List → mới cần refresh
                 if (!(data instanceof List)) {
                     NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
@@ -162,26 +162,31 @@ public class AdminController {
                     || msg.toLowerCase().contains("mở khóa") || msg.toLowerCase().contains("khoản"))) {
                 boolean isBan = !msg.toLowerCase().contains("mở");
                 setFeedback((isBan ? "🔒 " : "🔓 ") + msg, isBan ? "#e74c3c" : "#27ae60");
-                // Toast nổi bật hơn setFeedback
                 NotificationUtil.showToastOnWindow(
-                    (isBan ? "🔒 " : "🔓 ") + msg,
-                    rootPane != null && rootPane.getScene() != null
-                        ? rootPane.getScene().getWindow() : null,
-                    isBan ? "error" : "success"
+                        (isBan ? "🔒 " : "🔓 ") + msg,
+                        rootPane != null && rootPane.getScene() != null
+                                ? rootPane.getScene().getWindow() : null,
+                        isBan ? "error" : "success"
                 );
-                NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
+                // FIX: Nếu server trả về List<User> ngay trong response thì dùng luôn,
+                // không cần gửi thêm GET_USER_LIST
+                if (data instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof User) {
+                    allUsers.setAll((List<User>) data);
+                    updateStats();
+                } else {
+                    NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
+                }
             }
 
         } else {
             setFeedback("❌ " + response.getMessage(), "#e74c3c");
             NotificationUtil.showToastOnWindow(
-                "❌ " + response.getMessage(),
-                rootPane != null && rootPane.getScene() != null
-                    ? rootPane.getScene().getWindow() : null,
-                "error"
+                    "❌ " + response.getMessage(),
+                    rootPane != null && rootPane.getScene() != null
+                            ? rootPane.getScene().getWindow() : null,
+                    "error"
             );
-        }
-    }
+        }    }
 
     // ─── CẬP NHẬT THỐNG KÊ ────────────────────────────────────────────────────
 
@@ -192,18 +197,18 @@ public class AdminController {
 
         // FIX: Đếm APPROVED + RUNNING + OPEN cho "đang hoạt động"
         long running    = allAuctions.stream()
-            .filter(a -> a.getStatus() == AuctionStatus.RUNNING
-                      || a.getStatus() == AuctionStatus.OPEN
-                      || a.getStatus() == AuctionStatus.APPROVED)
-            .count();
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING
+                        || a.getStatus() == AuctionStatus.OPEN
+                        || a.getStatus() == AuctionStatus.APPROVED)
+                .count();
         long pending    = allAuctions.stream()
-            .filter(a -> a.getStatus() == AuctionStatus.PENDING_APPROVAL).count();
+                .filter(a -> a.getStatus() == AuctionStatus.PENDING_APPROVAL).count();
         long finished   = allAuctions.stream()
-            .filter(a -> a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID).count();
+                .filter(a -> a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID).count();
 
         double revenue = allAuctions.stream()
-            .filter(a -> a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID)
-            .mapToDouble(Auction::getCurrentHighestBid).sum();
+                .filter(a -> a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID)
+                .mapToDouble(Auction::getCurrentHighestBid).sum();
 
         // Navbar
         safe(lblNavTotalUsers, String.valueOf(totalUsers));
@@ -231,8 +236,8 @@ public class AdminController {
         pendingContainer.getChildren().clear();
 
         List<Auction> pending = allAuctions.stream()
-            .filter(a -> a.getStatus() == AuctionStatus.PENDING_APPROVAL)
-            .collect(Collectors.toList());
+                .filter(a -> a.getStatus() == AuctionStatus.PENDING_APPROVAL)
+                .collect(Collectors.toList());
 
         if (pending.isEmpty()) {
             VBox empty = new VBox(12);
@@ -259,7 +264,7 @@ public class AdminController {
         card.setAlignment(Pos.CENTER_LEFT);
         card.setPadding(new Insets(18, 22, 18, 22));
         card.setStyle("-fx-background-color: #171717; -fx-border-color: #e74c3c; -fx-border-radius: 8; " +
-                      "-fx-background-radius: 8; -fx-border-width: 0 0 0 3;");
+                "-fx-background-radius: 8; -fx-border-width: 0 0 0 3;");
         HBox.setHgrow(card, Priority.ALWAYS);
 
         // Thumbnail
@@ -286,10 +291,10 @@ public class AdminController {
         header.setAlignment(Pos.CENTER_LEFT);
         Label badge = new Label("⏳ CHỜ DUYỆT");
         badge.setStyle("-fx-background-color: rgba(231,76,60,0.2); -fx-text-fill: #e74c3c; " +
-                       "-fx-padding: 2 8; -fx-background-radius: 3; -fx-font-size: 10px; -fx-font-weight: bold;");
+                "-fx-padding: 2 8; -fx-background-radius: 3; -fx-font-size: 10px; -fx-font-weight: bold;");
         Label cat = new Label(auction.getItem().getClass().getSimpleName());
         cat.setStyle("-fx-background-color: rgba(245,197,24,0.15); -fx-text-fill: #F5C518; " +
-                     "-fx-padding: 2 8; -fx-background-radius: 3; -fx-font-size: 10px; -fx-font-weight: bold;");
+                "-fx-padding: 2 8; -fx-background-radius: 3; -fx-font-size: 10px; -fx-font-weight: bold;");
         header.getChildren().addAll(badge, cat);
 
         Label name = new Label(auction.getItem().getNameItem());
@@ -319,13 +324,13 @@ public class AdminController {
         Button btnApprove = new Button("✅  PHÊ DUYỆT");
         btnApprove.setMaxWidth(Double.MAX_VALUE);
         btnApprove.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; " +
-                            "-fx-background-radius: 5; -fx-cursor: hand; -fx-padding: 10 18; -fx-font-size: 13px;");
+                "-fx-background-radius: 5; -fx-cursor: hand; -fx-padding: 10 18; -fx-font-size: 13px;");
         btnApprove.setOnAction(e -> onApproveAuction(auction, btnApprove));
 
         Button btnReject = new Button("❌  TỪ CHỐI");
         btnReject.setMaxWidth(Double.MAX_VALUE);
         btnReject.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-weight: bold; " +
-                           "-fx-background-radius: 5; -fx-cursor: hand; -fx-padding: 10 18; -fx-font-size: 13px;");
+                "-fx-background-radius: 5; -fx-cursor: hand; -fx-padding: 10 18; -fx-font-size: 13px;");
         btnReject.setOnAction(e -> onRejectAuction(auction, btnReject));
 
         actions.getChildren().addAll(btnApprove, btnReject);
@@ -355,25 +360,25 @@ public class AdminController {
         btn.setDisable(true);
         setFeedback("⏳ Đang duyệt " + auction.getItem().getNameItem() + "...", "#F5C518");
         NetworkClient.getInstance().sendRequest(
-            new Request(ActionType.APPROVE_AUCTION, auction.getAuctionId()));
+                new Request(ActionType.APPROVE_AUCTION, auction.getAuctionId()));
     }
 
     private void onRejectAuction(Auction auction, Button btn) {
         // Confirm dialog dark theme thay vì Alert mặc định
         java.util.Optional<Boolean> confirmed = NotificationUtil.showConfirm(
-            rootPane != null && rootPane.getScene() != null ? rootPane.getScene().getWindow() : null,
-            "Từ chối sản phẩm",
-            "Bạn có chắc muốn TỪ CHỐI sản phẩm:\n\"" + auction.getItem().getNameItem() + "\"?\n\n"
-                + "Hành động này sẽ thông báo cho Seller biết.",
-            "❌  Từ Chối",
-            "Hủy"
+                rootPane != null && rootPane.getScene() != null ? rootPane.getScene().getWindow() : null,
+                "Từ chối sản phẩm",
+                "Bạn có chắc muốn TỪ CHỐI sản phẩm:\n\"" + auction.getItem().getNameItem() + "\"?\n\n"
+                        + "Hành động này sẽ thông báo cho Seller biết.",
+                "❌  Từ Chối",
+                "Hủy"
         );
         confirmed.ifPresent(yes -> {
             if (yes) {
                 btn.setDisable(true);
                 setFeedback("⏳ Đang từ chối " + auction.getItem().getNameItem() + "...", "#e74c3c");
                 NetworkClient.getInstance().sendRequest(
-                    new Request(ActionType.REJECT_AUCTION, auction.getAuctionId()));
+                        new Request(ActionType.REJECT_AUCTION, auction.getAuctionId()));
             }
         });
     }
@@ -383,13 +388,13 @@ public class AdminController {
     private void setupAuctionTable() {
         if (auctionItemCol != null)
             auctionItemCol.setCellValueFactory(d ->
-                new SimpleStringProperty(d.getValue().getItem().getNameItem()));
+                    new SimpleStringProperty(d.getValue().getItem().getNameItem()));
         if (auctionSellerCol != null)
             auctionSellerCol.setCellValueFactory(d ->
-                new SimpleStringProperty(d.getValue().getSeller().getUserName()));
+                    new SimpleStringProperty(d.getValue().getSeller().getUserName()));
         if (auctionBidCol != null)
             auctionBidCol.setCellValueFactory(d ->
-                new SimpleStringProperty(CurrencyFormatter.format(d.getValue().getCurrentHighestBid())));
+                    new SimpleStringProperty(CurrencyFormatter.format(d.getValue().getCurrentHighestBid())));
         if (auctionStatusCol != null)
             auctionStatusCol.setCellValueFactory(d -> {
                 // FIX: Thêm case APPROVED và REJECTED
@@ -409,7 +414,7 @@ public class AdminController {
             });
         if (auctionBidCountCol != null)
             auctionBidCountCol.setCellValueFactory(d ->
-                new SimpleStringProperty(String.valueOf(d.getValue().getBidHistory().size())));
+                    new SimpleStringProperty(String.valueOf(d.getValue().getBidHistory().size())));
 
         if (auctionActionCol != null)
             auctionActionCol.setCellFactory(col -> new TableCell<>() {
@@ -419,25 +424,25 @@ public class AdminController {
                 {
                     box.setAlignment(Pos.CENTER_LEFT);
                     btnCancel.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white; -fx-cursor: hand; " +
-                                       "-fx-padding: 4 10; -fx-background-radius: 4; -fx-font-size: 11px;");
+                            "-fx-padding: 4 10; -fx-background-radius: 4; -fx-font-size: 11px;");
                     btnApprove.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-cursor: hand; " +
-                                        "-fx-padding: 4 10; -fx-background-radius: 4; -fx-font-size: 11px;");
+                            "-fx-padding: 4 10; -fx-background-radius: 4; -fx-font-size: 11px;");
                     btnCancel.setOnAction(e -> {
                         Auction a = getTableView().getItems().get(getIndex());
                         // Confirm trước khi hủy phiên — thao tác không thể hoàn tác
                         java.util.Optional<Boolean> confirmed = NotificationUtil.showConfirm(
-                            getScene() != null ? getScene().getWindow() : null,
-                            "Dừng phiên đấu giá",
-                            "Bạn có chắc muốn DỪNG phiên:\n\"" + a.getItem().getNameItem() + "\"?\n\n"
-                                + "Tiền đặt cọc sẽ được hoàn lại cho bidder đang dẫn đầu.",
-                            "🚫  Dừng Phiên",
-                            "Hủy"
+                                getScene() != null ? getScene().getWindow() : null,
+                                "Dừng phiên đấu giá",
+                                "Bạn có chắc muốn DỪNG phiên:\n\"" + a.getItem().getNameItem() + "\"?\n\n"
+                                        + "Tiền đặt cọc sẽ được hoàn lại cho bidder đang dẫn đầu.",
+                                "🚫  Dừng Phiên",
+                                "Hủy"
                         );
                         confirmed.ifPresent(yes -> {
                             if (yes) {
                                 setFeedback("⏳ Đang dừng phiên " + a.getItem().getNameItem() + "...", "#e74c3c");
                                 NetworkClient.getInstance().sendRequest(
-                                    new Request(ActionType.CANCEL_AUCTION, a.getAuctionId()));
+                                        new Request(ActionType.CANCEL_AUCTION, a.getAuctionId()));
                             }
                         });
                     });
@@ -457,8 +462,8 @@ public class AdminController {
                     btnApprove.setVisible(a.getStatus() == AuctionStatus.PENDING_APPROVAL);
                     btnApprove.setManaged(a.getStatus() == AuctionStatus.PENDING_APPROVAL);
                     boolean canStop = a.getStatus() == AuctionStatus.RUNNING
-                                   || a.getStatus() == AuctionStatus.OPEN
-                                   || a.getStatus() == AuctionStatus.APPROVED;
+                            || a.getStatus() == AuctionStatus.OPEN
+                            || a.getStatus() == AuctionStatus.APPROVED;
                     btnCancel.setVisible(canStop);
                     btnCancel.setManaged(canStop);
                     setGraphic(box);
@@ -490,7 +495,7 @@ public class AdminController {
             });
         if (userStatusCol != null)
             userStatusCol.setCellValueFactory(d ->
-                new SimpleStringProperty(d.getValue().isBanned() ? "🔒 Bị khóa" : "✅ Hoạt động"));
+                    new SimpleStringProperty(d.getValue().isBanned() ? "🔒 Bị khóa" : "✅ Hoạt động"));
         if (userActionCol != null)
             userActionCol.setCellFactory(col -> new TableCell<>() {
                 private final Button btn = new Button();
@@ -501,18 +506,18 @@ public class AdminController {
                         // Confirm dialog trước khi ban/unban
                         String confirmTitle = isBanned ? "Mở Khóa Tài Khoản" : "Khóa Tài Khoản";
                         String confirmMsg   = isBanned
-                            ? "Mở khóa tài khoản \"" + user.getUserName() + "\"?\nNgười dùng sẽ đăng nhập được trở lại."
-                            : "Khóa tài khoản \"" + user.getUserName() + "\"?\nNgười dùng sẽ không thể đăng nhập.";
+                                ? "Mở khóa tài khoản \"" + user.getUserName() + "\"?\nNgười dùng sẽ đăng nhập được trở lại."
+                                : "Khóa tài khoản \"" + user.getUserName() + "\"?\nNgười dùng sẽ không thể đăng nhập.";
                         String yesLabel     = isBanned ? "🔓  Mở Khóa" : "🔒  Khóa Tài Khoản";
 
                         java.util.Optional<Boolean> confirmed = NotificationUtil.showConfirm(
-                            getScene() != null ? getScene().getWindow() : null,
-                            confirmTitle, confirmMsg, yesLabel, "Hủy"
+                                getScene() != null ? getScene().getWindow() : null,
+                                confirmTitle, confirmMsg, yesLabel, "Hủy"
                         );
                         confirmed.ifPresent(yes -> {
                             if (yes) {
                                 NetworkClient.getInstance().sendRequest(
-                                    new Request(ActionType.BAN_USER, user.getUserName()));
+                                        new Request(ActionType.BAN_USER, user.getUserName()));
                             }
                         });
                     });
@@ -528,8 +533,8 @@ public class AdminController {
                     if (user instanceof Admin) { setGraphic(null); return; }
                     btn.setText(user.isBanned() ? "🔓 Mở Khóa" : "🔒 Khóa");
                     btn.setStyle(user.isBanned()
-                        ? "-fx-background-color: #27ae60; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 5 12; -fx-background-radius: 4; -fx-font-size: 11px;"
-                        : "-fx-background-color: #c0392b; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 5 12; -fx-background-radius: 4; -fx-font-size: 11px;");
+                            ? "-fx-background-color: #27ae60; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 5 12; -fx-background-radius: 4; -fx-font-size: 11px;"
+                            : "-fx-background-color: #c0392b; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 5 12; -fx-background-radius: 4; -fx-font-size: 11px;");
                     setGraphic(btn);
                 }
             });
@@ -540,8 +545,8 @@ public class AdminController {
         String query = txtUserSearch != null ? txtUserSearch.getText().trim().toLowerCase() : "";
         if (filteredUsers != null) {
             filteredUsers.setPredicate(u -> query.isEmpty()
-                || u.getUserName().toLowerCase().contains(query)
-                || u.getEmail().toLowerCase().contains(query));
+                    || u.getUserName().toLowerCase().contains(query)
+                    || u.getEmail().toLowerCase().contains(query));
         }
     }
 
@@ -570,8 +575,8 @@ public class AdminController {
         if (lblFeedback != null) {
             lblFeedback.setText(msg);
             lblFeedback.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 13px; -fx-font-weight: bold; " +
-                                 "-fx-padding: 10 28; -fx-background-color: #0a0a0a; " +
-                                 "-fx-border-color: #1E1E1E; -fx-border-width: 1 0 0 0;");
+                    "-fx-padding: 10 28; -fx-background-color: #0a0a0a; " +
+                    "-fx-border-color: #1E1E1E; -fx-border-width: 1 0 0 0;");
         }
     }
 }

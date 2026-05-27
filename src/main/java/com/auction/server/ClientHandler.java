@@ -105,7 +105,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, e.getMessage(), null);
                 }
 
-            // ─── ĐĂNG KÝ ─────────────────────────────────────────────────────
+                // ─── ĐĂNG KÝ ─────────────────────────────────────────────────────
             case REGISTER:
                 try {
                     String registerData = (String) request.getPayload();
@@ -143,7 +143,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, "Lỗi khi xử lý đăng ký: " + e.getMessage(), null);
                 }
 
-            // ─── ĐẶT GIÁ ─────────────────────────────────────────────────────
+                // ─── ĐẶT GIÁ ─────────────────────────────────────────────────────
             case PLACE_BID:
                 try {
                     BidPayload bidData = (BidPayload) request.getPayload();
@@ -155,10 +155,10 @@ public class ClientHandler implements Runnable {
 
                     // Cho phép đặt giá khi RUNNING hoặc APPROVED (đã được duyệt)
                     if (auction.getStatus() != AuctionStatus.RUNNING &&
-                        auction.getStatus() != AuctionStatus.OPEN &&
-                        auction.getStatus() != AuctionStatus.APPROVED) {
+                            auction.getStatus() != AuctionStatus.OPEN &&
+                            auction.getStatus() != AuctionStatus.APPROVED) {
                         return new Response(StatusType.ERROR,
-                            "Phiên đấu giá không ở trạng thái có thể đặt giá. Trạng thái: " + auction.getStatus(), null);
+                                "Phiên đấu giá không ở trạng thái có thể đặt giá. Trạng thái: " + auction.getStatus(), null);
                     }
 
                     Bidder realBidder = (Bidder) UserManager.getInstance().getUser(bidData.getUsername());
@@ -195,7 +195,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, "Lỗi hệ thống khi xử lý đặt giá.", null);
                 }
 
-            // ─── TẠO PHIÊN ĐẤU GIÁ ─────────────────────────────────────────
+                // ─── TẠO PHIÊN ĐẤU GIÁ ─────────────────────────────────────────
             case CREATE_AUCTION:
                 try {
                     Auction newAuction = (Auction) request.getPayload();
@@ -213,7 +213,7 @@ public class ClientHandler implements Runnable {
 
                     // FIX: Trả về List (không phải single Auction) để client filter ngay
                     System.out.println("📦 [SERVER] Auction mới tạo: " + newAuction.getItem().getNameItem() +
-                        " | Tổng: " + updatedList.size() + " phiên");
+                            " | Tổng: " + updatedList.size() + " phiên");
                     return new Response(StatusType.SUCCESS, "AUCTION_CREATED", updatedList);
 
                 } catch (Exception e) {
@@ -221,7 +221,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, "Lỗi hệ thống khi lưu sản phẩm.", null);
                 }
 
-            // ─── LẤY DANH SÁCH PHIÊN ─────────────────────────────────────────
+                // ─── LẤY DANH SÁCH PHIÊN ─────────────────────────────────────────
             case GET_AUCTION_LIST:
                 return new Response(StatusType.SUCCESS, "Danh sách đấu giá",
                         AuctionManager.getInstance().getAllAuctions());
@@ -237,19 +237,79 @@ public class ClientHandler implements Runnable {
                     String targetUsername = (String) request.getPayload();
                     User targetUser = UserManager.getInstance().getUser(targetUsername);
 
-                    if (targetUser != null) {
-                        targetUser.setBanned(!targetUser.isBanned());
-                        ServerApp.getUserDAO().saveDataToFile();
-                        String act = targetUser.isBanned() ? "khóa" : "mở khóa";
-                        return new Response(StatusType.SUCCESS,
-                                "Đã " + act + " tài khoản " + targetUsername + "!", null);
+                    if (targetUser == null)
+                        return new Response(StatusType.ERROR, "Không tìm thấy User.", null);
+
+                    // FIX: Không cho phép ban tài khoản Admin
+                    if (targetUser instanceof Admin)
+                        return new Response(StatusType.ERROR, "Không thể khóa tài khoản Admin!", null);
+
+                    boolean wasBanned = targetUser.isBanned();
+                    targetUser.setBanned(!wasBanned);
+                    ServerApp.getUserDAO().saveDataToFile();
+                    String act = targetUser.isBanned() ? "khóa" : "mở khóa";
+
+                    // Khi KHÓA → cascade + FORCE_LOGOUT (áp dụng cho cả Bidder lẫn Seller)
+                    if (targetUser.isBanned()) {
+                        // Cascade cancel: hủy các phiên liên quan đến user bị khóa
+                        if (targetUser instanceof Bidder bannedBidder) {
+                            // Bidder: hủy các phiên mà bidder này đang dẫn đầu
+                            List<Auction> allAuctions = AuctionManager.getInstance().getAllAuctions();
+                            for (Auction a : allAuctions) {
+                                if ((a.getStatus() == AuctionStatus.RUNNING
+                                        || a.getStatus() == AuctionStatus.OPEN
+                                        || a.getStatus() == AuctionStatus.APPROVED)
+                                        && a.getHighestBidder() != null
+                                        && a.getHighestBidder().getUserName()
+                                        .equals(bannedBidder.getUserName())) {
+                                    a.refundOnCancel();
+                                    a.setStatus(AuctionStatus.CANCELED);
+                                    AuctionManager.getInstance().updateAuction(a);
+                                    System.out.println("🚫 [BAN CASCADE] Hủy phiên "
+                                            + a.getItem().getNameItem() + " (bidder bị khóa)");
+                                }
+                            }
+                            ServerApp.getAuctionDAO().saveDataToFile();
+                            ServerApp.getUserDAO().saveDataToFile();
+                            ServerApp.broadcastAuctionUpdate(
+                                    AuctionManager.getInstance().getAllAuctions(), "AUCTION_CANCELED");
+                        } else if (targetUser instanceof Seller bannedSeller) {
+                            // FIX: Seller bị ban → hủy các phiên PENDING/APPROVED của seller đó
+                            List<Auction> allAuctions = AuctionManager.getInstance().getAllAuctions();
+                            for (Auction a : allAuctions) {
+                                if (a.getSeller().getUserName().equals(bannedSeller.getUserName())
+                                        && (a.getStatus() == AuctionStatus.PENDING_APPROVAL
+                                        || a.getStatus() == AuctionStatus.APPROVED)) {
+                                    a.setStatus(AuctionStatus.CANCELED);
+                                    AuctionManager.getInstance().updateAuction(a);
+                                    System.out.println("🚫 [BAN CASCADE] Hủy phiên "
+                                            + a.getItem().getNameItem() + " (seller bị khóa)");
+                                }
+                            }
+                            ServerApp.getAuctionDAO().saveDataToFile();
+                            ServerApp.getUserDAO().saveDataToFile();
+                            ServerApp.broadcastAuctionUpdate(
+                                    AuctionManager.getInstance().getAllAuctions(), "AUCTION_CANCELED");
+                        }
+
+                        // FIX: FORCE_LOGOUT áp dụng cho cả Bidder và Seller
+                        ServerApp.broadcast(new Response(
+                                StatusType.SUCCESS,
+                                "FORCE_LOGOUT|" + targetUsername,
+                                null
+                        ));
                     }
-                    return new Response(StatusType.ERROR, "Không tìm thấy User.", null);
+
+                    // FIX: Trả về updated user list thay vì null → AdminController refresh ngay
+                    List<User> updatedUsers = UserManager.getInstance().getAllUsers();
+                    return new Response(StatusType.SUCCESS,
+                            "Đã " + act + " tài khoản " + targetUsername + "!", updatedUsers);
+
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Lỗi khi xử lý Ban/Unban.", null);
                 }
 
-            // ─── HỦY PHIÊN ĐẤU GIÁ ───────────────────────────────────────────
+                // ─── HỦY PHIÊN ĐẤU GIÁ ───────────────────────────────────────────
             case CANCEL_AUCTION:
                 try {
                     String targetAuctionId = (String) request.getPayload();
@@ -290,7 +350,7 @@ public class ClientHandler implements Runnable {
                 }
 
 
-            // ─── ADMIN DUYỆT SẢN PHẨM ────────────────────────────────────────
+                // ─── ADMIN DUYỆT SẢN PHẨM ────────────────────────────────────────
             case APPROVE_AUCTION:
                 try {
                     String approveId = (String) request.getPayload();
@@ -301,8 +361,17 @@ public class ClientHandler implements Runnable {
                     if (toApprove.getStatus() != AuctionStatus.PENDING_APPROVAL)
                         return new Response(StatusType.ERROR, "Phiên này không ở trạng thái chờ duyệt.", null);
 
-                    // FIX: Auto-LIVE nếu startTime <= now, còn lại set APPROVED (chờ đến giờ)
+                    // BUG #4 FIX: Không duyệt phiên đã hết hạn
                     LocalDateTime now = LocalDateTime.now();
+                    if (toApprove.getEndTime() != null && toApprove.getEndTime().isBefore(now)) {
+                        return new Response(StatusType.ERROR,
+                                "❌ Không thể duyệt! Phiên đã hết hạn vào "
+                                        + toApprove.getEndTime().format(
+                                        java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                                        + ".\nVui lòng từ chối phiên này.", null);
+                    }
+
+                    // FIX: Auto-LIVE nếu startTime <= now, còn lại set APPROVED (chờ đến giờ)
                     if (toApprove.getStartTime() == null || !toApprove.getStartTime().isAfter(now)) {
                         // Bắt đầu ngay → RUNNING
                         toApprove.setStatus(AuctionStatus.RUNNING);
@@ -329,7 +398,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, "Lỗi khi duyệt: " + e.getMessage(), null);
                 }
 
-            // ─── ADMIN TỪ CHỐI SẢN PHẨM ──────────────────────────────────────
+                // ─── ADMIN TỪ CHỐI SẢN PHẨM ──────────────────────────────────────
             case REJECT_AUCTION:
                 try {
                     String rejectId = (String) request.getPayload();
@@ -378,7 +447,22 @@ public class ClientHandler implements Runnable {
                                 abPayload.getMaxAmount(),
                                 abPayload.getIncrementAmount());
 
-                        // Flush dữ liệu xuống file (rule đã nằm trong auction object)
+                        // BUG #7 FIX: Trigger autobid NGAY nếu bidder không phải dẫn đầu
+                        // Không cần chờ người khác bid mới autobid mới kích hoạt
+                        if (abAuction.getHighestBidder() == null
+                                || !abAuction.getHighestBidder().getUserName()
+                                .equals(abBidder.getUserName())) {
+                            abAuction.triggerAutoBidsPublic();
+                            // Cập nhật lại bidder balance sau khi autobid
+                            ServerApp.getUserDAO().saveDataToFile();
+                            // Broadcast update giá mới
+                            List<Auction> afterAutoBid = AuctionManager.getInstance().getAllAuctions();
+                            ServerApp.broadcastAuctionUpdate(afterAutoBid, "UPDATE_AUCTION");
+                            System.out.println("🤖 [AUTOBID IMMEDIATE] Triggered for "
+                                    + abBidder.getUserName() + " on " + abAuction.getItem().getNameItem());
+                        }
+
+                        // Flush dữ liệu xuống file
                         ServerApp.getAuctionDAO().saveDataToFile();
 
                         System.out.println("🤖 [AUTOBID BẬT] " + abBidder.getUserName()
@@ -443,7 +527,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, "Lỗi khi nạp tiền: " + e.getMessage(), null);
                 }
 
-            // ─── RÚT TIỀN ─────────────────────────────────────────────────────
+                // ─── RÚT TIỀN ─────────────────────────────────────────────────────
             case WITHDRAW:
                 try {
                     String withdrawData = (String) request.getPayload();
@@ -475,7 +559,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, "Lỗi khi rút tiền: " + e.getMessage(), null);
                 }
 
-            // ─── CẬP NHẬT HỒ SƠ ──────────────────────────────────────────────
+                // ─── CẬP NHẬT HỒ SƠ ──────────────────────────────────────────────
             case UPDATE_PROFILE:
                 try {
                     String profileData = (String) request.getPayload();
@@ -503,7 +587,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, "Lỗi khi cập nhật: " + e.getMessage(), null);
                 }
 
-            // ─── ĐĂNG XUẤT ────────────────────────────────────────────────────
+                // ─── ĐĂNG XUẤT ────────────────────────────────────────────────────
             case LOGOUT:
                 return new Response(StatusType.SUCCESS, "Đã đăng xuất", null);
 

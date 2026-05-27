@@ -176,11 +176,11 @@ public class AuctionDetailController {
         // Khởi tạo bid validator sau khi có auction data
         if (canBid && txtBidAmount != null) {
             bidValidator = FormValidator.of(txtBidAmount)
-                .bidAmount(
-                    () -> currentAuction.getCurrentHighestBid(),
-                    () -> sessionUser instanceof Bidder b ? b.getBalance() : 0.0
-                )
-                .attach();
+                    .bidAmount(
+                            () -> currentAuction.getCurrentHighestBid(),
+                            () -> sessionUser instanceof Bidder b ? b.getBalance() : 0.0
+                    )
+                    .attach();
         }
 
         // FIX: Đăng ký listener với key riêng — không bị ghi đè
@@ -197,7 +197,7 @@ public class AuctionDetailController {
         priceLineChart.setLegendVisible(false);
         priceLineChart.setAnimated(false);
         priceSeries = PriceChartHelper.buildHistoricalChart(
-            priceLineChart, currentAuction.getBidHistory());
+                priceLineChart, currentAuction.getBidHistory());
         updateChartLabel();
     }
 
@@ -206,8 +206,8 @@ public class AuctionDetailController {
         if (lblChartInfo == null) return;
         int count = currentAuction.getBidHistory().size();
         lblChartInfo.setText(count == 0
-            ? "Chưa có lượt đặt giá nào"
-            : count + " lượt đặt giá · Cập nhật realtime");
+                ? "Chưa có lượt đặt giá nào"
+                : count + " lượt đặt giá · Cập nhật realtime");
     }
 
     private void setupBidControls() {
@@ -460,10 +460,10 @@ public class AuctionDetailController {
                 if (canBid && !endingWarningSent && secs <= WARNING_SECONDS && secs > 0) {
                     endingWarningSent = true;
                     NotificationService.get().toast(
-                        "⏳ Chỉ còn " + secs + " giây! Đặt giá ngay nếu muốn thắng!",
-                        NotificationType.WARNING,
-                        lblTimeLeft,
-                        5
+                            "⏳ Chỉ còn " + secs + " giây! Đặt giá ngay nếu muốn thắng!",
+                            NotificationType.WARNING,
+                            lblTimeLeft,
+                            5
                     );
                 }
             }
@@ -595,7 +595,7 @@ public class AuctionDetailController {
             // ConfirmDialog khi bid giá trị lớn
             if (amount >= LARGE_BID_THRESHOLD) {
                 Window owner = lblMessage != null && lblMessage.getScene() != null
-                    ? lblMessage.getScene().getWindow() : null;
+                        ? lblMessage.getScene().getWindow() : null;
                 java.util.Optional<Boolean> confirmed = ConfirmDialog.placeLargeBid(owner, amount);
                 if (confirmed.isEmpty() || !confirmed.get()) return; // User hủy
             }
@@ -625,6 +625,31 @@ public class AuctionDetailController {
             Platform.runLater(() -> {
                 String msg = response.getMessage();
 
+                // FIX: Xử lý FORCE_LOGOUT — user bị admin khóa khi đang xem phiên
+                if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
+                    String logoutTarget = msg.split("\\|")[1];
+                    if (sessionUser != null && logoutTarget.equals(sessionUser.getUserName())) {
+                        if (countdownTimeline != null) countdownTimeline.stop();
+                        NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+                        AppContext.logout();
+                        try {
+                            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+                            Stage stage = (Stage) (lblProductName != null && lblProductName.getScene() != null
+                                    ? lblProductName.getScene().getWindow() : null);
+                            if (stage != null) {
+                                stage.setScene(new Scene(root, 900, 600));
+                                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                                        javafx.scene.control.Alert.AlertType.WARNING);
+                                alert.setTitle("⚠️ Tài khoản bị khóa");
+                                alert.setHeaderText(null);
+                                alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\nBạn đã được đăng xuất tự động.");
+                                alert.show();
+                            }
+                        } catch (IOException ex) { ex.printStackTrace(); }
+                    }
+                    return;
+                }
+
                 // Cập nhật khi có bid mới (broadcast UPDATE_AUCTION kèm List<Auction>)
                 if ("UPDATE_AUCTION".equals(msg) && response.getData() instanceof List) {
                     @SuppressWarnings("unchecked")
@@ -641,18 +666,18 @@ public class AuctionDetailController {
                                 // FIX #3: Cập nhật biểu đồ realtime khi có bid mới
                                 if (priceLineChart != null && priceSeries != null) {
                                     priceSeries = PriceChartHelper.buildHistoricalChart(
-                                        priceLineChart, currentAuction.getBidHistory());
+                                            priceLineChart, currentAuction.getBidHistory());
                                     updateChartLabel();
                                 }
                                 if (wasExtended) {
                                     showBidNotification("⏱️", "Gia hạn thêm thời gian",
-                                        "Phiên được mở rộng thêm",
-                                        "#f39c12", 2.0);
+                                            "Phiên được mở rộng thêm",
+                                            "#f39c12", 2.0);
                                 } else if (canBid && updated.getHighestBidder() != null
                                         && !updated.getHighestBidder().getUserName().equals(sessionUser.getUserName())) {
                                     showBidNotification("🔥", "Bạn vừa bị vượt giá!",
-                                        CurrencyFormatter.format(updated.getCurrentHighestBid()),
-                                        "#e74c3c", 1.5);
+                                            CurrencyFormatter.format(updated.getCurrentHighestBid()),
+                                            "#e74c3c", 1.5);
                                 }
                             });
                 }
@@ -671,7 +696,7 @@ public class AuctionDetailController {
                                 // FIX #3: Cập nhật biểu đồ lần cuối khi phiên kết thúc
                                 if (priceLineChart != null) {
                                     priceSeries = PriceChartHelper.buildHistoricalChart(
-                                        priceLineChart, currentAuction.getBidHistory());
+                                            priceLineChart, currentAuction.getBidHistory());
                                     updateChartLabel();
                                 }
                                 if (countdownTimeline != null) countdownTimeline.stop();
@@ -690,7 +715,7 @@ public class AuctionDetailController {
                                     }
                                 } else if (ended.getHighestBidder() == null
                                         && (ended.getStatus() == AuctionStatus.FINISHED
-                                         || ended.getStatus() == AuctionStatus.PAID)) {
+                                        || ended.getStatus() == AuctionStatus.PAID)) {
                                     showEndedNoWinnerDialog();
                                 }
                                 // Tắt controls
@@ -716,8 +741,8 @@ public class AuctionDetailController {
                                     lblTimeLeft.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold; -fx-font-size: 18px;");
                                 }
                                 showBidNotification("🚫", "Phiên đã bị hủy",
-                                    "Tiền đặt cọc đã được hoàn lại",
-                                    "#7f8c8d", 3.0);
+                                        "Tiền đặt cọc đã được hoàn lại",
+                                        "#7f8c8d", 3.0);
                                 canBid = false;
                                 setupBidControls();
                                 if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
@@ -728,19 +753,19 @@ public class AuctionDetailController {
                 if (response.getStatus() == StatusType.SUCCESS
                         && "Đặt giá thành công!".equals(msg)) {
                     String bidAmountText = (txtBidAmount != null && !txtBidAmount.getText().isEmpty())
-                        ? txtBidAmount.getText().trim() : null;
+                            ? txtBidAmount.getText().trim() : null;
                     String bidAmountDisplay = "---";
                     try {
                         if (bidAmountText != null)
                             bidAmountDisplay = CurrencyFormatter.format(Double.parseDouble(bidAmountText));
                     } catch (NumberFormatException ignored) {}
                     showBidNotification("✅", "Đặt giá thành công!",
-                        bidAmountDisplay,
-                        "#27ae60", 1.5);
+                            bidAmountDisplay,
+                            "#27ae60", 1.5);
                     // Toast riêng biệt để rõ ràng hơn
                     NotificationService.get().success(
-                        "✅ Đặt giá " + bidAmountDisplay + " thành công!",
-                        lblMessage
+                            "✅ Đặt giá " + bidAmountDisplay + " thành công!",
+                            lblMessage
                     );
                     if (txtBidAmount != null) txtBidAmount.clear();
                     if (bidValidator != null) bidValidator.clearValidation();
@@ -783,7 +808,7 @@ public class AuctionDetailController {
                     if (nowActive) {
                         setAutoBidStatus("🤖 AutoBid đang hoạt động! Hệ thống sẽ tự trả giá thay bạn.", "#27ae60");
                         showBidNotification("🤖", "AutoBid đã bật",
-                            "Tự đặt giá khi bị vượt", "#8e44ad", 1.5);
+                                "Tự đặt giá khi bị vượt", "#8e44ad", 1.5);
                     } else {
                         setAutoBidStatus("AutoBid đã TẮT.", "#666");
                         if (txtAutoBidMax       != null) txtAutoBidMax.setDisable(false);
@@ -1069,7 +1094,7 @@ public class AuctionDetailController {
         // ― Đổi màu accent bar ―――――――――――――――――――――――――――――――――――
         if (notifAccentBar != null)
             notifAccentBar.setStyle("-fx-background-color: " + accentColor
-                + "; -fx-background-radius: 0 2 2 0;");
+                    + "; -fx-background-radius: 0 2 2 0;");
 
         // ― Buộc HBox co đúng theo nội dung — không để StackPane kéo căng cả 2 chiều ―
         notificationBanner.setMaxWidth(Region.USE_PREF_SIZE);

@@ -62,6 +62,19 @@ public class Auction extends Entity implements Serializable {
         // Kích hoạt anti-sniping để xem có cần gia hạn thời gian không
         applyAntiSniping();
 
+        // BUG #11 FIX: Hoàn tiền cho highestBidder cũ nếu bị người khác vượt qua
+        // Nguyên lý: mỗi lúc chỉ có 1 người "giữ" tiền đặt cọc.
+        // Khi bị vượt → hoàn lại đúng số tiền họ đã bị trừ (currentHighestBid).
+        if (this.highestBidder != null
+                && !this.highestBidder.getId().equals(transaction.getBidder().getId())) {
+            double refund = this.currentHighestBid;
+            this.highestBidder.setBalance(this.highestBidder.getBalance() + refund);
+            System.out.printf("↩️  [REFUND] Hoàn %.2f cho %s (bị vượt bởi %s)%n",
+                refund,
+                this.highestBidder.getUserName(),
+                transaction.getBidder().getUserName());
+        }
+
         // 2. Cập nhật dữ liệu
         this.currentHighestBid = transaction.getBidAmount();
         this.highestBidder = transaction.getBidder();
@@ -120,6 +133,11 @@ public class Auction extends Entity implements Serializable {
             notifyObservers("🛡️ Có người đặt giá phút chót! Phiên đấu giá gia hạn thêm " + EXTENSION_SECONDS
                     + " giây. Kết thúc lúc: " + this.endTime);
         }
+    }
+
+    /** Public: Kích hoạt autobid ngay lập tức (dùng khi bật autobid, không đợi bid mới). */
+    public synchronized void triggerAutoBidsPublic() {
+        triggerAutoBids();
     }
 
     private void triggerAutoBids() {
