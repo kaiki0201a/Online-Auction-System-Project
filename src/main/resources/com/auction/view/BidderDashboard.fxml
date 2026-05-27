@@ -51,6 +51,10 @@
             <Button onAction="#onSettingsClick" text="⚙  Cài Đặt"
                 styleClass="menu-btn"
                 maxWidth="Infinity"/>
+            <!-- Fix #6: Button xem danh sách phiên đấu giá đang tham gia -->
+            <Button onAction="#onMyAuctionsClick" text="🏆  Phiên Đang Tham Gia"
+                styleClass="menu-btn"
+                maxWidth="Infinity"/>
 
             <Separator style="-fx-background-color: #2A2A2A;"/>
             <Label text="VÍ ĐIỆN TỬ"

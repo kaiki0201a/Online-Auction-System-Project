@@ -279,6 +279,20 @@ public class ServerApp {
             ));
             System.out.println("💰 [SETTLEMENT BROADCAST] Seller " + seller.getUserName()
                 + " số dư mới: " + seller.getBalance());
+
+            // Fix #10: Broadcast AuctionEarning để client sync lịch sử nhận tiền ngay lập tức
+            // Lấy earning mới nhất vừa được thêm vào (addEarning thêm vào đầu danh sách)
+            if (!seller.getEarningHistory().isEmpty()) {
+                com.auction.model.AuctionEarning latestEarning = seller.getEarningHistory().get(0);
+                String earningMsg = "SELLER_EARNING_UPDATE|" + seller.getUserName();
+                broadcast(new com.auction.protocol.Response(
+                    com.auction.protocol.StatusType.SUCCESS,
+                    earningMsg,
+                    latestEarning
+                ));
+                System.out.println("📋 [EARNING BROADCAST] Seller " + seller.getUserName()
+                    + " nhận earning: " + latestEarning.getItemName());
+            }
         } else if (auction.getHighestBidder() == null && auction.getSeller() != null) {
             // BUG #3 FIX: Phiên kết thúc không có người mua — thông báo cho Seller
             String nobuyer = "AUCTION_NO_BUYER|" + auction.getSeller().getUserName()

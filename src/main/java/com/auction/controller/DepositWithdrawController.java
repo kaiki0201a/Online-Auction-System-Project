@@ -121,19 +121,30 @@ public class DepositWithdrawController {
                 addWalletHistory(new WalletTransaction(wType, amount, newBalance));
             }
 
+            // Fix #2: Dùng pendingType thay vì diff để chọn đúng label
+            String savedType = pendingType;
             pendingType = null;
             updateSummaryCards();
             renderHistory();
 
-            // Phản hồi UI
-            String label = diff >= 0 ? "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance)
-                                     : "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance);
-            if (diff >= 0) {
-                setMsg(lblDepositMessage, label, "#4CAF50");
+            // Phản hồi UI dựa theo loại giao dịch đang chờ
+            if ("deposit".equals(savedType)) {
+                setMsg(lblDepositMessage,
+                    "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
                 clearField(txtDepositAmount);
-            } else {
-                setMsg(lblWithdrawMessage, label, "#4CAF50");
+            } else if ("withdraw".equals(savedType)) {
+                setMsg(lblWithdrawMessage,
+                    "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
                 clearField(txtWithdrawAmount);
+            } else {
+                // Fallback: dùng diff nếu không xác định được type
+                if (diff >= 0) {
+                    setMsg(lblDepositMessage,
+                        "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                } else {
+                    setMsg(lblWithdrawMessage,
+                        "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                }
             }
 
         } else if (response.getStatus() == StatusType.ERROR) {

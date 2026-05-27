@@ -519,6 +519,18 @@ public class BidderDashboardController {
         } catch (IOException e) { e.printStackTrace(); }
     }
 
+    /** Fix #6: Mở màn hình "Phiên đấu giá đang tham gia" */
+    @FXML public void onMyAuctionsClick(ActionEvent event) {
+        try {
+            if (masterTimer != null) masterTimer.stop();
+            NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/MyAuctions.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root, 1280, 800));
+            stage.centerOnScreen();
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
     // FIX: removeEventListener thay vì removeOnResponseReceived
     @FXML public void onLogoutClick(ActionEvent event) {
         if (masterTimer != null) masterTimer.stop();

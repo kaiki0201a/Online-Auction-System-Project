@@ -88,7 +88,9 @@ public class AuctionListController {
         String status = comboStatus.getValue();
 
         List<Auction> filtered = allAuctions.stream()
-            .filter(a -> a.getStatus() != AuctionStatus.PENDING_APPROVAL)
+            .filter(a -> a.getStatus() != AuctionStatus.PENDING_APPROVAL
+                      && a.getStatus() != AuctionStatus.REJECTED
+                      && a.getStatus() != AuctionStatus.CANCELED)
             .filter(a -> {
                 String name = a.getItem().getNameItem().toLowerCase();
                 String seller = a.getSeller().getUserName().toLowerCase();

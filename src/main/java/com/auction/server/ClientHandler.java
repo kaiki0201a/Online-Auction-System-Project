@@ -253,20 +253,28 @@ public class ClientHandler implements Runnable {
                     if (targetUser.isBanned()) {
                         // Cascade cancel: hủy các phiên liên quan đến user bị khóa
                         if (targetUser instanceof Bidder bannedBidder) {
-                            // Bidder: hủy các phiên mà bidder này đang dẫn đầu
-                            List<Auction> allAuctions = AuctionManager.getInstance().getAllAuctions();
-                            for (Auction a : allAuctions) {
-                                if ((a.getStatus() == AuctionStatus.RUNNING
-                                        || a.getStatus() == AuctionStatus.OPEN
-                                        || a.getStatus() == AuctionStatus.APPROVED)
-                                        && a.getHighestBidder() != null
+                            // FIX #8: Hủy/reset TẤT CẢ phiên mà bidder đã tham gia (qua bidHistory)
+                            List<Auction> bannedBidderAuctions = AuctionManager.getInstance().getAllAuctions();
+                            for (Auction a : bannedBidderAuctions) {
+                                if (a.getStatus() != AuctionStatus.RUNNING
+                                        && a.getStatus() != AuctionStatus.OPEN
+                                        && a.getStatus() != AuctionStatus.APPROVED) continue;
+                                boolean participated = a.getBidHistory().stream()
+                                        .anyMatch(bt -> bt.getBidder().getUserName()
+                                                .equals(bannedBidder.getUserName()));
+                                if (!participated) continue;
+                                if (a.getHighestBidder() != null
                                         && a.getHighestBidder().getUserName()
                                         .equals(bannedBidder.getUserName())) {
                                     a.refundOnCancel();
                                     a.setStatus(AuctionStatus.CANCELED);
                                     AuctionManager.getInstance().updateAuction(a);
                                     System.out.println("🚫 [BAN CASCADE] Hủy phiên "
-                                            + a.getItem().getNameItem() + " (bidder bị khóa)");
+                                            + a.getItem().getNameItem() + " (bidder đang dẫn đầu)");
+                                } else {
+                                    System.out.println("ℹ️ [BAN INFO] Bidder " + bannedBidder.getUserName()
+                                            + " tham gia phiên " + a.getItem().getNameItem()
+                                            + " nhưng không dẫn đầu — tiếp tục bình thường.");
                                 }
                             }
                             ServerApp.getAuctionDAO().saveDataToFile();
@@ -415,6 +423,11 @@ public class ClientHandler implements Runnable {
                     // FIX: Broadcast với List<Auction>
                     List<Auction> allAfterReject = AuctionManager.getInstance().getAllAuctions();
                     ServerApp.broadcastAuctionUpdate(allAfterReject, "AUCTION_REJECTED");
+
+                    // Fix #12: Gửi thêm thông báo riêng cho Seller để biết phiên bị từ chối
+                    String sellerNotify = "AUCTION_REJECTED_SELLER|" + toReject.getSeller().getUserName()
+                            + "|" + toReject.getItem().getNameItem();
+                    ServerApp.broadcast(new Response(StatusType.SUCCESS, sellerNotify, null));
 
                     System.out.println("❌ [ADMIN] Đã từ chối: " + toReject.getItem().getNameItem());
                     return new Response(StatusType.SUCCESS, "TỪ_CHỐI_OK|" + rejectId, allAfterReject);

@@ -39,6 +39,10 @@ public class UserManager {
         if (user == null) {
             throw new AuthenticationException("Tài khoản '" + username + "' không tồn tại!");
         }
+        // Fix #13: Chặn tài khoản bị ban đăng nhập
+        if (user.isBanned()) {
+            throw new AuthenticationException("Tài khoản '" + username + "' đã bị khóa bởi Admin!");
+        }
         return user.login(password);
     }
 

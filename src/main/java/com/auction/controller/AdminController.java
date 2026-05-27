@@ -137,13 +137,11 @@ public class AdminController {
             }
 
             // FIX: Admin vừa approve/reject → response đã có List<Auction> trong data
-            // Không cần gửi thêm GET_AUCTION_LIST nếu data đã là List
             if (msg != null && (msg.startsWith("DUYỆT_OK|") || msg.startsWith("TỪ_CHỐI_OK|")
                     || "AUCTION_APPROVED".equals(msg) || "AUCTION_REJECTED".equals(msg))) {
                 boolean isApprove = msg.startsWith("DUYỆT_OK|") || "AUCTION_APPROVED".equals(msg);
                 setFeedback(isApprove ? "✅ Đã duyệt sản phẩm thành công!" : "❌ Đã từ chối sản phẩm!",
                         isApprove ? "#27ae60" : "#e74c3c");
-                // Nếu data không phải List → mới cần refresh
                 if (!(data instanceof List)) {
                     NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
                 }
@@ -178,10 +176,17 @@ public class AdminController {
                 }
             }
 
+            // Fix #1: Khi nhận response thành công của GET_AUCTION_LIST (sau refresh) → cập nhật feedback
+            if ("Danh sách đấu giá".equals(msg)) {
+                setFeedback("✅ Đã làm mới dữ liệu!", "#27ae60");
+            }
+
         } else {
-            setFeedback("❌ " + response.getMessage(), "#e74c3c");
+            String msg = response.getMessage();
+            setFeedback("❌ " + (msg != null ? msg : "Lỗi không xác định"), "#e74c3c");
+            // Fix #4: Hiển thị toast lỗi rõ ràng (ví dụ: phiên hết hạn khi duyệt)
             NotificationUtil.showToastOnWindow(
-                    "❌ " + response.getMessage(),
+                    "❌ " + (msg != null ? msg : "Lỗi không xác định"),
                     rootPane != null && rootPane.getScene() != null
                             ? rootPane.getScene().getWindow() : null,
                     "error"
@@ -554,7 +559,8 @@ public class AdminController {
 
     @FXML
     public void onRefreshClick(ActionEvent event) {
-        setFeedback("🔄 Đang làm mới...", "#A0A0A0");
+        // Fix #1: Đặt feedback 'đang làm mới', sẽ được cập nhật thành 'đã làm mới' khi nhận response
+        setFeedback("🔄 Đang làm mới dữ liệu...", "#A0A0A0");
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
     }

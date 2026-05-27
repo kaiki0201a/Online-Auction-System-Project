@@ -171,12 +171,31 @@ public class Auction extends Entity implements Serializable {
                 if (targetPrice <= topRule.getMaxBid()) {
                     try {
                         BidTransaction autoTx = new BidTransaction(this, topRule.getBidder(), targetPrice);
+
+                        // Snapshot highestBidder CŨ trước khi processBid() thay đổi
+                        Bidder previousHighest = this.highestBidder;
+                        double previousBidAmount = this.currentHighestBid;
+
                         validateBid(autoTx);
+
+                        // Fix #11: Hoàn tiền bidder cũ nếu bị vượt (tương tự ManualBidStrategy)
+                        if (previousHighest != null
+                                && !previousHighest.getId().equals(topRule.getBidder().getId())) {
+                            previousHighest.setBalance(previousHighest.getBalance() + previousBidAmount);
+                            System.out.printf("↩️  [AUTOBID REFUND] Hoàn %.2f cho %s%n",
+                                    previousBidAmount, previousHighest.getUserName());
+                        }
 
                         this.currentHighestBid = targetPrice;
                         this.highestBidder = topRule.getBidder();
                         this.bidHistory.add(autoTx);
                         topRule.getBidder().addTransaction(autoTx);
+
+                        // Fix #11: Trừ tiền bidder mới sau khi autobid thành công
+                        topRule.getBidder().setBalance(topRule.getBidder().getBalance() - targetPrice);
+                        System.out.printf("💸 [AUTOBID DEDUCT] Trừ %.2f từ %s (số dư còn: %.2f)%n",
+                                targetPrice, topRule.getBidder().getUserName(),
+                                topRule.getBidder().getBalance());
 
                         System.out.println("🤖 [AUTO-BID] Tự động trả giá $" + targetPrice + " thay cho "
                                 + topRule.getBidder().getUserName());

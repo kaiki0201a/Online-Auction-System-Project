@@ -208,6 +208,18 @@ public class SellerDashboardController {
             NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
         }
 
+        // Fix #10: Nhận SELLER_EARNING_UPDATE → thêm earning vào local history và reload bảng
+        if (msg != null && msg.startsWith("SELLER_EARNING_UPDATE|") && data instanceof AuctionEarning) {
+            String targetUsername = msg.split("\\|")[1];
+            if (targetUsername.equals(currentUser.getUserName())) {
+                AuctionEarning earning = (AuctionEarning) data;
+                currentUser.addEarning(earning);
+                Platform.runLater(this::loadPaymentHistory);
+                System.out.println("💰 [SELLER UI] Nhận earning: " + earning.getItemName());
+            }
+        }
+
+        // Kết thúc sửa #10 — tiếp tục kịch bản cũ
         // Khi phiên kết thúc hoặc seller nhận tiền → tải lại lịch sử thanh toán
         if ("AUCTION_ENDED".equals(msg) ||
                 (msg != null && msg.startsWith("SELLER_BALANCE_UPDATE|"))) {
@@ -226,6 +238,19 @@ public class SellerDashboardController {
                     + "Bạn có thể đăng lại sản phẩm với mức giá hấp dẫn hơn!");
             }
         }
+
+        // Fix #12: Thông báo khi Admin từ chối phiên của seller
+        if (msg != null && msg.startsWith("AUCTION_REJECTED_SELLER|")) {
+            String[] parts = msg.split("\\|");
+            String sellerName = parts.length > 1 ? parts[1] : "";
+            String itemName   = parts.length > 2 ? parts[2] : "sản phẩm";
+            if (sellerName.equals(currentUser.getUserName())) {
+                Platform.runLater(() -> showAlert("🚫 Phiên bị từ chối bởi Admin",
+                    "Phiên đấu giá sản phẩm \"" + itemName + "\" đã bị Admin từ chối.\n"
+                    + "Vui lòng kiểm tra lại thông tin và đăng lại sản phẩm!"));
+            }
+        }
+
 
         // BUG #8 FIX: Nhận FORCE_LOGOUT → tự đăng xuất nếu username khớp
         if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
@@ -597,6 +622,34 @@ public class SellerDashboardController {
         }
 
         List<String> dynamics = extractDynamicInputs();
+
+        // Fix #5: Validate từng field động cụ thể trước khi gọi buildItem()
+        if ("Art".equals(category)) {
+            if (dynamics.size() > 1 && !dynamics.get(1).isEmpty()) {
+                try { Integer.parseInt(dynamics.get(1)); }
+                catch (NumberFormatException e) {
+                    showAlert("❌ Lỗi thông số", "Năm sáng tác phải là số nguyên! (VD: 1990)\nGiá trị nhập: '" + dynamics.get(1) + "' không hợp lệ.");
+                    return;
+                }
+            }
+        } else if ("Electronics".equals(category)) {
+            if (dynamics.size() > 1 && !dynamics.get(1).isEmpty()) {
+                try { Integer.parseInt(dynamics.get(1)); }
+                catch (NumberFormatException e) {
+                    showAlert("❌ Lỗi thông số", "Số tháng bảo hành phải là số nguyên! (VD: 12)\nGiá trị nhập: '" + dynamics.get(1) + "' không hợp lệ.");
+                    return;
+                }
+            }
+        } else if ("Vehicle".equals(category)) {
+            if (dynamics.size() > 1 && !dynamics.get(1).isEmpty()) {
+                try { Double.parseDouble(dynamics.get(1)); }
+                catch (NumberFormatException e) {
+                    showAlert("❌ Lỗi thông số", "Số km phải là số hợp lệ! (VD: 12000)\nGiá trị nhập: '" + dynamics.get(1) + "' không phải số.");
+                    return;
+                }
+            }
+        }
+
         Item newItem = buildItem(category, name, desc, price, dynamics);
         if (newItem == null) { showAlert("Lỗi", "Danh mục không hợp lệ."); return; }
 
