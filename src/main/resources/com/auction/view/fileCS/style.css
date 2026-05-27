@@ -523,20 +523,68 @@
 .dark-root .label { -fx-text-fill: #D0D0D0; }
 
 /* =========================================
-   TOAST / FEEDBACK MESSAGE
+   TOAST / FEEDBACK MESSAGE — stacking, click-to-dismiss
    ========================================= */
 .toast {
     -fx-text-fill: white;
     -fx-padding: 12 20;
-    -fx-background-radius: 6;
+    -fx-background-radius: 8;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 14, 0, 0, 3);
+    -fx-max-width: 440;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 18, 0, 0, 4);
 }
-.toast-success { -fx-background-color: rgba(39,174,96,0.9); }
-.toast-error   { -fx-background-color: rgba(231,76,60,0.9); }
-.toast-warning { -fx-background-color: rgba(230,126,34,0.9); }
-.toast-default { -fx-background-color: rgba(26,26,26,0.95); -fx-border-color: #333; -fx-border-radius: 6; }
+.toast:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 22, 0, 0, 4);
+}
+.toast-success { -fx-background-color: rgba(39,174,96,0.95); }
+.toast-error   { -fx-background-color: rgba(231,76,60,0.95); }
+.toast-warning { -fx-background-color: rgba(230,126,34,0.95); }
+.toast-info    { -fx-background-color: rgba(52,152,219,0.95); }
+.toast-default { -fx-background-color: rgba(26,26,26,0.97);
+                 -fx-border-color: #3A3A3A; -fx-border-radius: 8;
+                 -fx-border-width: 1; }
+
+/* =========================================
+   FORM VALIDATION — realtime field feedback
+   ========================================= */
+/* Trạng thái field hợp lệ */
+.field-success {
+    -fx-border-color: #27ae60;
+    -fx-border-radius: 6;
+    -fx-border-width: 1.5;
+    -fx-background-color: rgba(39,174,96,0.04);
+    -fx-background-radius: 6;
+}
+/* Trạng thái field lỗi */
+.field-error {
+    -fx-border-color: #e74c3c;
+    -fx-border-radius: 6;
+    -fx-border-width: 1.5;
+    -fx-background-color: rgba(231,76,60,0.05);
+    -fx-background-radius: 6;
+}
+/* Label lỗi nhỏ bên dưới field */
+.field-error-label {
+    -fx-text-fill: #e74c3c;
+    -fx-font-size: 11px;
+    -fx-padding: 2 0 0 4;
+}
+
+/* =========================================
+   CONNECTION BANNER — banner lỗi kết nối cố định
+   ========================================= */
+.connection-error-banner {
+    -fx-background-color: #c0392b;
+    -fx-padding: 6 16;
+    -fx-alignment: CENTER;
+}
+.connection-error-banner-text {
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
 
 /* =========================================
    PASSWORD FIELD EYE TOGGLE

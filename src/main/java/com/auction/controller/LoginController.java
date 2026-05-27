@@ -3,9 +3,11 @@ package com.auction.controller;
 import com.auction.client.NetworkClient;
 import com.auction.model.Admin;
 import com.auction.model.User;
+import com.auction.notification.FormValidator;
+import com.auction.notification.NotificationService;
+import com.auction.notification.NotificationType;
 import com.auction.protocol.StatusType;
 import com.auction.utils.AppContext;
-import com.auction.utils.NotificationUtil;
 import com.auction.utils.UIUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -35,6 +37,29 @@ public class LoginController {
     @FXML private HBox   hboxPassword;            // Border đỏ khi password lỗi
 
     private boolean passwordVisible = false;
+
+    // Realtime form validators
+    private FormValidator usernameValidator;
+    private FormValidator passwordValidator;
+
+    @FXML
+    public void initialize() {
+        // Realtime validation — chỉ hiện lỗi sau khi user chạm vào field
+        if (txtUsername != null && lblUsernameError != null) {
+            usernameValidator = FormValidator.of(txtUsername)
+                .required("Vui lòng nhập tên đăng nhập")
+                .minLength(3, "Tên đăng nhập tối thiểu 3 ký tự")
+                .withErrorLabel(lblUsernameError)
+                .attach();
+        }
+        if (txtPassword != null && lblPasswordError != null) {
+            passwordValidator = FormValidator.of(txtPassword)
+                .required("Vui lòng nhập mật khẩu")
+                .minLength(1, "Vui lòng nhập mật khẩu")
+                .withErrorLabel(lblPasswordError)
+                .attach();
+        }
+    }
 
     /** Toggle hiển thị / ẩn mật khẩu */
     @FXML
@@ -104,11 +129,17 @@ public class LoginController {
 
         clearErrors();
 
-        if (username.isEmpty()) {
-            setFieldError(lblUsernameError, hboxUsername, "Vui lòng nhập tên đăng nhập");
+        // Validate client-side trước khi gửi request
+        boolean usernameOk = (usernameValidator != null) ? usernameValidator.validate()
+                             : !username.isEmpty();
+        boolean passwordOk = password.length() >= 1;
+
+        if (!usernameOk) {
+            if (username.isEmpty())
+                setFieldError(lblUsernameError, hboxUsername, "Vui lòng nhập tên đăng nhập");
             return;
         }
-        if (password.isEmpty()) {
+        if (!passwordOk) {
             setFieldError(lblPasswordError, hboxPassword, "Vui lòng nhập mật khẩu");
             return;
         }
@@ -119,20 +150,27 @@ public class LoginController {
                     try {
                         User userFromServer = (User) response.getData();
                         AppContext.setCurrentUser(userFromServer);
-                        NotificationUtil.showToast("Đăng nhập thành công!", rootPane, "success");
+                        NotificationService.get().success("Đăng nhập thành công! Chào " + userFromServer.getUserName(), rootPane);
                         navigateToDashboard(event, userFromServer);
                     } catch (Exception e) {
-                        NotificationUtil.showToast("Lỗi nạp giao diện: " + e.getMessage(), rootPane, "error");
+                        NotificationService.get().error("Lỗi nạp giao diện: " + e.getMessage(), rootPane);
                     }
                 } else {
                     String msg = response.getMessage();
+                    clearErrors();
                     // Phân biệt loại lỗi để hiện đúng chỗ
                     if (msg != null && (msg.toLowerCase().contains("không tồn tại")
                             || msg.toLowerCase().contains("not found")
-                            || msg.toLowerCase().contains("không tìm thấy"))) {
+                            || msg.toLowerCase().contains("không tìm thấy")
+                            || msg.toLowerCase().contains("user"))) {
                         setFieldError(lblUsernameError, hboxUsername, "Tài khoản không tồn tại");
+                        NotificationService.get().error("❌ Tài khoản không tồn tại", rootPane);
+                    } else if (msg != null && msg.toLowerCase().contains("khóa")) {
+                        setFieldError(lblUsernameError, hboxUsername, "Tài khoản đã bị khóa");
+                        NotificationService.get().toast("🔒 Tài khoản đã bị khóa bởi Admin", NotificationType.ERROR, rootPane, 5);
                     } else {
                         setFieldError(lblPasswordError, hboxPassword, "Sai mật khẩu");
+                        NotificationService.get().error("❌ Sai mật khẩu. Vui lòng thử lại.", rootPane);
                     }
                 }
             });
@@ -167,24 +205,24 @@ public class LoginController {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root, 900, 620));
         } catch (IOException e) {
-            NotificationUtil.showToast("Không thể mở trang đăng ký!", rootPane, "error");
+            NotificationService.get().error("Không thể mở trang đăng ký!", rootPane);
         }
     }
 
     /** Xử lý khi nhấn "Quên mật khẩu?" */
     @FXML
     private void onForgotPasswordClick(ActionEvent event) {
-        Alert dlg = new Alert(Alert.AlertType.INFORMATION);
-        dlg.setTitle("Quên mật khẩu?");
-        dlg.setHeaderText("Hướng dẫn khôi phục tài khoản");
-        dlg.setContentText(
-            "Để đặt lại mật khẩu, vui lòng:\n\n" +
-            "1. Liên hệ Admin hệ thống BIDPRECISION\n" +
-            "2. Cung cấp tên đăng nhập và email đã đăng ký\n" +
-            "3. Admin sẽ reset mật khẩu và gửi lại cho bạn\n\n" +
-            "📧 Liên hệ: admin@bidprecision.vn\n" +
-            "📞 Hotline: 1800-BIDPRECISION"
+        // Thay thế Alert mặc định bằng dark theme alert
+        NotificationService.get().alert(
+            ((Node) event.getSource()).getScene().getWindow(),
+            "Hướng dẫn khôi phục tài khoản",
+            "Các bước đặt lại mật khẩu:\n\n" +
+            "1️⃣  Liên hệ Admin hệ thống BidPrecision\n" +
+            "2️⃣  Cung cấp tên đăng nhập và email đã đăng ký\n" +
+            "3️⃣  Admin sẽ reset và gửi mật khẩu mới cho bạn\n\n" +
+            "📧 admin@bidprecision.vn\n" +
+            "📞 Hotline: 1800-BIDPRECISION",
+            NotificationType.INFO
         );
-        dlg.showAndWait();
     }
 }
