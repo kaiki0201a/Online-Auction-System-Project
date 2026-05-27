@@ -62,17 +62,25 @@ public class Auction extends Entity implements Serializable {
         // Kích hoạt anti-sniping để xem có cần gia hạn thời gian không
         applyAntiSniping();
 
-        // BUG #11 FIX: Hoàn tiền cho highestBidder cũ nếu bị người khác vượt qua
+        // Fix #11: Xử lý hoàn tiền khi có bid mới
         // Nguyên lý: mỗi lúc chỉ có 1 người "giữ" tiền đặt cọc.
-        // Khi bị vượt → hoàn lại đúng số tiền họ đã bị trừ (currentHighestBid).
-        if (this.highestBidder != null
-                && !this.highestBidder.getId().equals(transaction.getBidder().getId())) {
+        if (this.highestBidder != null) {
             double refund = this.currentHighestBid;
-            this.highestBidder.setBalance(this.highestBidder.getBalance() + refund);
-            System.out.printf("↩️  [REFUND] Hoàn %.2f cho %s (bị vượt bởi %s)%n",
-                refund,
-                this.highestBidder.getUserName(),
-                transaction.getBidder().getUserName());
+            if (!this.highestBidder.getId().equals(transaction.getBidder().getId())) {
+                // Người KHÁC vượt qua → hoàn tiền đầy đủ cho highestBidder cũ
+                this.highestBidder.setBalance(this.highestBidder.getBalance() + refund);
+                System.out.printf("↩️  [REFUND] Hoàn %.2f cho %s (bị vượt bởi %s)%n",
+                    refund, this.highestBidder.getUserName(), transaction.getBidder().getUserName());
+            } else {
+                // CÙNG bidder tự nâng giá (self-raise) → hoàn lại tiền cũ trước
+                // ManualBidStrategy sẽ trừ giá mới ngay sau đó
+                // → net effect = chỉ trừ delta (giá mới - giá cũ)
+                this.highestBidder.setBalance(this.highestBidder.getBalance() + refund);
+                System.out.printf("🔄 [SELF-RAISE] Hoàn %.2f cho %s (tự nâng từ %.2f → %.2f, chỉ trừ delta %.2f)%n",
+                    refund, this.highestBidder.getUserName(),
+                    this.currentHighestBid, transaction.getBidAmount(),
+                    transaction.getBidAmount() - this.currentHighestBid);
+            }
         }
 
         // 2. Cập nhật dữ liệu

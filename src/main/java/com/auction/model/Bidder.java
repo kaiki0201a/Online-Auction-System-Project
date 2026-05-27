@@ -18,22 +18,58 @@ public class Bidder extends User implements AuctionObserver {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 
-    private double balance; 
+    private double balance;       // Số dư khả dụng (có thể dùng để đặt giá mới)
+    private double heldBalance;   // Số dư đang bị giữ bởi bid hiện tại
     private List<BidTransaction> transactionHistory;
     private List<WalletTransaction> walletHistory; // Lịch sử nạp/rút tiền
 
     public Bidder(String userName, String passWord, String email, double balance){
         super(userName, passWord, email);
         this.balance = balance;
+        this.heldBalance = 0.0;
         this.transactionHistory = new CopyOnWriteArrayList<>();
         this.walletHistory      = new CopyOnWriteArrayList<>();
     }
 
+    // ── Số dư khả dụng (tiền còn được dùng) ──────────────────────────────────
     public double getBalance(){
         return this.balance;
     }
     public void setBalance(double balance){
         this.balance = balance;
+    }
+
+    // ── Số dư đang bị giữ bởi bid hiện tại ────────────────────────────────────
+    public double getHeldBalance() {
+        if (Double.isNaN(heldBalance)) heldBalance = 0.0; // safety guard
+        return heldBalance;
+    }
+    public void setHeldBalance(double heldBalance) {
+        this.heldBalance = Math.max(0, heldBalance);
+    }
+
+    /** Tổng tài sản = khả dụng + đang bị giữ. Dùng để kiểm tra affordability. */
+    public double getTotalBalance() {
+        return this.balance + this.heldBalance;
+    }
+
+    /**
+     * Khóa một khoản tiền từ balance → heldBalance.
+     * Gọi khi bidder thắng một lần đặt giá.
+     */
+    public void holdFunds(double amount) {
+        this.balance -= amount;
+        this.heldBalance += amount;
+    }
+
+    /**
+     * Giải phóng toàn bộ heldBalance → balance (hoàn tiền khi bị vượt hoặc hủy).
+     */
+    public double releaseHeldFunds() {
+        double released = this.heldBalance;
+        this.balance    += released;
+        this.heldBalance = 0.0;
+        return released;
     }
     public List<BidTransaction> getTransactionHistory(){
         return transactionHistory;
