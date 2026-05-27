@@ -28,16 +28,13 @@ public class ManualBidStrategy implements BidStrategy {
 
     @Override
     public void execute(Auction auction, BidTransaction transaction) throws AuctionException {
-        // Delegate toàn bộ validation + concurrency vào processBid() đã synchronized
+        // Delegate toàn bộ validation + concurrency + freeze tiền vào processBid()
+        // BUG 8 FIX: processBid() đã freeze tiền của bidder mới và unfreeze bidder cũ.
+        // KHÔNG trừ tiền thêm ở đây để tránh double deduction.
         auction.processBid(transaction);
 
-        // Trừ tiền từ ví bidder sau khi đặt thành công
-        transaction.getBidder().setBalance(
-            transaction.getBidder().getBalance() - transaction.getBidAmount()
-        );
-
         System.out.printf(
-            "✋ [MANUAL BID] %s đặt $%.2f cho phiên \"%s\"%n",
+            "✋ [MANUAL BID] %s đặt $%.2f cho phiên \"%s\" (tiền đã bị giam)%n",
             transaction.getBidder().getUserName(),
             transaction.getBidAmount(),
             auction.getItem().getNameItem()

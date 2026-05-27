@@ -130,6 +130,22 @@
                 <Label fx:id="lblToast" text="" maxWidth="Infinity"
                     style="-fx-font-size: 12px; -fx-padding: 0 0 10 0; -fx-text-fill: #27ae60;"/>
 
+                <!-- BUG 4 FIX: Nút dành riêng cho Bidder — Phiên Đấu Giá Đang Tham Gia -->
+                <VBox fx:id="sectionMyBids" spacing="14.0" managed="false" visible="false"
+                    style="-fx-background-color: #171717; -fx-border-color: #F5C518; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 22;">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="🏷" style="-fx-font-size: 18px;"/>
+                        <VBox spacing="4">
+                            <Label style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;" text="PHIÊN ĐẤU GIÁ ĐANG THAM GIA"/>
+                            <Label text="Xem lại tất cả các phiên bạn đã đặt giá, trạng thái và vị trí hiện tại."
+                                style="-fx-text-fill: #555; -fx-font-size: 11px;" wrapText="true"/>
+                        </VBox>
+                    </HBox>
+                    <Button maxWidth="Infinity" onAction="#onMyBidsClick"
+                        style="-fx-background-color: #F5C518; -fx-text-fill: #000; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 11; -fx-font-size: 13px;"
+                        text="🏷  Phiên Đấu Giá Đang Tham Gia →"/>
+                </VBox>
+
             </VBox>
         </ScrollPane>
     </VBox>

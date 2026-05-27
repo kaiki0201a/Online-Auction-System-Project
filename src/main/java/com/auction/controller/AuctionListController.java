@@ -89,6 +89,9 @@ public class AuctionListController {
 
         List<Auction> filtered = allAuctions.stream()
             .filter(a -> a.getStatus() != AuctionStatus.PENDING_APPROVAL)
+            // BUG 6 FIX: Ẩn phiên bị từ chối và đã hủy khỏi danh sách công khai
+            .filter(a -> a.getStatus() != AuctionStatus.REJECTED)
+            .filter(a -> a.getStatus() != AuctionStatus.CANCELED)
             .filter(a -> {
                 String name = a.getItem().getNameItem().toLowerCase();
                 String seller = a.getSeller().getUserName().toLowerCase();

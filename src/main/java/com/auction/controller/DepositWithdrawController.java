@@ -111,13 +111,14 @@ public class DepositWithdrawController {
             // Cập nhật model
             setBalance(newBalance);
 
-            // Ghi lịch sử
-            if (pendingType != null) {
-                WalletTransaction.Type wType = "deposit".equals(pendingType)
+            // Ghi lịch sử — dùng pendingType để xác định loại giao dịch
+            String resolvedType = pendingType; // lưu trước khi clear
+            if (resolvedType != null) {
+                WalletTransaction.Type wType = "deposit".equals(resolvedType)
                     ? WalletTransaction.Type.DEPOSIT
                     : WalletTransaction.Type.WITHDRAW;
                 double amount = Math.abs(diff) > 0.001 ? Math.abs(diff)
-                    : (pendingType.equals("deposit") ? extractAmount(txtDepositAmount) : extractAmount(txtWithdrawAmount));
+                    : ("deposit".equals(resolvedType) ? extractAmount(txtDepositAmount) : extractAmount(txtWithdrawAmount));
                 addWalletHistory(new WalletTransaction(wType, amount, newBalance));
             }
 
@@ -125,14 +126,15 @@ public class DepositWithdrawController {
             updateSummaryCards();
             renderHistory();
 
-            // Phản hồi UI
-            String label = diff >= 0 ? "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance)
-                                     : "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance);
-            if (diff >= 0) {
-                setMsg(lblDepositMessage, label, "#4CAF50");
+            // BUG 1 FIX: Dùng resolvedType thay vì diff >= 0 để phân biệt nạp/rút
+            // Khi rút tiền mà balance trùng (diff=0), diff-based logic sẽ hiển thị nhầm label Nạp
+            String successMsg = "✅ " + ("deposit".equals(resolvedType) ? "Nạp" : "Rút")
+                    + " thành công! Số dư: " + CurrencyFormatter.format(newBalance);
+            if ("deposit".equals(resolvedType)) {
+                setMsg(lblDepositMessage, successMsg, "#4CAF50");
                 clearField(txtDepositAmount);
             } else {
-                setMsg(lblWithdrawMessage, label, "#4CAF50");
+                setMsg(lblWithdrawMessage, successMsg, "#4CAF50");
                 clearField(txtWithdrawAmount);
             }
 

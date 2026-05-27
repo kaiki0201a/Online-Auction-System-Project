@@ -62,18 +62,29 @@ public class Auction extends Entity implements Serializable {
         // Kích hoạt anti-sniping để xem có cần gia hạn thời gian không
         applyAntiSniping();
 
-        // BUG #11 FIX: Hoàn tiền cho highestBidder cũ nếu bị người khác vượt qua
-        // Nguyên lý: mỗi lúc chỉ có 1 người "giữ" tiền đặt cọc.
-        // Khi bị vượt → hoàn lại đúng số tiền họ đã bị trừ (currentHighestBid).
+        // BUG 8 FIX: Hệ thống "giam tiền" (freeze/unfreeze)
+        // Khi bidder A đặt giá → trừ tiền A (giam)
+        // Khi bidder B outbid A → hoàn tiền A, trừ tiền B (giam B)
+        // Khi phiên kết thúc → người thắng cuối đã bị trừ tiền rồi, chỉ cộng seller
         if (this.highestBidder != null
                 && !this.highestBidder.getId().equals(transaction.getBidder().getId())) {
+            // Hoàn tiền cho highestBidder cũ (họ đã bị giam đúng số currentHighestBid)
             double refund = this.currentHighestBid;
             this.highestBidder.setBalance(this.highestBidder.getBalance() + refund);
-            System.out.printf("↩️  [REFUND] Hoàn %.2f cho %s (bị vượt bởi %s)%n",
+            System.out.printf("↩️  [UNFREEZE] Hoàn %.2f cho %s (bị outbid bởi %s)%n",
                 refund,
                 this.highestBidder.getUserName(),
                 transaction.getBidder().getUserName());
         }
+
+        // Trừ tiền bidder mới (giam tiền — freeze)
+        // Tại điểm này, this.highestBidder vẫn là người cũ (chưa update)
+        // → bidder mới chắc chắn khác highestBidder cũ → trừ tiền bình thường
+        // validateBid() đã kiểm tra balance >= bidAmount nên an toàn
+        transaction.getBidder().setBalance(
+            transaction.getBidder().getBalance() - transaction.getBidAmount());
+        System.out.printf("🔒 [FREEZE] Giam %.2f của %s%n",
+            transaction.getBidAmount(), transaction.getBidder().getUserName());
 
         // 2. Cập nhật dữ liệu
         this.currentHighestBid = transaction.getBidAmount();
@@ -172,6 +183,21 @@ public class Auction extends Entity implements Serializable {
                     try {
                         BidTransaction autoTx = new BidTransaction(this, topRule.getBidder(), targetPrice);
                         validateBid(autoTx);
+
+                        // BUG 8 FIX: Unfreeze tiền của highestBidder cũ trước khi autobid
+                        if (this.highestBidder != null
+                                && !this.highestBidder.getId().equals(topRule.getBidder().getId())) {
+                            double refund = this.currentHighestBid;
+                            this.highestBidder.setBalance(this.highestBidder.getBalance() + refund);
+                            System.out.printf("↩️  [AUTO UNFREEZE] Hoàn %.2f cho %s%n",
+                                refund, this.highestBidder.getUserName());
+                        }
+
+                        // BUG 8 FIX: Freeze tiền của autobidder mới
+                        topRule.getBidder().setBalance(
+                            topRule.getBidder().getBalance() - targetPrice);
+                        System.out.printf("🔒 [AUTO FREEZE] Giam %.2f của %s%n",
+                            targetPrice, topRule.getBidder().getUserName());
 
                         this.currentHighestBid = targetPrice;
                         this.highestBidder = topRule.getBidder();

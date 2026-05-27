@@ -19,6 +19,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -35,6 +36,8 @@ public class SettingsController {
     @FXML private PasswordField txtCurrentPassword;
     @FXML private PasswordField txtNewPassword;
     @FXML private PasswordField txtConfirmNewPassword;
+    // BUG 4 FIX: Section dành riêng cho Bidder
+    @FXML private VBox sectionMyBids;
 
     private static final String LISTENER_KEY = "settings";
     private User currentUser;
@@ -63,6 +66,13 @@ public class SettingsController {
             } else {
                 lblBalance.setText("N/A (Admin)");
             }
+        }
+
+        // BUG 4 FIX: Chỉ hiện nút "Phiên đấu giá đang tham gia" cho Bidder
+        if (sectionMyBids != null) {
+            boolean isBidder = currentUser instanceof Bidder;
+            sectionMyBids.setVisible(isBidder);
+            sectionMyBids.setManaged(isBidder);
         }
 
         // Dùng addEventListener (không ghi đè listener khác)
@@ -169,6 +179,19 @@ public class SettingsController {
             Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root, w, h));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** BUG 4 FIX: Mở màn hình "Phiên đấu giá đang tham gia" cho Bidder. */
+    @FXML
+    public void onMyBidsClick(ActionEvent event) {
+        NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/MyBids.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root, 1100, 750));
         } catch (IOException e) {
             e.printStackTrace();
         }

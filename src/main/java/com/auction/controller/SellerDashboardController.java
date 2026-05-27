@@ -121,10 +121,46 @@ public class SellerDashboardController {
 
     @SuppressWarnings("unchecked")
     private void handleResponse(com.auction.protocol.Response response) {
-        if (response.getStatus() != StatusType.SUCCESS) return;
-
         Object data = response.getData();
         String msg  = response.getMessage();
+
+        // BUG 2 FIX: Xử lý AUCTION_NO_BUYER TRƯỚC guard status != SUCCESS
+        // Vì broadcast này có status=SUCCESS nhưng phải xử lý ngay khi nhận được
+        if (msg != null && msg.startsWith("AUCTION_NO_BUYER|")) {
+            String[] parts = msg.split("\\|");
+            String sellerName = parts.length > 1 ? parts[1] : "";
+            String itemName   = parts.length > 2 ? parts[2] : "sản phẩm";
+            if (sellerName.equals(currentUser.getUserName())) {
+                showAlert("📭 Phiên không có người tham gia",
+                    "Phiên đấu giá sản phẩm \"" + itemName + "\" đã kết thúc\n"
+                    + "nhưng không có ai đặt giá.\n"
+                    + "Bạn có thể đăng lại sản phẩm với mức giá hấp dẫn hơn!");
+            }
+        }
+
+        // BUG 8 FIX: Nhận FORCE_LOGOUT → tự đăng xuất nếu username khớp (trước guard)
+        if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
+            String logoutTarget = msg.split("\\|")[1];
+            if (logoutTarget.equals(currentUser.getUserName())) {
+                NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+                AppContext.logout();
+                try {
+                    Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+                    Stage stage = (Stage) rootPane.getScene().getWindow();
+                    stage.setScene(new Scene(root, 900, 600));
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                        javafx.scene.control.Alert.AlertType.WARNING);
+                    alert.setTitle("⚠️ Tài khoản bị khóa");
+                    alert.setHeaderText(null);
+                    alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\n"
+                        + "Bạn đã được đăng xuất tự động.");
+                    alert.show();
+                } catch (IOException ex) { ex.printStackTrace(); }
+            }
+            return;
+        }
+
+        if (response.getStatus() != StatusType.SUCCESS) return;
 
         // FIX: Nhận bất kỳ response nào có data là List<Auction> → cập nhật ngay
         if (data instanceof List<?> dataList && !dataList.isEmpty()
@@ -208,44 +244,42 @@ public class SellerDashboardController {
             NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
         }
 
-        // Khi phiên kết thúc hoặc seller nhận tiền → tải lại lịch sử thanh toán
-        if ("AUCTION_ENDED".equals(msg) ||
-                (msg != null && msg.startsWith("SELLER_BALANCE_UPDATE|"))) {
+        // BUG 7 FIX: Khi phiên kết thúc có người mua → tạo AuctionEarning local để cập nhật lịch sử ngay
+        if ("AUCTION_ENDED".equals(msg) && data instanceof List<?> endedList
+                && !endedList.isEmpty() && endedList.get(0) instanceof Auction) {
+            @SuppressWarnings("unchecked")
+            List<Auction> endedAuctions = (List<Auction>) endedList;
+            for (Auction ended : endedAuctions) {
+                if (ended.getSeller().getUserName().equals(currentUser.getUserName())
+                        && (ended.getStatus() == AuctionStatus.FINISHED || ended.getStatus() == AuctionStatus.PAID)
+                        && ended.getHighestBidder() != null) {
+                    // Kiểm tra xem earning đã được thêm chưa (tránh duplicate)
+                    boolean alreadyAdded = currentUser.getEarningHistory().stream()
+                            .anyMatch(e -> e.getAuctionId().equals(ended.getAuctionId()));
+                    if (!alreadyAdded) {
+                        double amount = ended.getCurrentHighestBid();
+                        double newBalance = currentUser.getBalance() + amount;
+                        currentUser.setBalance(newBalance);
+                        AuctionEarning earning = new AuctionEarning(
+                                ended.getAuctionId(),
+                                ended.getItem().getNameItem(),
+                                ended.getHighestBidder().getUserName(),
+                                amount,
+                                newBalance,
+                                "PAID"
+                        );
+                        currentUser.addEarning(earning);
+                        System.out.println("[SELLER UI] Cập nhật earning local: " + ended.getItem().getNameItem());
+                    }
+                }
+            }
+            updateBalance();
             Platform.runLater(this::loadPaymentHistory);
         }
 
-        // BUG #3 FIX: Thông báo khi phiên của seller kết thúc không có người mua
-        if (msg != null && msg.startsWith("AUCTION_NO_BUYER|")) {
-            String[] parts = msg.split("\\|");
-            String sellerName = parts.length > 1 ? parts[1] : "";
-            String itemName   = parts.length > 2 ? parts[2] : "sản phẩm";
-            if (sellerName.equals(currentUser.getUserName())) {
-                showAlert("📭 Phiên không có người tham gia",
-                    "Phiên đấu giá sản phẩm \"" + itemName + "\" đã kết thúc\n"
-                    + "nhưng không có ai đặt giá.\n"
-                    + "Bạn có thể đăng lại sản phẩm với mức giá hấp dẫn hơn!");
-            }
-        }
-
-        // BUG #8 FIX: Nhận FORCE_LOGOUT → tự đăng xuất nếu username khớp
-        if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
-            String logoutTarget = msg.split("\\|")[1];
-            if (logoutTarget.equals(currentUser.getUserName())) {
-                NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
-                AppContext.logout();
-                try {
-                    Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
-                    Stage stage = (Stage) rootPane.getScene().getWindow();
-                    stage.setScene(new Scene(root, 900, 600));
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-                        javafx.scene.control.Alert.AlertType.WARNING);
-                    alert.setTitle("⚠️ Tài khoản bị khóa");
-                    alert.setHeaderText(null);
-                    alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\n"
-                        + "Bạn đã được đăng xuất tự động.");
-                    alert.show();
-                } catch (IOException ex) { ex.printStackTrace(); }
-            }
+        // Khi nhận SELLER_BALANCE_UPDATE → tải lại lịch sử thanh toán
+        if (msg != null && msg.startsWith("SELLER_BALANCE_UPDATE|")) {
+            Platform.runLater(this::loadPaymentHistory);
         }
     }
 
@@ -562,7 +596,7 @@ public class SellerDashboardController {
     @FXML private javafx.scene.control.DatePicker datePickerEnd;
     @FXML private javafx.scene.control.TextField  txtTimeEnd;
 
-    @FXML
+@FXML
     public void onPublishClick(javafx.event.ActionEvent event) {
         String name     = txtName          != null ? txtName.getText().trim()          : "";
         String priceStr = txtStartingPrice != null ? txtStartingPrice.getText().trim() : "";
@@ -596,7 +630,14 @@ public class SellerDashboardController {
             return;
         }
 
+        // BUG 3 FIX: Validate các thông số động trước khi tạo Item
         List<String> dynamics = extractDynamicInputs();
+        String dynamicError = validateDynamicInputs(category, dynamics);
+        if (dynamicError != null) {
+            showAlert("⚠️ Thông số không hợp lệ", dynamicError);
+            return;
+        }
+
         Item newItem = buildItem(category, name, desc, price, dynamics);
         if (newItem == null) { showAlert("Lỗi", "Danh mục không hợp lệ."); return; }
 
@@ -610,6 +651,59 @@ public class SellerDashboardController {
                 "Sản phẩm \"" + name + "\" đang được gửi lên server.\n"
                         + "Kho hàng sẽ cập nhật ngay khi server xác nhận.");
         onClearFormClick(null);
+    }
+
+    /**
+     * BUG 3 FIX: Validate các thông số động theo từng danh mục.
+     * Trả về null nếu hợp lệ, chuỗi thông báo lỗi nếu không hợp lệ.
+     */
+    private String validateDynamicInputs(String category, List<String> dynamics) {
+        if ("Art".equals(category)) {
+            if (dynamics.size() > 0 && dynamics.get(0).isEmpty()) {
+                return "Vui lòng nhập tên họa sĩ / nghệ nhân!";
+            }
+            if (dynamics.size() > 1 && !dynamics.get(1).isEmpty()) {
+                try {
+                    int year = Integer.parseInt(dynamics.get(1));
+                    if (year < 1000 || year > 2100) {
+                        return "Năm sáng tác không hợp lệ! Vui lòng nhập năm từ 1000 đến 2100.";
+                    }
+                } catch (NumberFormatException e) {
+                    return "Năm sáng tác phải là số nguyên! (VD: 1990)";
+                }
+            }
+        } else if ("Electronics".equals(category)) {
+            if (dynamics.size() > 0 && dynamics.get(0).isEmpty()) {
+                return "Vui lòng nhập tên thương hiệu!";
+            }
+            if (dynamics.size() > 1 && !dynamics.get(1).isEmpty()) {
+                try {
+                    int warranty = Integer.parseInt(dynamics.get(1));
+                    if (warranty <= 0) {
+                        return "Số tháng bảo hành phải lớn hơn 0!";
+                    }
+                } catch (NumberFormatException e) {
+                    return "Số tháng bảo hành phải là số nguyên! (VD: 12)";
+                }
+            }
+        } else if ("Vehicle".equals(category)) {
+            if (dynamics.size() > 0 && dynamics.get(0).isEmpty()) {
+                return "Vui lòng nhập loại động cơ! (VD: V8 Turbo)";
+            }
+            if (dynamics.size() > 1 && !dynamics.get(1).isEmpty()) {
+                try {
+                    double mileage = Double.parseDouble(dynamics.get(1));
+                    if (mileage < 0) {
+                        return "Số km không thể là số âm!";
+                    }
+                } catch (NumberFormatException e) {
+                    // BUG 3 ROOT CAUSE: người dùng nhập 'abc' vào ô Số Km
+                    return "Số km (Mileage) phải là số! Bạn đã nhập: '" + dynamics.get(1) + "'\n"
+                            + "Vui lòng chỉ nhập số (VD: 12000 hoặc 12500.5)";
+                }
+            }
+        }
+        return null; // Hợp lệ
     }
 
     /**
