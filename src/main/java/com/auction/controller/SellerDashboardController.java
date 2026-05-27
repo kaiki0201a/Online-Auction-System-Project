@@ -121,10 +121,36 @@ public class SellerDashboardController {
 
     @SuppressWarnings("unchecked")
     private void handleResponse(com.auction.protocol.Response response) {
-        if (response.getStatus() != StatusType.SUCCESS) return;
-
         Object data = response.getData();
         String msg  = response.getMessage();
+
+        // FORCE_LOGOUT: Admin khóa tài khoản này → tự đăng xuất
+        if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
+            String targetUser = msg.split("\\|")[1];
+            if (targetUser.equals(currentUser.getUserName())) {
+                NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+                AppContext.logout();
+                // Hiện dark-theme dialog thông báo trước khi logout
+                com.auction.notification.NotificationService.get().alert(
+                    rootPane != null && rootPane.getScene() != null
+                        ? rootPane.getScene().getWindow() : null,
+                    "\ud83d\udd12 Tài khoản bị khóa",
+                    "\u26a0\ufe0f Tài khoản \"" + targetUser + "\" của bạn đã bị Admin khóa.\n"
+                    + "Bạn sẽ được đăng xuất ngay bây giờ.",
+                    com.auction.notification.NotificationType.ERROR
+                );
+                try {
+                    Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+                    Stage stage = (Stage) rootPane.getScene().getWindow();
+                    stage.setScene(new Scene(root, 900, 600));
+                } catch (IOException e) { e.printStackTrace(); }
+            }
+            return;
+        }
+
+
+        if (response.getStatus() != StatusType.SUCCESS) return;
+
 
         // FIX: Nhận bất kỳ response nào có data là List<Auction> → cập nhật ngay
         if (data instanceof List<?> dataList && !dataList.isEmpty()

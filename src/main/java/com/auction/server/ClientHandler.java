@@ -238,11 +238,70 @@ public class ClientHandler implements Runnable {
                     User targetUser = UserManager.getInstance().getUser(targetUsername);
 
                     if (targetUser != null) {
-                        targetUser.setBanned(!targetUser.isBanned());
+                        boolean wasBanned = targetUser.isBanned();
+                        targetUser.setBanned(!wasBanned);
                         ServerApp.getUserDAO().saveDataToFile();
-                        String act = targetUser.isBanned() ? "khóa" : "mở khóa";
+                        boolean nowBanned = targetUser.isBanned();
+                        String act = nowBanned ? "khóa" : "mở khóa";
+
+                        // Nếu vừa bị khóa (bidder/seller) → broadcast FORCE_LOGOUT
+                        if (nowBanned) {
+                            ServerApp.broadcast(new Response(
+                                StatusType.SUCCESS,
+                                "FORCE_LOGOUT|" + targetUsername,
+                                null
+                            ));
+                            // Nếu là Bidder → hủy kết quả đấu giá đang dẫn đầu,
+                            // hoàn tiền + xét lại bidder tiếp theo
+                            if (targetUser instanceof Bidder bannedBidder) {
+                                boolean auctionChanged = false;
+                                for (Auction auc : AuctionManager.getInstance().getAllAuctions()) {
+                                    if ((auc.getStatus() == AuctionStatus.RUNNING
+                                            || auc.getStatus() == AuctionStatus.OPEN
+                                            || auc.getStatus() == AuctionStatus.APPROVED)
+                                            && auc.getHighestBidder() != null
+                                            && auc.getHighestBidder().getUserName().equals(targetUsername)) {
+                                        // Hoàn tiền cho bidder bị khóa
+                                        bannedBidder.setBalance(
+                                            bannedBidder.getBalance() + auc.getCurrentHighestBid());
+                                        // Tìm bidder hợp lệ tiếp theo trong lịch sử
+                                        Bidder nextBidder = null;
+                                        double nextBid = auc.getItem().getStartingPrice();
+                                        for (int i = auc.getBidHistory().size() - 1; i >= 0; i--) {
+                                            BidTransaction bt = auc.getBidHistory().get(i);
+                                            if (!bt.getBidder().getUserName().equals(targetUsername)
+                                                    && !bt.getBidder().isBanned()) {
+                                                nextBidder = bt.getBidder();
+                                                nextBid = bt.getBidAmount();
+                                                break;
+                                            }
+                                        }
+                                        // Cập nhật highest bidder
+                                        auc.setHighestBidder(nextBidder);
+                                        auc.setCurrentHighestBid(nextBidder != null ? nextBid
+                                            : auc.getItem().getStartingPrice());
+                                        AuctionManager.getInstance().updateAuction(auc);
+                                        auctionChanged = true;
+                                        System.out.println("🔒 [BAN] Huỷ kết quả " + targetUsername
+                                            + " trong phiên '" + auc.getItem().getNameItem()
+                                            + "'. Bidder mới dẫn đầu: "
+                                            + (nextBidder != null ? nextBidder.getUserName() : "Không ai"));
+                                    }
+                                }
+                                if (auctionChanged) {
+                                    ServerApp.getAuctionDAO().saveDataToFile();
+                                    ServerApp.getUserDAO().saveDataToFile();
+                                    List<Auction> allAfterBan = AuctionManager.getInstance().getAllAuctions();
+                                    ServerApp.broadcastAuctionUpdate(allAfterBan, "UPDATE_AUCTION");
+                                }
+                            }
+                        }
+
+                        // Sau khi xử lý xong → trả về list User mới nhất kèm message
+                        List<User> updatedUsers = UserManager.getInstance().getAllUsers();
                         return new Response(StatusType.SUCCESS,
-                                "Đã " + act + " tài khoản " + targetUsername + "!", null);
+                            "BAN_OK|" + (nowBanned ? "khóa" : "mở khóa") + "|" + targetUsername,
+                            updatedUsers);
                     }
                     return new Response(StatusType.ERROR, "Không tìm thấy User.", null);
                 } catch (Exception e) {
@@ -301,12 +360,19 @@ public class ClientHandler implements Runnable {
                     if (toApprove.getStatus() != AuctionStatus.PENDING_APPROVAL)
                         return new Response(StatusType.ERROR, "Phiên này không ở trạng thái chờ duyệt.", null);
 
-                    // FIX: Auto-LIVE nếu startTime <= now, còn lại set APPROVED (chờ đến giờ)
+                    // KIỂM TRA: Nếu thời gian kết thúc đã qua → không cho duyệt
                     LocalDateTime now = LocalDateTime.now();
+                    if (toApprove.getEndTime() != null && !toApprove.getEndTime().isAfter(now)) {
+                        return new Response(StatusType.ERROR,
+                            "EXPIRED_AUCTION|" + toApprove.getItem().getNameItem(),
+                            null);
+                    }
+
+                    // Auto-LIVE nếu startTime <= now, còn lại set APPROVED (chờ đến giờ)
                     if (toApprove.getStartTime() == null || !toApprove.getStartTime().isAfter(now)) {
                         // Bắt đầu ngay → RUNNING
                         toApprove.setStatus(AuctionStatus.RUNNING);
-                        // FIX: Trigger scheduleAutoClose để auction tự kết thúc đúng giờ
+                        // Trigger scheduleAutoClose để auction tự kết thúc đúng giờ
                         ServerApp.scheduleAutoClose(toApprove);
                         System.out.println("✅ [ADMIN] Duyệt + RUNNING ngay: " + toApprove.getItem().getNameItem());
                     } else {
@@ -319,7 +385,7 @@ public class ClientHandler implements Runnable {
                     AuctionManager.getInstance().updateAuction(toApprove);
                     ServerApp.getAuctionDAO().saveDataToFile();
 
-                    // FIX: Broadcast với toàn bộ List<Auction> — client filter nhất quán
+                    // Broadcast với toàn bộ List<Auction> — client filter nhất quán
                     List<Auction> allAfterApprove = AuctionManager.getInstance().getAllAuctions();
                     ServerApp.broadcastAuctionUpdate(allAfterApprove, "AUCTION_APPROVED");
 
@@ -337,13 +403,15 @@ public class ClientHandler implements Runnable {
 
                     if (toReject == null)
                         return new Response(StatusType.ERROR, "Không tìm thấy phiên.", null);
+                    if (toReject.getStatus() != AuctionStatus.PENDING_APPROVAL)
+                        return new Response(StatusType.ERROR, "Phiên này không ở trạng thái chờ duyệt.", null);
 
-                    // FIX: Set REJECTED thay vì CANCELED — seller thấy đúng lý do
+                    // Set REJECTED thay vì CANCELED — seller thấy đúng lý do
                     toReject.setStatus(AuctionStatus.REJECTED);
                     AuctionManager.getInstance().updateAuction(toReject);
                     ServerApp.getAuctionDAO().saveDataToFile();
 
-                    // FIX: Broadcast với List<Auction>
+                    // Broadcast với List<Auction>
                     List<Auction> allAfterReject = AuctionManager.getInstance().getAllAuctions();
                     ServerApp.broadcastAuctionUpdate(allAfterReject, "AUCTION_REJECTED");
 

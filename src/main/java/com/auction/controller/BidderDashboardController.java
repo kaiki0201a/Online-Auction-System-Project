@@ -124,6 +124,31 @@ public class BidderDashboardController {
             return;
         }
 
+        // FORCE_LOGOUT: Admin khóa tài khoản này → tự đăng xuất
+        if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
+            String targetUser = msg.split("\\|")[1];
+            if (targetUser.equals(currentUser.getUserName())) {
+                if (masterTimer != null) masterTimer.stop();
+                NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+                AppContext.logout();
+                // Hiển dark-theme dialog thông báo trước khi logout
+                com.auction.notification.NotificationService.get().alert(
+                    rootPane != null && rootPane.getScene() != null
+                        ? rootPane.getScene().getWindow() : null,
+                    "🔒 Tài khoản bị khóa",
+                    "⚠️ Tài khoản \"" + targetUser + "\" của bạn đã bị Admin khóa.\n"
+                    + "Bạn sẽ được đăng xuất ngay bây giờ.",
+                    com.auction.notification.NotificationType.ERROR
+                );
+                try {
+                    Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+                    Stage stage = (Stage) rootPane.getScene().getWindow();
+                    stage.setScene(new Scene(root, 900, 600));
+                } catch (IOException e) { e.printStackTrace(); }
+            }
+            return;
+        }
+
         // FIX: Hoàn tiền khi phiên bị hủy giữa chừng
         if (msg != null && msg.startsWith("BIDDER_REFUND|") && response.getData() instanceof Double) {
             String targetUsername = msg.split("\\|")[1];

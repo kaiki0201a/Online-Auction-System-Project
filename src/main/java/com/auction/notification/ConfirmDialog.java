@@ -148,17 +148,22 @@ public class ConfirmDialog {
         scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
         dialog.setScene(scene);
 
-        // Scale-in animation
+        // Scale-in animation — cần play TRƯỚC showAndWait
         root.setScaleX(0.88); root.setScaleY(0.88); root.setOpacity(0);
-        dialog.show();
+
+        // FIX CRITICAL: Chỉ dùng showAndWait() — KHÔNG gọi show() trước
+        // Gọi show() rồi showAndWait() khiến dialog trả về ngay với result=false
+        // trước khi user kịp click bất cứ nút nào!
         javafx.animation.ParallelTransition anim = new javafx.animation.ParallelTransition(
             createScale(root, 0.88, 1.0, 200),
             createFade(root, 0, 1, 180)
         );
-        anim.play();
+        // Delay nhỏ để animation play sau khi dialog hiện lên qua showAndWait
+        dialog.setOnShown(e -> anim.play());
         dialog.showAndWait();
 
         return acted[0] ? Optional.of(result[0]) : Optional.empty();
+
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

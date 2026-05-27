@@ -440,4 +440,13 @@ public class Auction extends Entity implements Serializable {
     public List<AutoBidRule> getAutoBidRules() {
         return autoBidRules;
     }
+
+    // Setters for ban logic: allow server to roll back highest bidder
+    public void setHighestBidder(Bidder bidder) {
+        this.highestBidder = bidder;
+    }
+
+    public void setCurrentHighestBid(double amount) {
+        this.currentHighestBid = amount;
+    }
 }

@@ -2,6 +2,7 @@ package com.auction.controller;
 
 import com.auction.client.NetworkClient;
 import com.auction.model.*;
+import com.auction.notification.ConfirmDialog;
 import com.auction.protocol.ActionType;
 import com.auction.protocol.Request;
 import com.auction.protocol.Response;
@@ -27,11 +28,13 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 /**
  * AdminController — FIX hoàn chỉnh.
@@ -119,69 +122,78 @@ public class AdminController {
 
     @SuppressWarnings("unchecked")
     private void handleResponse(Response response) {
-        if (response.getStatus() == StatusType.SUCCESS) {
-            Object data = response.getData();
-            String msg  = response.getMessage();
+        String msg  = response.getMessage();
+        Object data = response.getData();
 
-            // Nhận danh sách User
-            if ("Danh sách User".equals(msg) && data instanceof List) {
+        // ── Bỏ qua sự kiện kết nối (CONNECTION_LOST/RESTORED/FAILED) ──
+        if (msg != null && (msg.startsWith("CONNECTION_") || msg.startsWith("FORCE_LOGOUT|"))) {
+            return; // Admin không cần xử lý các sự kiện này
+        }
+
+        if (response.getStatus() == StatusType.SUCCESS) {
+
+            // ── 1. Nhận List<User> (GET_USER_LIST hoặc sau BAN_OK) ──
+            if (data instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof User) {
                 allUsers.setAll((List<User>) data);
                 updateStats();
+                if (msg != null && msg.startsWith("BAN_OK|")) {
+                    String[] parts = msg.split("\\|");
+                    boolean isBan   = parts.length > 1 && parts[1].equals("khóa");
+                    String  uname   = parts.length > 2 ? parts[2] : "";
+                    String  feedMsg = (isBan ? "🔒 Đã khóa" : "🔓 Đã mở khóa") + " tài khoản " + uname + "!";
+                    setFeedback(feedMsg, isBan ? "#e74c3c" : "#27ae60");
+                    showToast(feedMsg, isBan ? "error" : "success");
+                }
+                return;
             }
 
-            // FIX: Nhận bất kỳ response nào có data là List<Auction> → cập nhật ngay
+            // ── 2. Nhận List<Auction> (mọi nguồn) ──
             if (data instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof Auction) {
                 allAuctions.setAll((List<Auction>) data);
                 renderPendingList();
                 updateStats();
-            }
-
-            // FIX: Admin vừa approve/reject → response đã có List<Auction> trong data
-            // Không cần gửi thêm GET_AUCTION_LIST nếu data đã là List
-            if (msg != null && (msg.startsWith("DUYỆT_OK|") || msg.startsWith("TỪ_CHỐI_OK|")
-                    || "AUCTION_APPROVED".equals(msg) || "AUCTION_REJECTED".equals(msg))) {
-                boolean isApprove = msg.startsWith("DUYỆT_OK|") || "AUCTION_APPROVED".equals(msg);
-                setFeedback(isApprove ? "✅ Đã duyệt sản phẩm thành công!" : "❌ Đã từ chối sản phẩm!",
-                    isApprove ? "#27ae60" : "#e74c3c");
-                // Nếu data không phải List → mới cần refresh
-                if (!(data instanceof List)) {
-                    NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
+                // Hiện feedback tùy theo action vừa thực hiện
+                if (msg != null) {
+                    if (msg.startsWith("DUYỆT_OK|") || "AUCTION_APPROVED".equals(msg)) {
+                        setFeedback("✅ Đã duyệt sản phẩm thành công!", "#27ae60");
+                    } else if (msg.startsWith("TỪ_CHỐI_OK|") || "AUCTION_REJECTED".equals(msg)) {
+                        setFeedback("❌ Đã từ chối sản phẩm!", "#e74c3c");
+                    } else if (msg.contains("hủy") || "AUCTION_CANCELED".equals(msg)) {
+                        setFeedback("🚫 Đã dừng phiên đấu giá!", "#e74c3c");
+                    }
                 }
+                return;
             }
 
-            // Broadcast các sự kiện khác
-            if ("UPDATE_AUCTION".equals(msg) || "AUCTION_CREATED".equals(msg)
-                    || "AUCTION_WENT_LIVE".equals(msg) || "AUCTION_ENDED".equals(msg)) {
-                if (!(data instanceof List)) {
-                    NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
-                }
-            }
-
-            // Ban/Unban
-            if (msg != null && (msg.toLowerCase().contains("khoá") || msg.toLowerCase().contains("khóa")
-                    || msg.toLowerCase().contains("mở khóa") || msg.toLowerCase().contains("khoản"))) {
-                boolean isBan = !msg.toLowerCase().contains("mở");
-                setFeedback((isBan ? "🔒 " : "🔓 ") + msg, isBan ? "#e74c3c" : "#27ae60");
-                // Toast nổi bật hơn setFeedback
-                NotificationUtil.showToastOnWindow(
-                    (isBan ? "🔒 " : "🔓 ") + msg,
-                    rootPane != null && rootPane.getScene() != null
-                        ? rootPane.getScene().getWindow() : null,
-                    isBan ? "error" : "success"
-                );
-                NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
+            // ── 3. Broadcast không kèm data (hiếm gặp) → reload thủ công ──
+            if (msg != null && (
+                    "AUCTION_APPROVED".equals(msg) || "AUCTION_REJECTED".equals(msg) ||
+                    "AUCTION_CANCELED".equals(msg) || "AUCTION_CREATED".equals(msg) ||
+                    "AUCTION_WENT_LIVE".equals(msg) || "AUCTION_ENDED".equals(msg) ||
+                    "UPDATE_AUCTION".equals(msg))) {
+                NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
             }
 
         } else {
-            setFeedback("❌ " + response.getMessage(), "#e74c3c");
-            NotificationUtil.showToastOnWindow(
-                "❌ " + response.getMessage(),
-                rootPane != null && rootPane.getScene() != null
-                    ? rootPane.getScene().getWindow() : null,
-                "error"
-            );
+            // ── Xử lý lỗi ──
+            if (msg != null && msg.startsWith("EXPIRED_AUCTION|")) {
+                String itemName = msg.split("\\|").length > 1 ? msg.split("\\|")[1] : "sản phẩm";
+                setFeedback("⚠️ Phiên '" + itemName + "' đã quá hạn! Vui lòng bấm TỪ CHỐI để đóng phiên.", "#e67e22");
+                showToast("⚠️ Phiên đã quá hạn! Hãy từ chối phiên này.", "warning");
+            } else if (msg != null && !msg.startsWith("CONNECTION_")) {
+                setFeedback("❌ " + msg, "#e74c3c");
+                showToast("❌ " + msg, "error");
+            }
         }
     }
+
+    /** Helper: hiển thị toast gắn với cửa sổ admin. */
+    private void showToast(String message, String type) {
+        if (rootPane != null && rootPane.getScene() != null) {
+            NotificationUtil.showToastOnWindow(message, rootPane.getScene().getWindow(), type);
+        }
+    }
+
 
     // ─── CẬP NHẬT THỐNG KÊ ────────────────────────────────────────────────────
 
@@ -307,9 +319,25 @@ public class AdminController {
         meta.setHgap(25); meta.setVgap(4);
         addMeta(meta, "Người bán:", auction.getSeller().getUserName(), 0);
         addMeta(meta, "Giá khởi điểm:", CurrencyFormatter.format(auction.getItem().getStartingPrice()), 1);
-        addMeta(meta, "ID phiên:", auction.getAuctionId().substring(0, 8) + "...", 2);
+
+        // Hiển thị thời gian kết thúc và cảnh báo nếu đã quá hạn
+        boolean isExpired = auction.getEndTime() != null &&
+            !auction.getEndTime().isAfter(java.time.LocalDateTime.now());
+        String endTimeStr = auction.getEndTime() != null
+            ? auction.getEndTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            : "Chưa xác định";
+        addMeta(meta, "Kết thúc:", endTimeStr, 2);
 
         info.getChildren().addAll(header, name, desc, meta);
+
+        // Cảnh báo quá hạn
+        if (isExpired) {
+            Label expiredWarning = new Label("⚠️ PHIÊN ĐÃ QUÁ HẠN — Vui lòng TỪ CHỐI phiên này");
+            expiredWarning.setStyle("-fx-text-fill: #e67e22; -fx-font-size: 12px; -fx-font-weight: bold; " +
+                "-fx-background-color: rgba(230,126,34,0.1); -fx-padding: 4 8; -fx-background-radius: 4;");
+            expiredWarning.setWrapText(true);
+            info.getChildren().add(expiredWarning);
+        }
 
         // Nút hành động
         VBox actions = new VBox(10);
@@ -318,9 +346,17 @@ public class AdminController {
 
         Button btnApprove = new Button("✅  PHÊ DUYỆT");
         btnApprove.setMaxWidth(Double.MAX_VALUE);
-        btnApprove.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; " +
-                            "-fx-background-radius: 5; -fx-cursor: hand; -fx-padding: 10 18; -fx-font-size: 13px;");
+        // Disable nút duyệt nếu phiên đã quá hạn
+        if (isExpired) {
+            btnApprove.setDisable(true);
+            btnApprove.setStyle("-fx-background-color: #555; -fx-text-fill: #999; -fx-font-weight: bold; " +
+                "-fx-background-radius: 5; -fx-padding: 10 18; -fx-font-size: 13px;");
+        } else {
+            btnApprove.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; " +
+                "-fx-background-radius: 5; -fx-cursor: hand; -fx-padding: 10 18; -fx-font-size: 13px;");
+        }
         btnApprove.setOnAction(e -> onApproveAuction(auction, btnApprove));
+
 
         Button btnReject = new Button("❌  TỪ CHỐI");
         btnReject.setMaxWidth(Double.MAX_VALUE);
@@ -359,23 +395,17 @@ public class AdminController {
     }
 
     private void onRejectAuction(Auction auction, Button btn) {
-        // Confirm dialog dark theme thay vì Alert mặc định
-        java.util.Optional<Boolean> confirmed = NotificationUtil.showConfirm(
-            rootPane != null && rootPane.getScene() != null ? rootPane.getScene().getWindow() : null,
-            "Từ chối sản phẩm",
-            "Bạn có chắc muốn TỪ CHỐI sản phẩm:\n\"" + auction.getItem().getNameItem() + "\"?\n\n"
-                + "Hành động này sẽ thông báo cho Seller biết.",
-            "❌  Từ Chối",
-            "Hủy"
-        );
-        confirmed.ifPresent(yes -> {
-            if (yes) {
-                btn.setDisable(true);
-                setFeedback("⏳ Đang từ chối " + auction.getItem().getNameItem() + "...", "#e74c3c");
-                NetworkClient.getInstance().sendRequest(
-                    new Request(ActionType.REJECT_AUCTION, auction.getAuctionId()));
-            }
-        });
+        Window owner = rootPane != null && rootPane.getScene() != null
+            ? rootPane.getScene().getWindow() : null;
+        ConfirmDialog.rejectProduct(owner, auction.getItem().getNameItem())
+            .ifPresent(yes -> {
+                if (yes) {
+                    btn.setDisable(true);
+                    setFeedback("⏳ Đang từ chối " + auction.getItem().getNameItem() + "...", "#e74c3c");
+                    NetworkClient.getInstance().sendRequest(
+                        new Request(ActionType.REJECT_AUCTION, auction.getAuctionId()));
+                }
+            });
     }
 
     // ─── TAB: BẢNG ĐẤU GIÁ ───────────────────────────────────────────────────
@@ -424,22 +454,15 @@ public class AdminController {
                                         "-fx-padding: 4 10; -fx-background-radius: 4; -fx-font-size: 11px;");
                     btnCancel.setOnAction(e -> {
                         Auction a = getTableView().getItems().get(getIndex());
-                        // Confirm trước khi hủy phiên — thao tác không thể hoàn tác
-                        java.util.Optional<Boolean> confirmed = NotificationUtil.showConfirm(
-                            getScene() != null ? getScene().getWindow() : null,
-                            "Dừng phiên đấu giá",
-                            "Bạn có chắc muốn DỪNG phiên:\n\"" + a.getItem().getNameItem() + "\"?\n\n"
-                                + "Tiền đặt cọc sẽ được hoàn lại cho bidder đang dẫn đầu.",
-                            "🚫  Dừng Phiên",
-                            "Hủy"
-                        );
-                        confirmed.ifPresent(yes -> {
-                            if (yes) {
-                                setFeedback("⏳ Đang dừng phiên " + a.getItem().getNameItem() + "...", "#e74c3c");
-                                NetworkClient.getInstance().sendRequest(
-                                    new Request(ActionType.CANCEL_AUCTION, a.getAuctionId()));
-                            }
-                        });
+                        Window owner2 = getScene() != null ? getScene().getWindow() : null;
+                        ConfirmDialog.cancelAuction(owner2, a.getItem().getNameItem())
+                            .ifPresent(yes -> {
+                                if (yes) {
+                                    setFeedback("⏳ Đang dừng phiên " + a.getItem().getNameItem() + "...", "#e74c3c");
+                                    NetworkClient.getInstance().sendRequest(
+                                        new Request(ActionType.CANCEL_AUCTION, a.getAuctionId()));
+                                }
+                            });
                     });
                     btnApprove.setOnAction(e -> {
                         Auction a = getTableView().getItems().get(getIndex());
@@ -497,24 +520,20 @@ public class AdminController {
                 {
                     btn.setOnAction(e -> {
                         User user = getTableView().getItems().get(getIndex());
-                        boolean isBanned = user.isBanned();
-                        // Confirm dialog trước khi ban/unban
-                        String confirmTitle = isBanned ? "Mở Khóa Tài Khoản" : "Khóa Tài Khoản";
-                        String confirmMsg   = isBanned
-                            ? "Mở khóa tài khoản \"" + user.getUserName() + "\"?\nNgười dùng sẽ đăng nhập được trở lại."
-                            : "Khóa tài khoản \"" + user.getUserName() + "\"?\nNgười dùng sẽ không thể đăng nhập.";
-                        String yesLabel     = isBanned ? "🔓  Mở Khóa" : "🔒  Khóa Tài Khoản";
-
-                        java.util.Optional<Boolean> confirmed = NotificationUtil.showConfirm(
-                            getScene() != null ? getScene().getWindow() : null,
-                            confirmTitle, confirmMsg, yesLabel, "Hủy"
-                        );
-                        confirmed.ifPresent(yes -> {
-                            if (yes) {
-                                NetworkClient.getInstance().sendRequest(
-                                    new Request(ActionType.BAN_USER, user.getUserName()));
-                            }
-                        });
+                        Window owner3 = getScene() != null ? getScene().getWindow() : null;
+                        if (user.isBanned()) {
+                            ConfirmDialog.unbanUser(owner3, user.getUserName())
+                                .ifPresent(yes -> {
+                                    if (yes) NetworkClient.getInstance().sendRequest(
+                                        new Request(ActionType.BAN_USER, user.getUserName()));
+                                });
+                        } else {
+                            ConfirmDialog.banUser(owner3, user.getUserName())
+                                .ifPresent(yes -> {
+                                    if (yes) NetworkClient.getInstance().sendRequest(
+                                        new Request(ActionType.BAN_USER, user.getUserName()));
+                                });
+                        }
                     });
                 }
 
@@ -552,6 +571,11 @@ public class AdminController {
         setFeedback("🔄 Đang làm mới...", "#A0A0A0");
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_USER_LIST, null));
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
+        // Hiển feedback hoàn thành sau 1 giây (sau khi server phản hồi)
+        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(
+            javafx.util.Duration.seconds(1.5));
+        pause.setOnFinished(e2 -> setFeedback("✅ Dữ liệu đã được cập nhật!", "#27ae60"));
+        pause.play();
     }
 
     // FIX: removeEventListener thay vì removeOnResponseReceived
