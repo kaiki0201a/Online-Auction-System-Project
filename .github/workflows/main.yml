@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest, windowns-latest, macos-latest, linux-latest
+    runs-on: ubuntu-latest
     # BỔ SUNG QUYỀN TẠI ĐÂY
     permissions:
       contents: read
