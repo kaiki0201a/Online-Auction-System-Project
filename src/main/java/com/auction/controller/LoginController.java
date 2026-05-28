@@ -1,12 +1,13 @@
-package com.auction.controller; // Dòng này luôn ở đầu file
+package com.auction.controller;
 
-// Khu vực 1: Import các thư viện cần thiết
 import com.auction.client.NetworkClient;
 import com.auction.model.Admin;
 import com.auction.model.User;
+import com.auction.notification.FormValidator;
+import com.auction.notification.NotificationService;
+import com.auction.notification.NotificationType;
 import com.auction.protocol.StatusType;
 import com.auction.utils.AppContext;
-import com.auction.utils.NotificationUtil;
 import com.auction.utils.UIUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -17,76 +18,211 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.Node;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import java.io.IOException;
 
 public class LoginController {
-    @FXML private Node rootPane;
-    // Khu vực 2: Khai báo biến ánh xạ từ giao diện (Thành viên A đặt fx:id)
-    @FXML
-    private TextField txtUsername; // Nơi nhập tên
-    @FXML
-    private PasswordField txtPassword; // Nơi nhập mật khẩu
 
-    // Khu vực 3: Hàm xử lý khi người dùng nhấn nút Đăng nhập
+    @FXML private StackPane rootPane;
+    @FXML private TextField txtUsername;
+    @FXML private PasswordField txtPassword;
+    @FXML private TextField txtPasswordVisible;   // TextField hiện mật khẩu
+    @FXML private Button btnTogglePassword;       // Nút mắt
+    @FXML private Button btnLogin;
+    @FXML private Button btnRegister;
+    @FXML private Label  lblUsernameError;        // Lỗi inline dưới ô username
+    @FXML private Label  lblPasswordError;        // Lỗi inline dưới ô password
+    @FXML private HBox   hboxUsername;            // Border đỏ khi username lỗi
+    @FXML private HBox   hboxPassword;            // Border đỏ khi password lỗi
+
+    private boolean passwordVisible = false;
+
+    // Realtime form validators
+    private FormValidator usernameValidator;
+    private FormValidator passwordValidator;
+
+    @FXML
+    public void initialize() {
+        // Realtime validation — chỉ hiện lỗi sau khi user chạm vào field
+        if (txtUsername != null && lblUsernameError != null) {
+            usernameValidator = FormValidator.of(txtUsername)
+                .required("Vui lòng nhập tên đăng nhập")
+                .minLength(3, "Tên đăng nhập tối thiểu 3 ký tự")
+                .withErrorLabel(lblUsernameError)
+                .attach();
+        }
+        if (txtPassword != null && lblPasswordError != null) {
+            passwordValidator = FormValidator.of(txtPassword)
+                .required("Vui lòng nhập mật khẩu")
+                .minLength(1, "Vui lòng nhập mật khẩu")
+                .withErrorLabel(lblPasswordError)
+                .attach();
+        }
+    }
+
+    /** Toggle hiển thị / ẩn mật khẩu */
+    @FXML
+    public void onTogglePasswordVisibility(ActionEvent event) {
+        passwordVisible = !passwordVisible;
+        if (passwordVisible) {
+            txtPasswordVisible.setText(txtPassword.getText());
+            txtPasswordVisible.setVisible(true);
+            txtPasswordVisible.setManaged(true);
+            txtPassword.setVisible(false);
+            txtPassword.setManaged(false);
+            btnTogglePassword.setText("👁");   // mắt mở = đang hiện
+        } else {
+            txtPassword.setText(txtPasswordVisible.getText());
+            txtPassword.setVisible(true);
+            txtPassword.setManaged(true);
+            txtPasswordVisible.setVisible(false);
+            txtPasswordVisible.setManaged(false);
+            btnTogglePassword.setText("🔒");  // khoá = đang ẩn
+        }
+    }
+
+    /** Xoá toàn bộ lỗi inline */
+    private void clearErrors() {
+        setFieldError(lblUsernameError, hboxUsername, null);
+        setFieldError(lblPasswordError, hboxPassword, null);
+    }
+
+    /** Hiện / ẩn lỗi inline dưới một field.
+     *  msg == null → xoá lỗi; msg != null → hiện lỗi đỏ. */
+    private void setFieldError(Label lbl, HBox box, String msg) {
+        if (lbl != null) {
+            if (msg != null) {
+                lbl.setText("⚠ " + msg);
+                lbl.setVisible(true);
+                lbl.setManaged(true);
+            } else {
+                lbl.setText("");
+                lbl.setVisible(false);
+                lbl.setManaged(false);
+            }
+        }
+        if (box != null) {
+            if (msg != null) {
+                box.setStyle(box.getStyle()
+                    .replace("-fx-border-color: #333333", "")
+                    .replace("-fx-border-color:#333333", "")
+                    + "; -fx-border-color: #e74c3c;");
+            } else {
+                String s = box.getStyle()
+                    .replaceAll(";?\\s*-fx-border-color:\\s*#e74c3c", "")
+                    .trim();
+                box.setStyle(s + "; -fx-border-color: #333333;");
+            }
+        }
+    }
+
+    /** Lấy mật khẩu từ field đang hiển thị */
+    private String getCurrentPassword() {
+        return passwordVisible ? txtPasswordVisible.getText() : txtPassword.getText();
+    }
+
     @FXML
     public void onLoginClick(ActionEvent event) {
-        String username = txtUsername.getText();
-        String password = txtPassword.getText();
+        String username = txtUsername.getText().trim();
+        String password = getCurrentPassword();
 
-        if (username.isEmpty() || password.isEmpty()) {
-            NotificationUtil.showToast("Vui lòng nhập tài khoản và mật khẩu!", rootPane, "warning");
+        clearErrors();
+
+        // Validate client-side trước khi gửi request
+        boolean usernameOk = (usernameValidator != null) ? usernameValidator.validate()
+                             : !username.isEmpty();
+        boolean passwordOk = password.length() >= 1;
+
+        if (!usernameOk) {
+            if (username.isEmpty())
+                setFieldError(lblUsernameError, hboxUsername, "Vui lòng nhập tên đăng nhập");
+            return;
+        }
+        if (!passwordOk) {
+            setFieldError(lblPasswordError, hboxPassword, "Vui lòng nhập mật khẩu");
             return;
         }
 
-        // Đăng ký "tai nghe" đợi Server trả lời
         NetworkClient.getInstance().setOnResponseReceived(response -> {
-
-            // 🚨 BẮT BUỘC: Đẩy việc cập nhật UI về luồng chính của JavaFX
             Platform.runLater(() -> {
                 if (response.getStatus() == StatusType.SUCCESS) {
                     try {
                         User userFromServer = (User) response.getData();
-
-                        // LƯU KÉT SẮT (SESSION)
                         AppContext.setCurrentUser(userFromServer);
-
-                        NotificationUtil.showToast("Đăng nhập thành công!", rootPane, "success");
-                        // Chuyển màn hình
+                        NotificationService.get().success("Đăng nhập thành công! Chào " + userFromServer.getUserName(), rootPane);
                         navigateToDashboard(event, userFromServer);
                     } catch (Exception e) {
-                        NotificationUtil.showToast("Lỗi nạp giao diện!", rootPane, "error");
+                        NotificationService.get().error("Lỗi nạp giao diện: " + e.getMessage(), rootPane);
                     }
                 } else {
-                    NotificationUtil.showToast(response.getMessage(), rootPane, "error");
+                    String msg = response.getMessage();
+                    clearErrors();
+                    // Phân biệt loại lỗi để hiện đúng chỗ
+                    if (msg != null && (msg.toLowerCase().contains("không tồn tại")
+                            || msg.toLowerCase().contains("not found")
+                            || msg.toLowerCase().contains("không tìm thấy")
+                            || msg.toLowerCase().contains("user"))) {
+                        setFieldError(lblUsernameError, hboxUsername, "Tài khoản không tồn tại");
+                        NotificationService.get().error("❌ Tài khoản không tồn tại", rootPane);
+                    } else if (msg != null && msg.toLowerCase().contains("khóa")) {
+                        setFieldError(lblUsernameError, hboxUsername, "Tài khoản đã bị khóa");
+                        NotificationService.get().toast("🔒 Tài khoản đã bị khóa bởi Admin", NotificationType.ERROR, rootPane, 5);
+                    } else {
+                        setFieldError(lblPasswordError, hboxPassword, "Sai mật khẩu");
+                        NotificationService.get().error("❌ Sai mật khẩu. Vui lòng thử lại.", rootPane);
+                    }
                 }
             });
         });
 
-        // Hiện vòng xoay Loading chờ Server
-        UIUtils.showLoadingSpinner((javafx.scene.layout.StackPane) rootPane, () -> {
-            // Gọi hàm gửi yêu cầu mạng sau khi UI Loading hiện lên
-            NetworkClient.getInstance().login(username, password);
-        });
+        UIUtils.showLoadingSpinner(rootPane, () ->
+            NetworkClient.getInstance().login(username, password)
+        );
     }
-    // Hàm bổ trợ - Phân quyền và Chuyển màn hình
-    private void navigateToDashboard(ActionEvent event, com.auction.model.User user) throws IOException {
-        String fxmlPath = (user instanceof Admin) ? "/com/auction/view/AdminDashboard.fxml" : "/com/auction/view/Dashboard.fxml";
+
+    private void navigateToDashboard(ActionEvent event, User user) throws IOException {
+        String fxmlPath;
+        if (user instanceof Admin) {
+            fxmlPath = "/com/auction/view/AdminDashboard.fxml";
+        } else if (user instanceof com.auction.model.Seller) {
+            fxmlPath = "/com/auction/view/SellerDashboard.fxml";
+        } else {
+            fxmlPath = "/com/auction/view/BidderDashboard.fxml";
+        }
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
         Parent root = loader.load();
-
-        // ĐÃ XÓA logic gọi dashboardController.setUser() vì đã có AppContext lo
-
-        Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
-        stage.setScene(new Scene(root));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        stage.setScene(new Scene(root, 1280, 800));
+        stage.centerOnScreen();
     }
 
-    // Khu vực 5: Hàm bổ trợ - Hiện thông báo (Alert)
-    public void showError(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+    @FXML
+    private void onRegisterClick(ActionEvent event) {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Register.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root, 900, 620));
+        } catch (IOException e) {
+            NotificationService.get().error("Không thể mở trang đăng ký!", rootPane);
+        }
+    }
+
+    /** Xử lý khi nhấn "Quên mật khẩu?" */
+    @FXML
+    private void onForgotPasswordClick(ActionEvent event) {
+        // Thay thế Alert mặc định bằng dark theme alert
+        NotificationService.get().alert(
+            ((Node) event.getSource()).getScene().getWindow(),
+            "Hướng dẫn khôi phục tài khoản",
+            "Các bước đặt lại mật khẩu:\n\n" +
+            "1️⃣  Liên hệ Admin hệ thống BidPrecision\n" +
+            "2️⃣  Cung cấp tên đăng nhập và email đã đăng ký\n" +
+            "3️⃣  Admin sẽ reset và gửi mật khẩu mới cho bạn\n\n" +
+            "📧 admin@bidprecision.vn\n" +
+            "📞 Hotline: 1800-BIDPRECISION",
+            NotificationType.INFO
+        );
     }
 }

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="rootPane" styleClass="dark-root" stylesheets="@fileCS/style.css"
+    xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.auction.controller.MyAuctionsController"
+    prefWidth="1280" prefHeight="800">
+
+    <!-- ====== TOP NAVBAR ====== -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20"
+            style="-fx-background-color: #0F0F0F; -fx-border-color: #2A2A2A; -fx-border-width: 0 0 1 0; -fx-padding: 12 25;">
+            <Button onAction="#onBackClick"
+                style="-fx-background-color: transparent; -fx-text-fill: #F5C518; -fx-font-size: 14px; -fx-cursor: hand; -fx-border-color: #2A2A2A; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14;"
+                text="← Quay Lại"/>
+            <Label text="🏆" style="-fx-font-size: 22px;"/>
+            <Label text="PHIÊN ĐẤU GIÁ ĐANG THAM GIA"
+                style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblCount" text="(0 phiên)"
+                style="-fx-text-fill: #555; -fx-font-size: 13px;"/>
+        </HBox>
+    </top>
+
+    <!-- ====== CENTER CONTENT ====== -->
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="scroll-pane">
+            <VBox spacing="20" style="-fx-padding: 30 36;">
+
+                <!-- Filter bar -->
+                <HBox spacing="12" alignment="CENTER_LEFT">
+                    <Label text="Lọc:" style="-fx-text-fill: #888; -fx-font-size: 13px;"/>
+                    <ComboBox fx:id="comboFilter" prefWidth="200"
+                        style="-fx-background-color: #1a1a1a; -fx-text-fill: white; -fx-border-color: #333; -fx-border-radius: 4;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                </HBox>
+
+                <!-- Stats cards -->
+                <HBox spacing="16" alignment="CENTER_LEFT">
+                    <VBox spacing="6" alignment="CENTER"
+                        style="-fx-background-color: #171717; -fx-border-color: #F5C518; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 16 24;" prefWidth="220">
+                        <Label text="ĐANG DẪN ĐẦU" style="-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblLeading" text="0"
+                            style="-fx-text-fill: #27ae60; -fx-font-size: 28px; -fx-font-weight: bold;"/>
+                    </VBox>
+                    <VBox spacing="6" alignment="CENTER"
+                        style="-fx-background-color: #171717; -fx-border-color: #e74c3c; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 16 24;" prefWidth="220">
+                        <Label text="ĐANG BỊ VƯỢT" style="-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblOutbid" text="0"
+                            style="-fx-text-fill: #e74c3c; -fx-font-size: 28px; -fx-font-weight: bold;"/>
+                    </VBox>
+                    <VBox spacing="6" alignment="CENTER"
+                        style="-fx-background-color: #171717; -fx-border-color: #27ae60; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 16 24;" prefWidth="220">
+                        <Label text="ĐÃ THẮNG" style="-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblWon" text="0"
+                            style="-fx-text-fill: #F5C518; -fx-font-size: 28px; -fx-font-weight: bold;"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Auction table -->
+                <VBox spacing="14"
+                    style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 22;">
+                    <Label text="📋  DANH SÁCH PHIÊN"
+                        style="-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    <TableView fx:id="tableAuctions" prefHeight="500"
+                        style="-fx-background-color: transparent; -fx-border-color: #2A2A2A; -fx-border-radius: 4;">
+                        <columns>
+                            <TableColumn fx:id="colItem" text="Sản Phẩm" prefWidth="280"/>
+                            <TableColumn fx:id="colStatus" text="Trạng Thái" prefWidth="140"/>
+                            <TableColumn fx:id="colMyBid" text="Giá Tôi Đặt" prefWidth="150"/>
+                            <TableColumn fx:id="colCurrentBid" text="Giá Hiện Tại" prefWidth="150"/>
+                            <TableColumn fx:id="colEndTime" text="Kết Thúc" prefWidth="180"/>
+                            <TableColumn fx:id="colAction" text="Hành Động" prefWidth="150"/>
+                        </columns>
+                        <placeholder>
+                            <VBox alignment="CENTER" spacing="14" style="-fx-padding: 40;">
+                                <Label text="🏆" style="-fx-font-size: 36px;"/>
+                                <Label text="Bạn chưa tham gia phiên đấu giá nào."
+                                    style="-fx-text-fill: #555; -fx-font-size: 14px;"/>
+                                <Label text="Hãy vào Thị Trường để tham gia đấu giá!"
+                                    style="-fx-text-fill: #444; -fx-font-size: 12px;"/>
+                            </VBox>
+                        </placeholder>
+                    </TableView>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

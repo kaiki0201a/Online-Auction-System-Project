@@ -1,0 +1,128 @@
+/* GLOBAL SYSTEM */
+.root-layout {
+    -fx-background-color: linear-gradient(to bottom, #050505, #0B0B0B);
+    -fx-border-color: #7B6DFF;
+    -fx-border-width: 4px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+}
+
+.logo-text {
+    -fx-font-family: 'Space Grotesk', sans-serif;
+    -fx-font-size: 28px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #F4E0B2;
+}
+
+/* HEADER */
+.header {
+    -fx-pref-height: 80px;
+    -fx-padding: 0 40px;
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
+}
+
+.nav-text { -fx-text-fill: #9A9A9A; -fx-font-size: 12px; -fx-font-weight: 500; }
+.nav-text-active { -fx-text-fill: #F3D89D; -fx-font-size: 12px; -fx-font-weight: 700; }
+.nav-indicator { -fx-pref-height: 2px; -fx-background-color: #DDBF7A; -fx-margin: 5 0 0 0; }
+
+.balance-text { -fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #F4D28D; }
+
+/* PRODUCT IMAGE AREA */
+.product-image-container {
+    -fx-pref-height: 420px;
+    -fx-background-color: #111; /* Thay bằng ảnh thực tế */
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(255,255,255,0.06);
+}
+
+.image-overlay {
+    -fx-background-color: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+}
+
+.product-title-large { -fx-font-size: 24px; -fx-font-weight: 800; -fx-text-fill: white; }
+.product-subtitle { -fx-font-size: 14px; -fx-text-fill: #B5B5B5; }
+
+.status-badge {
+    -fx-padding: 5 14;
+    -fx-background-color: rgba(214,185,120,0.08);
+    -fx-border-color: rgba(214,185,120,0.25);
+    -fx-border-radius: 999;
+}
+.status-badge-text { -fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #E1C17F; }
+
+/* SIDEBAR & PRICE */
+.bid-sidebar { -fx-pref-width: 320px; }
+
+.price-card {
+    -fx-padding: 30;
+    -fx-background-color: #0B0B0B;
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-radius: 4px;
+}
+
+.hero-price {
+    -fx-font-size: 54px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #F2F2F2;
+    -fx-letter-spacing: -1px;
+}
+
+.countdown-box {
+    -fx-background-color: #111111;
+    -fx-border-color: rgba(255,255,255,0.04);
+    -fx-padding: 10;
+}
+
+.btn-primary-bid {
+    -fx-pref-height: 54px;
+    -fx-background-color: #E7D2A1;
+    -fx-text-fill: #111;
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+}
+.btn-primary-bid:hover { -fx-background-color: #F0DEB8; -fx-translate-y: -1; }
+
+.btn-quick-bid {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,255,255,0.1);
+    -fx-text-fill: white;
+    -fx-padding: 8;
+}
+.btn-quick-bid:hover { -fx-border-color: #D8BD84; -fx-text-fill: #D8BD84; }
+
+/* AUTO BID & HISTORY */
+.auto-bid-panel {
+    -fx-padding: 20;
+    -fx-background-color: #0D0D0D;
+    -fx-border-color: rgba(255,255,255,0.05);
+}
+
+.auto-bid-input {
+    -fx-background-color: #111;
+    -fx-border-color: rgba(255,255,255,0.1);
+    -fx-text-fill: white;
+}
+
+.history-row-active { -fx-padding: 8; -fx-background-color: rgba(255,255,255,0.03); }
+.bidder-name-active { -fx-font-weight: 700; -fx-text-fill: white; }
+.bid-price-active { -fx-font-weight: 800; -fx-text-fill: #F0C977; }
+
+/* UTILS */
+.card-section-title { -fx-font-size: 11px; -fx-font-weight: 800; -fx-text-fill: #D4BB88; -fx-letter-spacing: 1px; }
+.label-dim { -fx-text-fill: #8E8E8E; -fx-font-size: 12px; }
+.value-bright { -fx-text-fill: #F2F2F2; -fx-font-weight: 600; }
+.label-dim-micro { -fx-text-fill: #666; -fx-font-size: 10px; }
+
+/* CHART */
+.chart-container {
+    -fx-padding: 25;
+    -fx-background-color: #0A0A0A;
+    -fx-border-color: rgba(255,255,255,0.05);
+}
+.chart-placeholder {
+    -fx-background-color: linear-gradient(to bottom, rgba(226,184,76,0.1), transparent);
+    -fx-border-color: transparent transparent #E2B84C transparent;
+    -fx-border-width: 2px;
+}

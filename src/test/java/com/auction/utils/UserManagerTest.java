@@ -1,5 +1,6 @@
 package com.auction.utils;
 
+import com.auction.exception.AuthenticationException;
 import com.auction.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ class UserManagerTest {
     }
 
     @Test
-    void testAuthenticate_Success() {
+    void testAuthenticate_Success() throws AuthenticationException {
         // Kiểm tra tài khoản có sẵn trong constructor
         assertTrue(userManager.authenticate("bidder", "123"));
         assertTrue(userManager.authenticate("admin", "123"));
@@ -26,22 +27,45 @@ class UserManagerTest {
 
     @Test
     void testAuthenticate_WrongPassword() {
-        // Kiểm tra sai mật khẩu
-        assertFalse(userManager.authenticate("bidder", "wrongpass"));
+        // Kiểm tra sai mật khẩu → authenticate ném AuthenticationException
+        assertThrows(AuthenticationException.class, () ->
+            userManager.authenticate("bidder", "wrongpass")
+        );
     }
 
     @Test
     void testAuthenticate_NonExistentUser() {
-        // Kiểm tra tài khoản không tồn tại
-        assertFalse(userManager.authenticate("ghost", "123"));
+        // Kiểm tra tài khoản không tồn tại → ném AuthenticationException
+        assertThrows(AuthenticationException.class, () ->
+            userManager.authenticate("ghost", "123")
+        );
     }
 
     @Test
     void testRegister_Success() {
         // Đăng ký tài khoản mới hợp lệ
-        boolean result = userManager.register("newuser", "pass", "new@gmail.com");
+        boolean result = userManager.register("newuser_test_" + System.currentTimeMillis(), "pass", "new@gmail.com");
         assertTrue(result);
-        assertNotNull(userManager.getUser("newuser"));
+    }
+
+    @Test
+    void testRegister_WithRole_Bidder() {
+        String username = "bidder_test_" + System.currentTimeMillis();
+        boolean result = userManager.register(username, "pass123", "bidder@test.com", "Bidder");
+        assertTrue(result);
+        User user = userManager.getUser(username);
+        assertNotNull(user);
+        assertInstanceOf(com.auction.model.Bidder.class, user);
+    }
+
+    @Test
+    void testRegister_WithRole_Seller() {
+        String username = "seller_test_" + System.currentTimeMillis();
+        boolean result = userManager.register(username, "pass123", "seller@test.com", "Seller");
+        assertTrue(result);
+        User user = userManager.getUser(username);
+        assertNotNull(user);
+        assertInstanceOf(com.auction.model.Seller.class, user);
     }
 
     @Test

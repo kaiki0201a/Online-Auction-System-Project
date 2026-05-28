@@ -9,7 +9,11 @@ public abstract class Item extends Entity implements Serializable {
     // Fields
     private String nameItem, descriptionItem;
     private double startingPrice;
+    private String imagePath; // Thêm trường này
+    // ... các trường khác
 
+    public String getImagePath() { return imagePath; }
+    public void setImagePath(String path) { this.imagePath = path; }
     // Constructor
 
     public Item(String nameItem, String descriptionItem, double startingPrice) {

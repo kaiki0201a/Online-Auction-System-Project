@@ -1,0 +1,211 @@
+/* --- ROOT CONTAINER --- */
+.dark-scroll {
+    -fx-background-color: transparent;
+    -fx-background: #151515; /* Fallback */
+}
+.dark-scroll .viewport {
+    -fx-background-color: transparent;
+}
+.form-container {
+    -fx-background-color: linear-gradient(to right, #121212 0%, #171717 50%, #1A1A1A 100%);
+    -fx-padding: 40px 44px;
+    -fx-pref-width: 1350px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+/* --- TYPOGRAPHY & HEADERS --- */
+.header-title {
+    -fx-font-family: "SansSerif";
+    -fx-font-size: 56px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #F3F3F3;
+}
+.header-subtitle {
+    -fx-font-family: "SansSerif";
+    -fx-font-size: 20px;
+    -fx-text-fill: #B9B1A4;
+}
+.divider {
+    -fx-background-color: #3A3126;
+    -fx-min-height: 1px;
+    -fx-pref-height: 1px;
+    -fx-opacity: 0.7;
+}
+
+/* --- LABELS --- */
+.field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #CDBB95;
+}
+
+/* --- INPUT FIELDS STANDARD --- */
+.form-input {
+    -fx-background-color: #111111;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #F1F1F1;
+    -fx-font-size: 18px;
+    -fx-pref-height: 58px;
+    -fx-padding: 0 15px;
+}
+.form-input:focused, .spec-input:focused, .price-input-wrapper:focused-within {
+    -fx-border-color: #C9A86A;
+    -fx-effect: dropshadow(three-pass-box, rgba(201,168,106,0.25), 8, 0, 0, 0);
+}
+.form-input:hover, .spec-input:hover, .price-input-wrapper:hover {
+    -fx-border-color: #4A4A4A;
+}
+.form-input:focused:hover, .spec-input:focused:hover {
+    -fx-border-color: #C9A86A;
+}
+
+/* --- DYNAMIC SPECS BOX --- */
+.spec-box {
+    -fx-border-color: #6D5A37;
+    -fx-border-style: dashed;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-color: rgba(255, 255, 255, 0.01);
+    -fx-background-radius: 8px;
+    -fx-padding: 28px;
+}
+.spec-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F1D49B;
+}
+.spec-divider {
+    -fx-background-color: #2A2A2A;
+    -fx-min-height: 1px;
+}
+.spec-input {
+    -fx-background-color: #101010;
+    -fx-border-color: #262626;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-text-fill: #F1F1F1;
+    -fx-font-size: 16px;
+    -fx-pref-height: 52px;
+    -fx-padding: 0 15px;
+}
+
+/* --- PRICE INPUT SPECIAL --- */
+.price-input-wrapper {
+    -fx-background-color: #111111;
+    -fx-border-color: #2A2A2A;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-pref-height: 58px;
+    -fx-padding: 0 15px;
+}
+.price-prefix {
+    -fx-font-size: 28px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #E0C58D;
+}
+.price-input {
+    -fx-background-color: transparent;
+    -fx-text-fill: #F1F1F1;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+.price-input:focused {
+    -fx-background-color: transparent; /* Loại bỏ viền focus mặc định của textfield bên trong */
+}
+
+/* --- TIME & TRANSPARENT INPUTS --- */
+.transparent-input {
+    -fx-background-color: transparent;
+    -fx-text-fill: #F1F1F1;
+    -fx-font-size: 18px;
+    -fx-padding: 0;
+}
+.time-icon {
+    -fx-text-fill: #D5BE8C;
+    -fx-font-size: 20px;
+}
+
+/* --- UPLOAD AREA --- */
+.upload-area {
+    -fx-background-color: #121212;
+    -fx-border-color: #D2B57B;
+    -fx-border-style: dashed;
+    -fx-border-width: 2px;
+    -fx-border-radius: 4px;
+    -fx-pref-height: 300px;
+    -fx-cursor: hand;
+}
+.upload-area:hover {
+    -fx-border-color: #F1D49B;
+    -fx-background-color: rgba(241,212,155,0.03);
+}
+.upload-title {
+    -fx-font-size: 42px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F2F2F2;
+}
+.upload-subtitle {
+    -fx-font-size: 18px;
+    -fx-text-fill: #B6AA94;
+}
+
+/* --- BUTTONS --- */
+.btn-browse {
+    -fx-background-color: transparent;
+    -fx-border-color: #D4B97C;
+    -fx-border-radius: 4px;
+    -fx-text-fill: #E6D1A0;
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-pref-width: 150px;
+    -fx-pref-height: 46px;
+    -fx-cursor: hand;
+}
+.btn-browse:hover {
+    -fx-background-color: #D4B97C;
+    -fx-text-fill: #111111;
+}
+
+.footer-divider {
+    -fx-background-color: #2E2A22;
+    -fx-min-height: 1px;
+}
+
+.btn-draft {
+    -fx-background-color: transparent;
+    -fx-border-color: #5B5447;
+    -fx-border-radius: 4px;
+    -fx-text-fill: #D6C8AA;
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-pref-width: 170px;
+    -fx-pref-height: 58px;
+    -fx-cursor: hand;
+}
+.btn-draft:hover {
+    -fx-background-color: rgba(255,255,255,0.04);
+}
+
+.btn-create {
+    -fx-background-color: #E4C98F;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #151515;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-pref-width: 240px;
+    -fx-pref-height: 58px;
+    -fx-cursor: hand;
+}
+.btn-create:hover {
+    -fx-background-color: #F0D9A8;
+    -fx-translate-y: -1px;
+}
+
+/* Fix ComboBox / DatePicker mũi tên dropdown */
+.combo-box .arrow, .date-picker .arrow {
+    -fx-background-color: #C8B38A;
+}

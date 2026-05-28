@@ -4,17 +4,30 @@ import java.io.Serializable;
 
 public enum ActionType implements Serializable {
     LOGIN,
-    CREATE_AUCTION,
     REGISTER,
+    LOGOUT,
+
+    // Auction actions
+    CREATE_AUCTION,
     GET_AUCTION_LIST,
     UPDATE_AUCTION,
+    CANCEL_AUCTION,
     PLACE_BID,
-    LOGOUT,
-    // --- THÊM 3 HÀNH ĐỘNG CỦA ADMIN VÀO ĐÂY ---
-    GET_USER_LIST,      // Lấy danh sách người dùng
-    BAN_USER,           // Khóa/Mở khóa tài khoản
-    CANCEL_AUCTION,      // Ép dừng phiên đấu giá
-    // --- THÊM 2 HÀNH ĐỘNG DÀNH CHO BROADCAST TỪ SERVER ---
-    BROADCAST_BID_UPDATE,     // Server chủ động báo có người đặt giá mới
-    BROADCAST_AUCTION_END     // Server chủ động báo phiên đấu giá kết thúc
+    SET_AUTOBID,
+
+    // User/Admin actions
+    GET_USER_LIST,
+    BAN_USER,
+    APPROVE_AUCTION,   // Admin duyệt sản phẩm chờ
+    REJECT_AUCTION,    // Admin từ chối sản phẩm
+    DEPOSIT,           // Nạp tiền (giả lập)
+    WITHDRAW,          // Rút tiền (giả lập)
+    UPDATE_PROFILE,    // Cập nhật thông tin cá nhân / đổi mật khẩu
+
+    // Broadcast từ Server
+    BROADCAST_BID_UPDATE,
+    BROADCAST_AUCTION_END,
+
+    // Cập nhật số dư cho Seller sau khi phiên kết thúc và settlement xong
+    SELLER_BALANCE_UPDATE
 }

@@ -45,7 +45,7 @@ public class AuctionManager {
     /**
      * Hàm nội bộ bổ trợ: Quyết định nguồn dữ liệu xử lý.
      * - Nếu đang chạy Unit Test (đã gọi setAuctionDAO): Trả về đối tượng Mock giả lập.
-     * - Nếu chạy thật (App/Server bình thường): Tự động lấy nguồn thực tế từ ServerApp.getAuctionDAO().
+     * - Nếu chạy thật (App/Server bình thường): Tự động lấy nguồn thực tế từ ServerApp.
      */
     private IAuctionDAO getDAO() {
         if (this.auctionDAO != null) {

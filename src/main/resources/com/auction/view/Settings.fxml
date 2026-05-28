@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane fx:id="rootPane" styleClass="dark-root" stylesheets="@fileCS/style.css"
+    xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.auction.controller.SettingsController">
+
+    <VBox prefWidth="600.0" prefHeight="530.0" style="-fx-background-color: #0d0d0d;" alignment="TOP_CENTER">
+
+        <!-- Header -->
+        <HBox alignment="CENTER_LEFT" spacing="15"
+            style="-fx-background-color: #0F0F0F; -fx-border-color: #2A2A2A; -fx-border-width: 0 0 1 0; -fx-padding: 15 30;">
+            <Button onAction="#onBackClick"
+                style="-fx-background-color: transparent; -fx-text-fill: #F5C518; -fx-font-size: 14px; -fx-cursor: hand; -fx-border-color: #2A2A2A; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14;"
+                text="← Quay Lại"/>
+            <Label text="⚙" style="-fx-text-fill: #F5C518; -fx-font-size: 20px;"/>
+            <Label style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;" text="Cài Đặt Tài Khoản"/>
+        </HBox>
+
+        <!-- Main Content -->
+        <ScrollPane fitToWidth="true" styleClass="scroll-pane" VBox.vgrow="ALWAYS">
+            <VBox spacing="18.0" style="-fx-padding: 24 36;">
+
+                <!-- Avatar + Thông tin tài khoản -->
+                <VBox spacing="14.0"
+                    style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 22;">
+                    <HBox spacing="18" alignment="CENTER_LEFT">
+                        <!-- Avatar circle -->
+                        <StackPane style="-fx-background-color: #E6B969; -fx-background-radius: 34; -fx-effect: dropshadow(gaussian,rgba(230,185,105,0.3),10,0,0,0);"
+                            prefWidth="68" prefHeight="68">
+                            <Label fx:id="lblAvatarInitials" text="?"
+                                style="-fx-text-fill: #000; -fx-font-size: 26px; -fx-font-weight: bold;"/>
+                        </StackPane>
+                        <VBox spacing="4">
+                            <Label fx:id="lblUsername"
+                                style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;" text="..."/>
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label fx:id="lblRole"
+                                    style="-fx-text-fill: #F5C518; -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-color: rgba(245,197,24,0.1); -fx-padding: 3 10; -fx-background-radius: 12;"
+                                    text="..."/>
+                                <Label fx:id="lblEmail"
+                                    style="-fx-text-fill: #666; -fx-font-size: 12px;" text="..."/>
+                            </HBox>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <VBox spacing="4" alignment="CENTER_RIGHT">
+                            <Label text="SỐ DƯ VÍ" style="-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                            <Label fx:id="lblBalance"
+                                style="-fx-text-fill: #27ae60; -fx-font-size: 18px; -fx-font-weight: bold;" text="..."/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <!-- Đổi Email -->
+                <VBox spacing="14.0"
+                    style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 22;">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="✉" style="-fx-text-fill: #3498db; -fx-font-size: 18px;"/>
+                        <Label style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;" text="ĐỔI ĐỊA CHỈ EMAIL"/>
+                    </HBox>
+                    <Label text="Email mới sẽ được dùng để liên lạc và thông báo từ hệ thống."
+                        style="-fx-text-fill: #555; -fx-font-size: 11px;" wrapText="true"/>
+
+                    <VBox spacing="7.0">
+                        <Label style="-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;" text="ĐỊA CHỈ EMAIL MỚI"/>
+                        <HBox alignment="CENTER_LEFT"
+                            style="-fx-background-color: #1a1a1a; -fx-border-color: #333333; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 10 0 15;">
+                            <Label style="-fx-text-fill: #3498db;" text="✉ "/>
+                            <TextField fx:id="txtNewEmail" promptText="Nhập địa chỉ email mới"
+                                style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 11 10;"
+                                HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                    </VBox>
+                    <Button maxWidth="Infinity" onAction="#onUpdateEmailClick"
+                        styleClass="btn-primary"
+                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 11; -fx-font-size: 13px;"
+                        text="✉  Cập Nhật Email"/>
+                </VBox>
+
+                <!-- Đổi Mật Khẩu -->
+                <VBox spacing="14.0"
+                    style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 22;">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="🔒" style="-fx-font-size: 18px;"/>
+                        <Label style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;" text="ĐỔI MẬT KHẨU"/>
+                    </HBox>
+                    <Label text="Mật khẩu mạnh nên có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số."
+                        style="-fx-text-fill: #555; -fx-font-size: 11px;" wrapText="true"/>
+
+                    <VBox spacing="10">
+                        <VBox spacing="6.0">
+                            <Label style="-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;" text="MẬT KHẨU HIỆN TẠI"/>
+                            <HBox alignment="CENTER_LEFT"
+                                style="-fx-background-color: #1a1a1a; -fx-border-color: #333333; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 10 0 15;">
+                                <Label style="-fx-text-fill: #666;" text="🔑 "/>
+                                <PasswordField fx:id="txtCurrentPassword" promptText="Nhập mật khẩu hiện tại"
+                                    style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 11 10;"
+                                    HBox.hgrow="ALWAYS"/>
+                            </HBox>
+                        </VBox>
+                        <VBox spacing="6.0">
+                            <Label style="-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;" text="MẬT KHẨU MỚI (TỐI THIỂU 6 KÝ TỰ)"/>
+                            <HBox alignment="CENTER_LEFT"
+                                style="-fx-background-color: #1a1a1a; -fx-border-color: #333333; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 10 0 15;">
+                                <Label style="-fx-text-fill: #e74c3c;" text="🔒 "/>
+                                <PasswordField fx:id="txtNewPassword" promptText="Mật khẩu mới"
+                                    style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 11 10;"
+                                    HBox.hgrow="ALWAYS"/>
+                            </HBox>
+                        </VBox>
+                        <VBox spacing="6.0">
+                            <Label style="-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;" text="XÁC NHẬN MẬT KHẨU MỚI"/>
+                            <HBox alignment="CENTER_LEFT"
+                                style="-fx-background-color: #1a1a1a; -fx-border-color: #333333; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 10 0 15;">
+                                <Label style="-fx-text-fill: #e74c3c;" text="🔒 "/>
+                                <PasswordField fx:id="txtConfirmNewPassword" promptText="Nhập lại mật khẩu mới"
+                                    style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 11 10;"
+                                    HBox.hgrow="ALWAYS"/>
+                            </HBox>
+                        </VBox>
+                    </VBox>
+                    <Button maxWidth="Infinity" onAction="#onChangePasswordClick"
+                        style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 11; -fx-font-size: 13px;"
+                        text="🔒  Xác Nhận Đổi Mật Khẩu"/>
+                </VBox>
+
+                <!-- Toast Label cho feedback -->
+                <Label fx:id="lblToast" text="" maxWidth="Infinity"
+                    style="-fx-font-size: 12px; -fx-padding: 0 0 10 0; -fx-text-fill: #27ae60;"/>
+
+            </VBox>
+        </ScrollPane>
+    </VBox>
+</StackPane>

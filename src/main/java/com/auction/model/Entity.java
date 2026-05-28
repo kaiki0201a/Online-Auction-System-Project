@@ -7,7 +7,7 @@ import java.util.UUID;
  * Lớp trừu tượng cơ sở cho mọi đối tượng trong hệ thống (User, Item, Auction...).
  * Giúp đảm bảo mọi thực thể đều có một mã ID duy nhất ngay khi được tạo ra.
  */
-public abstract class Entity {
+public abstract class Entity implements Serializable {
     // ID phiên bản để tránh lỗi khi nâng cấp code sau này
     private static final long serialVersionUID = 1L;
 

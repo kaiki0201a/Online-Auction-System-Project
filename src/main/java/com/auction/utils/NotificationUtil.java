@@ -1,66 +1,61 @@
 package com.auction.utils;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.PauseTransition;
-import javafx.animation.Timeline;
+import com.auction.notification.ConfirmDialog;
+import com.auction.notification.NotificationService;
+import com.auction.notification.NotificationType;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.stage.Popup;
 import javafx.stage.Window;
-import javafx.util.Duration;
 
+import java.util.Optional;
+
+/**
+ * NotificationUtil — Facade backward-compatible cho NotificationService.
+ *
+ * Class này giữ lại API cũ để không cần sửa toàn bộ controller cũ.
+ * Tất cả phương thức delegate sang NotificationService (singleton mới).
+ *
+ * ✅ Code cũ vẫn hoạt động: NotificationUtil.showToast(...)
+ * ✅ Code mới dùng clean API: NotificationService.get().success(...)
+ *
+ * @deprecated Sử dụng {@link NotificationService} trực tiếp cho code mới.
+ */
 public class NotificationUtil {
 
-    // 1. Thay 'StackPane root' bằng 'Node anchorNode'. Cấm tiệt việc ép kiểu!
+    private NotificationUtil() {}
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  TOAST (legacy API — backward-compatible)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /** @deprecated Dùng {@link NotificationService#get()}.success/error/warning/info(msg, anchor) */
     public static void showToast(String message, Node anchorNode, String type) {
         if (anchorNode == null || anchorNode.getScene() == null) return;
+        NotificationService.get().toast(message, NotificationType.fromString(type), anchorNode);
+    }
 
-        // Lấy Window hiện tại từ Node
-        Window window = anchorNode.getScene().getWindow();
+    /** @deprecated Dùng {@link NotificationService#get()}.toastOnWindow(msg, type, window) */
+    public static void showToastOnWindow(String message, Window window, String type) {
+        if (window == null) return;
+        NotificationService.get().toastOnWindow(message, NotificationType.fromString(type), window);
+    }
 
-        // 2. Sử dụng Popup làm Overlay độc lập
-        Popup popup = new Popup();
-        Label toastLabel = new Label(message);
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  CONFIRM DIALOG (legacy API — backward-compatible)
+    // ═══════════════════════════════════════════════════════════════════════════
 
-        // 3. XÓA TOÀN BỘ CSS CỨNG. Chuyển sang dùng styleClass
-        toastLabel.getStyleClass().add("toast");
-        if (type != null) {
-            toastLabel.getStyleClass().add("toast-" + type);
-        } else {
-            toastLabel.getStyleClass().add("toast-default");
-        }
+    /** @deprecated Dùng {@link ConfirmDialog} preset methods hoặc {@link NotificationService#get()}.confirm(...) */
+    public static Optional<Boolean> showConfirm(Window owner, String title,
+                                                 String message,
+                                                 String yesLabel, String noLabel) {
+        return ConfirmDialog.show(owner, title, message, yesLabel, noLabel, true);
+    }
 
-        toastLabel.setOpacity(0);
-        popup.getContent().add(toastLabel);
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  ALERT DIALOG (legacy API — backward-compatible)
+    // ═══════════════════════════════════════════════════════════════════════════
 
-        // Tính toán vị trí hiển thị (Góc dưới bên phải màn hình App)
-        popup.setOnShown(e -> {
-            popup.setX(window.getX() + window.getWidth() - popup.getWidth() - 20);
-            popup.setY(window.getY() + window.getHeight() - popup.getHeight() - 20);
-        });
-
-        // Hiển thị Popup
-        popup.show(window);
-
-        // Hiệu ứng Fade in
-        Timeline fadeIn = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(toastLabel.opacityProperty(), 0)),
-                new KeyFrame(Duration.millis(300), new KeyValue(toastLabel.opacityProperty(), 1))
-        );
-
-        // Hiệu ứng Fade out
-        Timeline fadeOut = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(toastLabel.opacityProperty(), 1)),
-                new KeyFrame(Duration.millis(500), new KeyValue(toastLabel.opacityProperty(), 0))
-        );
-        fadeOut.setOnFinished(e -> popup.hide());
-
-        // 4. Dùng PauseTransition chuẩn của JavaFX thay vì Thread.sleep()
-        PauseTransition delay = new PauseTransition(Duration.seconds(3));
-        delay.setOnFinished(e -> fadeOut.play());
-
-        fadeIn.setOnFinished(e -> delay.play());
-        fadeIn.play();
+    /** @deprecated Dùng {@link NotificationService#get()}.alert(...) */
+    public static void showAlert(Window owner, String title, String message, String type) {
+        NotificationService.get().alert(owner, title, message, NotificationType.fromString(type));
     }
 }

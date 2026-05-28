@@ -3,6 +3,7 @@ package com.auction.controller;
 import com.auction.client.NetworkClient;
 import com.auction.model.Auction;
 import com.auction.model.Bidder;
+import com.auction.model.Seller;
 import com.auction.model.User;
 import com.auction.protocol.ActionType;
 import com.auction.protocol.Request;
@@ -14,12 +15,13 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -28,70 +30,28 @@ import java.util.List;
 
 public class DashboardController {
 
-    @FXML private TableView<Auction> tableAuctions;
-    @FXML private TableColumn<Auction, String> colId;
-    @FXML private TableColumn<Auction, String> colProductName;
-    @FXML private TableColumn<Auction, Double> colCurrentPrice;
-    @FXML private TableColumn<Auction, String> colStatus;
+    @FXML private BorderPane rootPane;
+    @FXML private Label lblUsername, lblRole, lblAvatarInitials, lblWelcome, lblBalance, lblSectionTitle;
     @FXML private Button btnCreateAuction;
-    @FXML private ComboBox<String> comboCategory;
     @FXML private TextField txtSearch;
+    @FXML private ComboBox<String> comboCategory;
+    @FXML private FlowPane auctionGrid; // Lưới chứa các thẻ sản phẩm
     @FXML private Button btnSearch;
-
-    // Thêm vào phần khai báo biến @FXML
-    @FXML private TableColumn<Auction, java.time.LocalDateTime> colEndTime;
-    @FXML private Node rootPane;
-
     private User currentUser;
     private ObservableList<Auction> auctionData = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        // LẤY SESSION NGƯỜI DÙNG TỪ APPCONTEXT
         currentUser = AppContext.getCurrentUser();
+        setupUserInfo();
 
-        // Phân quyền
-        boolean isBidder = currentUser instanceof Bidder;
-        btnCreateAuction.setVisible(!isBidder);
-        btnCreateAuction.setManaged(!isBidder);
-
-
-        // 3. CẤU HÌNH BẢNG
-        colId.setCellValueFactory(new PropertyValueFactory<>("auctionId"));
-        colProductName.setCellValueFactory(new PropertyValueFactory<>("item"));
-        colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentHighestBid"));
-        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
-        colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
-        // ---> BỔ SUNG: Custom lại cách hiển thị của cột tiền tệ <---
-        colCurrentPrice.setCellFactory(tc -> new TableCell<Auction, Double>() {
-            @Override
-            protected void updateItem(Double price, boolean empty) {
-                super.updateItem(price, empty);
-                if (empty || price == null) {
-                    setText(null);
-                } else {
-                    // Gọi hàm tiện ích đã tạo để format
-                    setText(com.auction.utils.CurrencyFormatter.format(price));
-                }
-            }
-        });
-        // ---> BỔ SUNG: Trạng thái rỗng (Empty States) khi chưa có sản phẩm <---
-        Label emptyLabel = new Label("Hiện chưa có sản phẩm nào");
-        emptyLabel.setStyle("-fx-text-fill: gray; -fx-font-style: italic; -fx-font-size: 14px;");
-        tableAuctions.setPlaceholder(emptyLabel);
-        // 3.5 BỔ SUNG: CÀI ĐẶT BỘ LỌC VÀ TÌM KIẾM
         comboCategory.setItems(FXCollections.observableArrayList("Tất cả", "Art", "Electronics", "Vehicle"));
-        comboCategory.getSelectionModel().selectFirst(); // Mặc định chọn "Tất cả"
-
-        btnSearch.setOnAction(event -> filterAuctions());
-
-        // Lắng nghe sự kiện gõ phím Enter trên ô tìm kiếm
-        txtSearch.setOnAction(event -> filterAuctions());
-
-        // Lắng nghe sự kiện khi chọn danh mục mới trong ComboBox sẽ tự động lọc
+        comboCategory.getSelectionModel().selectFirst();
         comboCategory.setOnAction(event -> filterAuctions());
 
-        // Lắng nghe mạng
+        txtSearch.setOnAction(event -> filterAuctions());
+
+        // Lắng nghe dữ liệu mạng
         NetworkClient.getInstance().setOnResponseReceived(response -> {
             Platform.runLater(() -> {
                 if (response.getStatus() == StatusType.SUCCESS && response.getData() instanceof List) {
@@ -106,58 +66,137 @@ public class DashboardController {
         });
 
         NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
-        tableAuctions.setItems(auctionData);
     }
 
-    // --- HÀM BỔ SUNG ĐỂ XỬ LÝ LỌC & TÌM KIẾM ---
+    private void setupUserInfo() {
+        lblUsername.setText(currentUser.getUserName());
+        lblAvatarInitials.setText(currentUser.getUserName().substring(0, 1).toUpperCase());
+        lblWelcome.setText("Chào mừng trở lại, " + currentUser.getUserName() + ".");
+
+        if (currentUser instanceof Bidder) {
+            lblRole.setText("Bidder Account");
+            lblBalance.setText(String.format("$%,.2f", ((Bidder) currentUser).getBalance()));
+            btnCreateAuction.setVisible(false);
+            btnCreateAuction.setManaged(false);
+            lblSectionTitle.setText("• Đấu Giá Trực Tiếp");
+        } else if (currentUser instanceof Seller) {
+            lblRole.setText("Elite Seller");
+            lblBalance.setText("Kho: Vô hạn");
+            btnCreateAuction.setVisible(true);
+            btnCreateAuction.setManaged(true);
+            lblSectionTitle.setText("• Quản Lý Kho Hàng Của Bạn");
+        } else {
+            lblRole.setText("Administrator");
+            lblBalance.setText("System");
+        }
+    }
+
+    @FXML
+    public void onSearchClick(ActionEvent event) {
+        filterAuctions();
+    }
+
     private void filterAuctions() {
         String keyword = txtSearch.getText().toLowerCase().trim();
         String selectedCategory = comboCategory.getValue();
 
-        ObservableList<Auction> filteredList = FXCollections.observableArrayList();
+        auctionGrid.getChildren().clear(); // Xóa lưới cũ
 
         for (Auction auction : auctionData) {
             boolean matchesSearch = auction.getItem().getNameItem().toLowerCase().contains(keyword);
-
             boolean matchesCategory = true;
             if (!"Tất cả".equals(selectedCategory)) {
-                // Kiểm tra xem class của Item có khớp với danh mục được chọn không
-                String itemType = auction.getItem().getClass().getSimpleName();
-                matchesCategory = itemType.equals(selectedCategory);
+                matchesCategory = auction.getItem().getClass().getSimpleName().equals(selectedCategory);
             }
 
             if (matchesSearch && matchesCategory) {
-                filteredList.add(auction);
+                // Tạo thẻ VBox cho từng sản phẩm và nhét vào lưới
+                auctionGrid.getChildren().add(createAuctionCard(auction));
             }
         }
 
-        // Cập nhật lại dữ liệu hiển thị trên bảng
-        tableAuctions.setItems(filteredList);
+        if (auctionGrid.getChildren().isEmpty()) {
+            Label emptyLbl = new Label("Không tìm thấy phiên đấu giá nào.");
+            emptyLbl.setStyle("-fx-text-fill: #A0A0A0; -fx-font-size: 16px;");
+            auctionGrid.getChildren().add(emptyLbl);
+        }
     }
 
+    // --- CỖ MÁY TẠO THẺ SẢN PHẨM (CARD) ---
+    private Node createAuctionCard(Auction auction) {
+        VBox card = new VBox();
+        card.getStyleClass().add("auction-card");
+        card.setPrefWidth(320); // Chiều rộng cố định của thẻ giống Shopee/eBay
 
-    private void loadMockData() {
-        // Ở đây bạn tự tạo dữ liệu để test giao diện
-        // Sau này khi Thành viên C xong, bạn sẽ thay bằng: auctionData.addAll(AuctionManager.getInstance().getAllAuctions());
-        System.out.println("Đang nạp dữ liệu giả để kiểm tra giao diện...");
-        // Tạo thử các vật phẩm giả
-        com.auction.model.Art art = new com.auction.model.Art("Tranh sơn dầu", "Đẹp", 1000, "Picasso", 1920);
-        com.auction.model.Seller seller = new com.auction.model.Seller("Seller01", "123", "seller@test.com");
+        // 1. Vùng chứa ảnh giả lập (Image Placeholder)
+        StackPane imageBox = new StackPane();
+        imageBox.getStyleClass().add("card-image-placeholder");
+        imageBox.setPrefHeight(200);
 
-        // Tạo phiên đấu giá giả
-        Auction mockAuction = new Auction(art, seller, java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusDays(1));
+        Label lblTag = new Label("• " + auction.getStatus().toString());
+        lblTag.getStyleClass().add("tag-live");
+        StackPane.setAlignment(lblTag, Pos.TOP_LEFT);
+        StackPane.setMargin(lblTag, new Insets(15));
 
-        // Thêm vào danh sách hiển thị
-        auctionData.add(mockAuction);
+        Label lblCategory = new Label(auction.getItem().getClass().getSimpleName());
+        lblCategory.setStyle("-fx-text-fill: #555555; -fx-font-weight: bold; -fx-font-size: 24px;");
+
+        imageBox.getChildren().addAll(lblCategory, lblTag);
+
+        // 2. Vùng thông tin (Info Box)
+        VBox infoBox = new VBox(10);
+        infoBox.setPadding(new Insets(20));
+
+        Label lblTitle = new Label(auction.getItem().getNameItem());
+        lblTitle.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 16px;");
+        lblTitle.setWrapText(true);
+
+        HBox priceRow = new HBox();
+        priceRow.setAlignment(Pos.CENTER_LEFT);
+
+        VBox priceCol = new VBox(3);
+        Label lblPriceTitle = new Label("GIÁ HIỆN TẠI");
+        lblPriceTitle.setStyle("-fx-text-fill: #A0A0A0; -fx-font-size: 10px;");
+        Label lblPrice = new Label(String.format("$%,.0f", auction.getCurrentHighestBid()));
+        lblPrice.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 18px;");
+        priceCol.getChildren().addAll(lblPriceTitle, lblPrice);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button btnAction = new Button(currentUser instanceof Seller ? "Sửa/Xem" : "ĐẶT GIÁ");
+        btnAction.getStyleClass().add("btn-gold");
+        btnAction.setOnAction(e -> openAuctionDetail(auction)); // Click nút để mở chi tiết
+
+        priceRow.getChildren().addAll(priceCol, spacer, btnAction);
+        infoBox.getChildren().addAll(lblTitle, priceRow);
+
+        card.getChildren().addAll(imageBox, infoBox);
+
+        // Click cả thẻ cũng mở chi tiết
+        card.setOnMouseClicked(e -> openAuctionDetail(auction));
+
+        return card;
     }
 
-    // --- HÀM MỚI BỔ SUNG ĐỂ MỞ MÀN HÌNH TẠO ĐẤU GIÁ ---
+    private void openAuctionDetail(Auction auction) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/AuctionDetail.fxml"));
+            Parent root = loader.load();
+            AuctionDetailController detailController = loader.getController();
+            detailController.setAuctionData(auction);
+            Stage stage = (Stage) rootPane.getScene().getWindow();
+            stage.setScene(new Scene(root));
+        } catch (IOException e) {
+            showError("Lỗi", "Không thể mở chi tiết phiên đấu giá.");
+        }
+    }
+
     @FXML
     public void onCreateAuctionClick(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/AddProduct.fxml"));
             Parent root = loader.load();
-
             Stage stage = new Stage();
             stage.setTitle("Đăng sản phẩm đấu giá mới");
             stage.initModality(Modality.APPLICATION_MODAL);
@@ -169,53 +208,37 @@ public class DashboardController {
     }
 
     @FXML
-    public void onTableClick(MouseEvent event) {
-        if (event.getClickCount() == 2) {
-            Auction selected = tableAuctions.getSelectionModel().getSelectedItem();
-            if (selected != null) {
-                openAuctionDetail(selected);
-            }
-        }
-    }
-
-    private void openAuctionDetail(Auction auction) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/AuctionDetail.fxml"));
-            Parent root = loader.load();
-
-            AuctionDetailController detailController = loader.getController();
-            detailController.setAuctionData(auction); // Gửi duy nhất Auction, Detail sẽ tự móc User từ AppContext
-
-            Stage stage = (Stage) tableAuctions.getScene().getWindow();
-            stage.setScene(new Scene(root));
-        } catch (IOException e) {
-            showError("Lỗi", "Không thể mở chi tiết phiên đấu giá: " + e.getMessage());
-        }
-    }
-
-    @FXML
     public void onProfileClick(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/UserProfile.fxml")); // Viết hoa chữ P cho chuẩn
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/auction/view/UserProfile.fxml"));
             Parent root = loader.load();
-
             UserProfileController profileController = loader.getController();
             if (currentUser instanceof Bidder) {
                 profileController.setUserData((Bidder) currentUser);
             }
-
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
-            stage.setTitle("Thông tin tài khoản - " + currentUser.getUserName());
+            stage.setTitle("Trang cá nhân");
         } catch (IOException e) {
             showError("Lỗi", "Không thể mở trang cá nhân.");
+        }
+    }
+
+    @FXML
+    public void onLogoutClick(ActionEvent event) {
+        try {
+            AppContext.logout();
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+        } catch (Exception e) {
+            showError("Lỗi", "Lỗi đăng xuất.");
         }
     }
 
     private void showError(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
-        alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
     }
