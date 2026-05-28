@@ -4,6 +4,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 
 <StackPane fx:id="rootPane" stylesheets="@fileCS/style.css" xmlns="http://javafx.com/javafx/21"
     xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.LoginController">
@@ -11,8 +13,16 @@
     <HBox prefHeight="600.0" prefWidth="900.0" style="-fx-background-color: #0d0d0d; -fx-font-family: 'Segoe UI', Arial, sans-serif;">
 
         <!-- Panel Trái: Branding -->
-        <StackPane prefWidth="450.0" styleClass="login-background-image">
+        <StackPane prefWidth="450.0">
+
+            <ImageView fitHeight="600.0" fitWidth="450.0" preserveRatio="false">
+                <image>
+                    <Image url="@images/bg_watch.jpeg" />
+                </image>
+            </ImageView>
+
             <Region style="-fx-background-color: rgba(0, 0, 0, 0.4);" />
+
             <VBox alignment="CENTER_LEFT" prefHeight="600.0" prefWidth="450.0" spacing="20.0" StackPane.alignment="CENTER">
                 <padding><Insets bottom="50.0" left="50.0" right="50.0" top="50.0" /></padding>
                 <Label style="-fx-text-fill: linear-gradient(to right, #FDEB94, #D4AF37); -fx-font-weight: 900; -fx-font-size: 38px;" text="BIDPRECISION" wrapText="true" />

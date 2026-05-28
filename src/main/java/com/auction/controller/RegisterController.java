@@ -18,44 +18,61 @@ import java.io.IOException;
 
 public class RegisterController {
 
-    @FXML private StackPane rootPane;
-    @FXML private TextField  txtUsername;
-    @FXML private TextField  txtEmail;
+    @FXML private StackPane     rootPane;
+    @FXML private TextField     txtUsername;
+    @FXML private TextField     txtEmail;
     @FXML private PasswordField txtPassword;
     @FXML private TextField     txtPasswordVisible;
     @FXML private Button        btnTogglePassword;
-    @FXML private PasswordField txtConfirmPassword;
-    @FXML private TextField     txtConfirmVisible;
-    @FXML private Button        btnToggleConfirm;
-    @FXML private ToggleGroup   roleGroup;
-    @FXML private RadioButton   radioBidder;
-    @FXML private RadioButton   radioSeller;
-    @FXML private RadioButton   radioAdmin;
-    @FXML private VBox          adminCodeBox;   // Panel mã Admin (ẩn theo mặc định)
-    @FXML private PasswordField txtAdminCode;   // Mã Admin bảo mật
+    @FXML private ToggleGroup   roleToggleGroup;
+    @FXML private ToggleButton  btnBidder;
+    @FXML private ToggleButton  btnSeller;
+    @FXML private ToggleButton  btnAdmin;
+    @FXML private VBox          adminCodeBox;
+    @FXML private PasswordField txtAdminCode;
+    @FXML private CheckBox      chkTerms;
     @FXML private Label         lblStatus;
     @FXML private Button        btnRegister;
 
-    private boolean pwVisible      = false;
-    private boolean confirmVisible = false;
+    private static final String STYLE_ACTIVE   = "-fx-background-color: #D4AF37; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 13px; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 12 10;";
+    private static final String STYLE_INACTIVE = "-fx-background-color: #1e1e1e; -fx-text-fill: #AAAAAA; -fx-font-weight: bold; -fx-font-size: 13px; -fx-border-color: #333; -fx-border-radius: 6; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 12 10;";
+    private static final String STYLE_ADMIN_ACTIVE = "-fx-background-color: #8B0000; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 13px; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 12 10;";
+
+    private boolean pwVisible = false;
 
     @FXML
     public void initialize() {
-        // Lắng nghe thay đổi role để hiện/ẩn ô mã Admin
-        if (roleGroup != null) {
-            roleGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
-                boolean isAdmin = (newVal == radioAdmin);
-                if (adminCodeBox != null) {
-                    adminCodeBox.setVisible(isAdmin);
-                    adminCodeBox.setManaged(isAdmin);
-                }
-                // Đổi style radio Admin khi được chọn
-                if (radioAdmin != null) {
-                    radioAdmin.setStyle(isAdmin
-                        ? "-fx-text-fill: #e74c3c; -fx-font-size: 12px; -fx-font-weight: bold;"
-                        : "-fx-text-fill: #888; -fx-font-size: 12px;");
-                }
+        // Lắng nghe thay đổi role để hiện/ẩn ô mã Admin và cập nhật style
+        if (roleToggleGroup != null) {
+            roleToggleGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+                updateRoleStyles(newVal);
             });
+        }
+        // Đảm bảo Bidder được chọn mặc định với style active
+        if (btnBidder != null) {
+            btnBidder.setStyle(STYLE_ACTIVE);
+        }
+    }
+
+    /** Xử lý khi nhấn nút role (Bidder / Seller / Admin) */
+    @FXML
+    public void onRoleToggle(ActionEvent event) {
+        updateRoleStyles(roleToggleGroup != null ? roleToggleGroup.getSelectedToggle() : null);
+    }
+
+    private void updateRoleStyles(Toggle selected) {
+        boolean isAdmin = (selected == btnAdmin);
+        // Cập nhật màu từng nút
+        if (btnBidder != null)
+            btnBidder.setStyle(selected == btnBidder ? STYLE_ACTIVE   : STYLE_INACTIVE);
+        if (btnSeller != null)
+            btnSeller.setStyle(selected == btnSeller ? STYLE_ACTIVE   : STYLE_INACTIVE);
+        if (btnAdmin  != null)
+            btnAdmin.setStyle( isAdmin                ? STYLE_ADMIN_ACTIVE : STYLE_INACTIVE);
+        // Hiện/ẩn ô mã Admin
+        if (adminCodeBox != null) {
+            adminCodeBox.setVisible(isAdmin);
+            adminCodeBox.setManaged(isAdmin);
         }
     }
 
@@ -76,23 +93,7 @@ public class RegisterController {
         }
     }
 
-    @FXML public void onToggleConfirm(ActionEvent e) {
-        confirmVisible = !confirmVisible;
-        if (confirmVisible) {
-            txtConfirmVisible.setText(txtConfirmPassword.getText());
-            txtConfirmVisible.setVisible(true);  txtConfirmVisible.setManaged(true);
-            txtConfirmPassword.setVisible(false); txtConfirmPassword.setManaged(false);
-            btnToggleConfirm.setText("👁");   // mắt mở = đang hiện
-        } else {
-            txtConfirmPassword.setText(txtConfirmVisible.getText());
-            txtConfirmPassword.setVisible(true);  txtConfirmPassword.setManaged(true);
-            txtConfirmVisible.setVisible(false);  txtConfirmVisible.setManaged(false);
-            btnToggleConfirm.setText("🔒");  // khoá = đang ẩn
-        }
-    }
-
-    private String getPassword()  { return pwVisible      ? txtPasswordVisible.getText() : txtPassword.getText(); }
-    private String getConfirm()   { return confirmVisible ? txtConfirmVisible.getText()  : txtConfirmPassword.getText(); }
+    private String getPassword() { return pwVisible ? txtPasswordVisible.getText() : txtPassword.getText(); }
 
     // ─── Đăng ký ──────────────────────────────────────────────────────────────
 
@@ -101,11 +102,11 @@ public class RegisterController {
         String username = safe(txtUsername);
         String email    = safe(txtEmail);
         String password = getPassword();
-        String confirm  = getConfirm();
 
-        // Xác định role
-        boolean isAdmin  = (radioAdmin  != null && radioAdmin.isSelected());
-        boolean isSeller = (radioSeller != null && radioSeller.isSelected());
+        // Xác định role từ ToggleButton
+        Toggle selected = (roleToggleGroup != null) ? roleToggleGroup.getSelectedToggle() : null;
+        boolean isAdmin  = (selected == btnAdmin);
+        boolean isSeller = (selected == btnSeller);
         String role = isAdmin ? "Admin" : (isSeller ? "Seller" : "Bidder");
 
         // ─── Validate ─────────────────────────────────────────────────────────
@@ -120,9 +121,6 @@ public class RegisterController {
         }
         if (password.length() < 6) {
             showStatus("❌ Mật khẩu phải có ít nhất 6 ký tự!", "#e74c3c"); return;
-        }
-        if (!password.equals(confirm)) {
-            showStatus("❌ Mật khẩu xác nhận không khớp!", "#e74c3c"); return;
         }
         // Validate Admin code
         if (isAdmin) {

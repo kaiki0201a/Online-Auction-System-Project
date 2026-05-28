@@ -53,6 +53,32 @@
                     </HBox>
                 </VBox>
 
+                <!-- Thông Tin Hồ Sơ -->
+                <VBox spacing="14.0"
+                    style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 22;">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="👤" style="-fx-font-size: 18px;"/>
+                        <Label style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;" text="THÔNG TIN HỒ SƠ"/>
+                    </HBox>
+                    <Label text="Tên đăng nhập không thể thay đổi sau khi tạo tài khoản."
+                        style="-fx-text-fill: #555; -fx-font-size: 11px;" wrapText="true"/>
+
+                    <!-- Tên đăng nhập (chỉ xem) -->
+                    <VBox spacing="7.0">
+                        <Label style="-fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold;" text="TÊN ĐĂNG NHẬP"/>
+                        <HBox alignment="CENTER_LEFT"
+                            style="-fx-background-color: #141414; -fx-border-color: #252525; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 10 0 15;">
+                            <Label style="-fx-text-fill: #555;" text="🔐 "/>
+                            <TextField fx:id="txtUsernameDisplay" promptText="Tên đăng nhập"
+                                editable="false"
+                                style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: #888; -fx-prompt-text-fill: #555; -fx-padding: 11 10;"
+                                HBox.hgrow="ALWAYS"/>
+                            <Label text="Không thể sửa"
+                                style="-fx-text-fill: #444; -fx-font-size: 10px; -fx-padding: 0 6 0 0;"/>
+                        </HBox>
+                    </VBox>
+                </VBox>
+
                 <!-- Đổi Email -->
                 <VBox spacing="14.0"
                     style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 22;">
@@ -124,6 +150,59 @@
                     <Button maxWidth="Infinity" onAction="#onChangePasswordClick"
                         style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 11; -fx-font-size: 13px;"
                         text="🔒  Xác Nhận Đổi Mật Khẩu"/>
+                </VBox>
+
+                <!-- Thông Báo -->
+                <VBox spacing="14.0"
+                    style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 22;">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="🔔" style="-fx-font-size: 18px;"/>
+                        <Label style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;" text="THÔNG BÁO"/>
+                    </HBox>
+                    <Label text="Tuỳ chỉnh các loại thông báo bạn muốn nhận."
+                        style="-fx-text-fill: #555; -fx-font-size: 11px;" wrapText="true"/>
+
+                    <!-- Outbid Alerts -->
+                    <HBox alignment="CENTER_LEFT" spacing="12"
+                        style="-fx-background-color: #1a1a1a; -fx-border-color: #2A2A2A; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 14 16;">
+                        <VBox spacing="3" HBox.hgrow="ALWAYS">
+                            <Label text="Cảnh báo bị vượt giá"
+                                style="-fx-text-fill: #ddd; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+                            <Label text="Thông báo ngay khi có người đặt giá cao hơn bạn."
+                                style="-fx-text-fill: #555; -fx-font-size: 11px;" wrapText="true"/>
+                        </VBox>
+                        <ToggleButton fx:id="toggleOutbid" selected="true"
+                            style="-fx-background-color: #F5C518; -fx-background-radius: 20; -fx-min-width: 46; -fx-min-height: 24; -fx-cursor: hand; -fx-text-fill: transparent; -fx-font-size: 0;"
+                            onAction="#onToggleNotification"/>
+                    </HBox>
+
+                    <!-- Auction Ending Soon -->
+                    <HBox alignment="CENTER_LEFT" spacing="12"
+                        style="-fx-background-color: #1a1a1a; -fx-border-color: #2A2A2A; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 14 16;">
+                        <VBox spacing="3" HBox.hgrow="ALWAYS">
+                            <Label text="Đấu giá sắp kết thúc"
+                                style="-fx-text-fill: #ddd; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+                            <Label text="Nhắc nhở khi phiên đấu giá bạn quan tâm sắp hết giờ."
+                                style="-fx-text-fill: #555; -fx-font-size: 11px;" wrapText="true"/>
+                        </VBox>
+                        <ToggleButton fx:id="toggleAuctionEnd" selected="true"
+                            style="-fx-background-color: #F5C518; -fx-background-radius: 20; -fx-min-width: 46; -fx-min-height: 24; -fx-cursor: hand; -fx-text-fill: transparent; -fx-font-size: 0;"
+                            onAction="#onToggleNotification"/>
+                    </HBox>
+
+                    <!-- Exclusive News -->
+                    <HBox alignment="CENTER_LEFT" spacing="12"
+                        style="-fx-background-color: #1a1a1a; -fx-border-color: #2A2A2A; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 14 16;">
+                        <VBox spacing="3" HBox.hgrow="ALWAYS">
+                            <Label text="Tin tức &amp; Ưu đãi độc quyền"
+                                style="-fx-text-fill: #ddd; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+                            <Label text="Cập nhật về các phiên đấu giá nổi bật sắp diễn ra."
+                                style="-fx-text-fill: #555; -fx-font-size: 11px;" wrapText="true"/>
+                        </VBox>
+                        <ToggleButton fx:id="toggleNews" selected="false"
+                            style="-fx-background-color: #333; -fx-background-radius: 20; -fx-min-width: 46; -fx-min-height: 24; -fx-cursor: hand; -fx-text-fill: transparent; -fx-font-size: 0;"
+                            onAction="#onToggleNotification"/>
+                    </HBox>
                 </VBox>
 
                 <!-- Toast Label cho feedback -->

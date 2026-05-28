@@ -31,10 +31,14 @@ public class SettingsController {
     @FXML private Label lblRole;
     @FXML private Label lblBalance;
     @FXML private Label lblAvatarInitials; // Avatar initials circle
+    @FXML private TextField txtUsernameDisplay;
     @FXML private TextField txtNewEmail;
     @FXML private PasswordField txtCurrentPassword;
     @FXML private PasswordField txtNewPassword;
     @FXML private PasswordField txtConfirmNewPassword;
+    @FXML private ToggleButton toggleOutbid;
+    @FXML private ToggleButton toggleAuctionEnd;
+    @FXML private ToggleButton toggleNews;
 
     private static final String LISTENER_KEY = "settings";
     private User currentUser;
@@ -49,6 +53,12 @@ public class SettingsController {
         if (lblEmail       != null) lblEmail.setText(currentUser.getEmail());
         if (lblAvatarInitials != null)
             lblAvatarInitials.setText(name.substring(0, 1).toUpperCase());
+        // Hiển thị tên đăng nhập ở ô read-only
+        if (txtUsernameDisplay != null) txtUsernameDisplay.setText(name);
+        // Áp dụng style toggle ban đầu
+        applyToggleStyle(toggleOutbid);
+        applyToggleStyle(toggleAuctionEnd);
+        applyToggleStyle(toggleNews);
 
         if (lblRole != null) {
             String role = (currentUser instanceof com.auction.model.Admin) ? "Quản trị viên" :
@@ -153,22 +163,33 @@ public class SettingsController {
     }
 
     @FXML
+    public void onToggleNotification(ActionEvent event) {
+        if (event.getSource() instanceof ToggleButton tb) {
+            applyToggleStyle(tb);
+        }
+    }
+
+    private void applyToggleStyle(ToggleButton tb) {
+        if (tb == null) return;
+        if (tb.isSelected()) {
+            tb.setStyle("-fx-background-color: #F5C518; -fx-background-radius: 20; "
+                    + "-fx-min-width: 46; -fx-min-height: 24; -fx-cursor: hand; "
+                    + "-fx-text-fill: transparent; -fx-font-size: 0;");
+        } else {
+            tb.setStyle("-fx-background-color: #333; -fx-background-radius: 20; "
+                    + "-fx-min-width: 46; -fx-min-height: 24; -fx-cursor: hand; "
+                    + "-fx-text-fill: transparent; -fx-font-size: 0;");
+        }
+    }
+
+    @FXML
     public void onBackClick(ActionEvent event) {
         NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
         try {
-            String fxmlPath;
-            int w = 1280, h = 800;
-            if (currentUser instanceof com.auction.model.Admin) {
-                fxmlPath = "/com/auction/view/AdminDashboard.fxml";
-                w = 1350; h = 900;
-            } else if (currentUser instanceof Seller) {
-                fxmlPath = "/com/auction/view/SellerDashboard.fxml";
-            } else {
-                fxmlPath = "/com/auction/view/BidderDashboard.fxml";
-            }
-            Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
+            // Always go back to UserProfile (which is the hub for account management)
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/UserProfile.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, w, h));
+            stage.setScene(new Scene(root, 500, 720));
         } catch (IOException e) {
             e.printStackTrace();
         }
