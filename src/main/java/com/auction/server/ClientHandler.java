@@ -576,7 +576,8 @@ public class ClientHandler implements Runnable {
             case UPDATE_PROFILE:
                 try {
                     String profileData = (String) request.getPayload();
-                    String[] parts = profileData.split("\\|");
+                    // Dùng limit -1 để giữ phần tử rỗng ở cuối (tránh split bỏ sót)
+                    String[] parts = profileData.split("\\|", -1);
                     if (parts.length < 3) {
                         return new Response(StatusType.ERROR, "Dữ liệu không hợp lệ.", null);
                     }
@@ -588,14 +589,19 @@ public class ClientHandler implements Runnable {
                     if (user == null) {
                         return new Response(StatusType.ERROR, "Không tìm thấy tài khoản.", null);
                     }
+                    boolean emailUpdated = false;
                     if (!newEmail.isEmpty()) {
                         user.setEmail(newEmail);
+                        emailUpdated = true;
                     }
                     if (!newPassword.isEmpty()) {
                         user.setPassWord(user.hashPasswordPublic(newPassword));
                     }
                     ServerApp.getUserDAO().saveDataToFile();
-                    return new Response(StatusType.SUCCESS, "Cập nhật thông tin thành công!", user);
+                    String successMsg = emailUpdated
+                            ? "Thay đổi email thành công!"
+                            : "Đổi mật khẩu thành công!";
+                    return new Response(StatusType.SUCCESS, successMsg, user);
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Lỗi khi cập nhật: " + e.getMessage(), null);
                 }
