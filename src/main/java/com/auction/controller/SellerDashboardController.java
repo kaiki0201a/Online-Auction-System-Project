@@ -55,6 +55,8 @@ public class SellerDashboardController {
 
     // Kho hàng
     @FXML private HBox inventoryContainer;
+    @FXML private Button btnViewAllInventory;
+    private static final int INVENTORY_PREVIEW_LIMIT = 4;
 
     // Form tạo sản phẩm
     @FXML private TextField txtName;
@@ -101,7 +103,7 @@ public class SellerDashboardController {
 
         if (txtStartingPrice != null) {
             txtStartingPrice.setTextFormatter(new TextFormatter<>(change ->
-                change.getControlNewText().matches("\\d*(\\.\\d*)?") ? change : null));
+                    change.getControlNewText().matches("\\d*(\\.\\d*)?") ? change : null));
         }
 
         // FIX: Dùng addEventListener với key "seller" — không ghi đè listener khác
@@ -139,12 +141,12 @@ public class SellerDashboardController {
             if (data instanceof List<?> lst && !lst.isEmpty() && lst.get(0) instanceof Auction) {
                 // Tìm auction vừa được duyệt trong list
                 ((List<Auction>) data).stream()
-                    .filter(a -> a.getSeller().getUserName().equals(currentUser.getUserName()))
-                    .filter(a -> a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.APPROVED)
-                    .findFirst()
-                    .ifPresent(approved -> showAlert("✅ Sản phẩm được duyệt!",
-                        "Sản phẩm \"" + approved.getItem().getNameItem() +
-                        "\" đã được Admin phê duyệt!"));
+                        .filter(a -> a.getSeller().getUserName().equals(currentUser.getUserName()))
+                        .filter(a -> a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.APPROVED)
+                        .findFirst()
+                        .ifPresent(approved -> showAlert("✅ Sản phẩm được duyệt!",
+                                "Sản phẩm \"" + approved.getItem().getNameItem() +
+                                        "\" đã được Admin phê duyệt!"));
             }
         }
 
@@ -152,12 +154,12 @@ public class SellerDashboardController {
         if ("AUCTION_REJECTED".equals(msg) || msg != null && msg.startsWith("TỪ_CHỐI_OK|")) {
             if (data instanceof List<?> lst && !lst.isEmpty() && lst.get(0) instanceof Auction) {
                 ((List<Auction>) data).stream()
-                    .filter(a -> a.getSeller().getUserName().equals(currentUser.getUserName()))
-                    .filter(a -> a.getStatus() == AuctionStatus.REJECTED)
-                    .findFirst()
-                    .ifPresent(rejected -> showAlert("❌ Sản phẩm bị từ chối",
-                        "Sản phẩm \"" + rejected.getItem().getNameItem() +
-                        "\" đã bị Admin từ chối. Vui lòng kiểm tra lại thông tin."));
+                        .filter(a -> a.getSeller().getUserName().equals(currentUser.getUserName()))
+                        .filter(a -> a.getStatus() == AuctionStatus.REJECTED)
+                        .findFirst()
+                        .ifPresent(rejected -> showAlert("❌ Sản phẩm bị từ chối",
+                                "Sản phẩm \"" + rejected.getItem().getNameItem() +
+                                        "\" đã bị Admin từ chối. Vui lòng kiểm tra lại thông tin."));
             }
         }
 
@@ -188,14 +190,14 @@ public class SellerDashboardController {
                 renderLiveAuctions();
                 // Kiểm tra có phiên nào của seller bị hủy không
                 updatedList.stream()
-                    .filter(a -> a.getStatus() == AuctionStatus.CANCELED
-                              && a.getSeller().getUserName().equals(currentUser.getUserName()))
-                    .findFirst()
-                    .ifPresent(canceled -> showAlert("🚫 Phiên bị hủy",
-                            "Phiên đấu giá \"" + canceled.getItem().getNameItem()
-                            + "\" đã bị Admin hủy.\n"
-                            + "Sản phẩm của bạn hiện đã được trả về kho.\n"
-                            + "Tiền của bidder đã được hoàn lại cho họ."));
+                        .filter(a -> a.getStatus() == AuctionStatus.CANCELED
+                                && a.getSeller().getUserName().equals(currentUser.getUserName()))
+                        .findFirst()
+                        .ifPresent(canceled -> showAlert("🚫 Phiên bị hủy",
+                                "Phiên đấu giá \"" + canceled.getItem().getNameItem()
+                                        + "\" đã bị Admin hủy.\n"
+                                        + "Sản phẩm của bạn hiện đã được trả về kho.\n"
+                                        + "Tiền của bidder đã được hoàn lại cho họ."));
             }
             return;
         }
@@ -233,9 +235,9 @@ public class SellerDashboardController {
             String itemName   = parts.length > 2 ? parts[2] : "sản phẩm";
             if (sellerName.equals(currentUser.getUserName())) {
                 showAlert("📭 Phiên không có người tham gia",
-                    "Phiên đấu giá sản phẩm \"" + itemName + "\" đã kết thúc\n"
-                    + "nhưng không có ai đặt giá.\n"
-                    + "Bạn có thể đăng lại sản phẩm với mức giá hấp dẫn hơn!");
+                        "Phiên đấu giá sản phẩm \"" + itemName + "\" đã kết thúc\n"
+                                + "nhưng không có ai đặt giá.\n"
+                                + "Bạn có thể đăng lại sản phẩm với mức giá hấp dẫn hơn!");
             }
         }
 
@@ -246,8 +248,8 @@ public class SellerDashboardController {
             String itemName   = parts.length > 2 ? parts[2] : "sản phẩm";
             if (sellerName.equals(currentUser.getUserName())) {
                 Platform.runLater(() -> showAlert("🚫 Phiên bị từ chối bởi Admin",
-                    "Phiên đấu giá sản phẩm \"" + itemName + "\" đã bị Admin từ chối.\n"
-                    + "Vui lòng kiểm tra lại thông tin và đăng lại sản phẩm!"));
+                        "Phiên đấu giá sản phẩm \"" + itemName + "\" đã bị Admin từ chối.\n"
+                                + "Vui lòng kiểm tra lại thông tin và đăng lại sản phẩm!"));
             }
         }
 
@@ -263,11 +265,11 @@ public class SellerDashboardController {
                     Stage stage = (Stage) rootPane.getScene().getWindow();
                     stage.setScene(new Scene(root, 900, 600));
                     javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-                        javafx.scene.control.Alert.AlertType.WARNING);
+                            javafx.scene.control.Alert.AlertType.WARNING);
                     alert.setTitle("⚠️ Tài khoản bị khóa");
                     alert.setHeaderText(null);
                     alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\n"
-                        + "Bạn đã được đăng xuất tự động.");
+                            + "Bạn đã được đăng xuất tự động.");
                     alert.show();
                 } catch (IOException ex) { ex.printStackTrace(); }
             }
@@ -342,9 +344,24 @@ public class SellerDashboardController {
         inventoryContainer.getChildren().clear();
 
         List<Auction> mine = allAuctions.stream()
-            .filter(a -> a.getSeller() != null &&
-                         a.getSeller().getUserName().equals(currentUser.getUserName()))
-            .collect(Collectors.toList());
+                .filter(a -> a.getSeller() != null &&
+                        a.getSeller().getUserName().equals(currentUser.getUserName()))
+                .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
+                .collect(Collectors.toList());
+
+        int total = mine.size();
+
+        // Cập nhật text nút: ẩn nếu không có gì, hiện số lượng nếu vượt limit
+        if (btnViewAllInventory != null) {
+            if (total <= INVENTORY_PREVIEW_LIMIT) {
+                btnViewAllInventory.setVisible(false);
+                btnViewAllInventory.setManaged(false);
+            } else {
+                btnViewAllInventory.setVisible(true);
+                btnViewAllInventory.setManaged(true);
+                btnViewAllInventory.setText("Xem tất cả (" + total + ") →");
+            }
+        }
 
         if (mine.isEmpty()) {
             Label empty = new Label("Chưa có sản phẩm nào. Hãy tạo phiên đấu giá đầu tiên!");
@@ -353,62 +370,70 @@ public class SellerDashboardController {
             return;
         }
 
-        for (Auction auction : mine) {
-            VBox card = new VBox();
-            card.getStyleClass().add("auction-card");
-            card.setPrefWidth(270);
+        List<Auction> preview = mine.subList(0, Math.min(INVENTORY_PREVIEW_LIMIT, total));
 
-            StackPane imgBox = new StackPane();
-            imgBox.getStyleClass().add("card-image-placeholder");
-            imgBox.setPrefHeight(155);
-
-            String imgPath = auction.getItem().getImagePath();
-            if (imgPath != null && !imgPath.isEmpty()) {
-                try {
-                    Image img = new Image("file:" + imgPath, 270, 155, true, true);
-                    ImageView iv = new ImageView(img);
-                    iv.setFitWidth(270); iv.setFitHeight(155); iv.setPreserveRatio(false);
-                    imgBox.getChildren().add(iv);
-                } catch (Exception ignored) {}
-            } else {
-                Label catIcon = new Label(auction.getItem().getClass().getSimpleName());
-                catIcon.setStyle("-fx-text-fill: #333; -fx-font-size: 18px; -fx-font-weight: bold;");
-                imgBox.getChildren().add(catIcon);
-            }
-
-            // FIX: Badge với đủ các status mới
-            Label badge = buildStatusBadge(auction);
-            StackPane.setAlignment(badge, Pos.TOP_RIGHT);
-            StackPane.setMargin(badge, new Insets(10));
-            imgBox.getChildren().add(badge);
-
-            VBox info = new VBox(8);
-            info.setPadding(new Insets(14));
-            Label lblTitle = new Label(auction.getItem().getNameItem());
-            lblTitle.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
-            lblTitle.setWrapText(true);
-
-            HBox row = new HBox();
-            row.setAlignment(Pos.CENTER_LEFT);
-            VBox pCol = new VBox(2);
-            boolean isEnded = auction.getStatus() == AuctionStatus.FINISHED
-                           || auction.getStatus() == AuctionStatus.PAID;
-            Label lpt = new Label(isEnded ? "Giá Chốt" : "Giá Hiện Tại");
-            lpt.setStyle("-fx-text-fill: #666; -fx-font-size: 9px;");
-            Label lpv = new Label(CurrencyFormatter.format(auction.getCurrentHighestBid()));
-            lpv.setStyle("-fx-text-fill: #F5C518; -fx-font-weight: bold; -fx-font-size: 15px;");
-            pCol.getChildren().addAll(lpt, lpv);
-            Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-            Button btnView = new Button("Chi tiết →");
-            btnView.getStyleClass().add("btn-outline");
-            btnView.setOnAction(e -> openAuctionDetail(auction));
-            row.getChildren().addAll(pCol, sp, btnView);
-            info.getChildren().addAll(lblTitle, row);
-            card.getChildren().addAll(imgBox, info);
-            card.setOnMouseClicked(e -> openAuctionDetail(auction));
-            inventoryContainer.getChildren().add(card);
+        for (Auction auction : preview) {
+            inventoryContainer.getChildren().add(buildInventoryCard(auction, this::openAuctionDetail));
         }
     }
+
+    /** Tạo card hiển thị cho một phiên đấu giá trong kho hàng. Dùng chung cho
+     *  preview trên dashboard và popup "Xem tất cả". */
+    private VBox buildInventoryCard(Auction auction, java.util.function.Consumer<Auction> onClick) {
+        VBox card = new VBox();
+        card.getStyleClass().add("auction-card");
+        card.setPrefWidth(270);
+
+        StackPane imgBox = new StackPane();
+        imgBox.getStyleClass().add("card-image-placeholder");
+        imgBox.setPrefHeight(155);
+
+        String imgPath = auction.getItem().getImagePath();
+        if (imgPath != null && !imgPath.isEmpty()) {
+            try {
+                Image img = new Image("file:" + imgPath, 270, 155, true, true);
+                ImageView iv = new ImageView(img);
+                iv.setFitWidth(270); iv.setFitHeight(155); iv.setPreserveRatio(false);
+                imgBox.getChildren().add(iv);
+            } catch (Exception ignored) {}
+        } else {
+            Label catIcon = new Label(auction.getItem().getClass().getSimpleName());
+            catIcon.setStyle("-fx-text-fill: #333; -fx-font-size: 18px; -fx-font-weight: bold;");
+            imgBox.getChildren().add(catIcon);
+        }
+
+        Label badge = buildStatusBadge(auction);
+        StackPane.setAlignment(badge, Pos.TOP_RIGHT);
+        StackPane.setMargin(badge, new Insets(10));
+        imgBox.getChildren().add(badge);
+
+        VBox info = new VBox(8);
+        info.setPadding(new Insets(14));
+        Label lblTitle = new Label(auction.getItem().getNameItem());
+        lblTitle.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
+        lblTitle.setWrapText(true);
+
+        HBox row = new HBox();
+        row.setAlignment(Pos.CENTER_LEFT);
+        VBox pCol = new VBox(2);
+        boolean isEnded = auction.getStatus() == AuctionStatus.FINISHED
+                || auction.getStatus() == AuctionStatus.PAID;
+        Label lpt = new Label(isEnded ? "Giá Chốt" : "Giá Hiện Tại");
+        lpt.setStyle("-fx-text-fill: #666; -fx-font-size: 9px;");
+        Label lpv = new Label(CurrencyFormatter.format(auction.getCurrentHighestBid()));
+        lpv.setStyle("-fx-text-fill: #F5C518; -fx-font-weight: bold; -fx-font-size: 15px;");
+        pCol.getChildren().addAll(lpt, lpv);
+        Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
+        Button btnView = new Button("Chi tiết →");
+        btnView.getStyleClass().add("btn-outline");
+        btnView.setOnAction(e -> onClick.accept(auction));
+        row.getChildren().addAll(pCol, sp, btnView);
+        info.getChildren().addAll(lblTitle, row);
+        card.getChildren().addAll(imgBox, info);
+        card.setOnMouseClicked(e -> onClick.accept(auction));
+        return card;
+    }
+
 
     // ─── Live Auctions ─────────────────────────────────────────────────────────
 
@@ -418,11 +443,11 @@ public class SellerDashboardController {
 
         // FIX: Include APPROVED (sắp diễn ra) + RUNNING + OPEN
         List<Auction> live = allAuctions.stream()
-            .filter(a -> a.getStatus() == AuctionStatus.RUNNING
-                      || a.getStatus() == AuctionStatus.OPEN
-                      || a.getStatus() == AuctionStatus.APPROVED)
-            .limit(4)
-            .collect(Collectors.toList());
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING
+                        || a.getStatus() == AuctionStatus.OPEN
+                        || a.getStatus() == AuctionStatus.APPROVED)
+                .limit(4)
+                .collect(Collectors.toList());
 
         if (live.isEmpty()) {
             Label empty = new Label("Hiện không có phiên đấu giá nào đang/sắp diễn ra.");
@@ -435,13 +460,13 @@ public class SellerDashboardController {
             VBox card = new VBox(8);
             card.setPrefWidth(240);
             card.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #2A2A2A; " +
-                          "-fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 14;");
+                    "-fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 14;");
 
             String statusText = a.getStatus() == AuctionStatus.APPROVED ? "📅 SẮP DIỄN RA" :
-                                a.getStatus() == AuctionStatus.RUNNING  ? "🔴 ĐANG ĐẤU GIÁ" : "🟢 ĐANG MỞ";
+                    a.getStatus() == AuctionStatus.RUNNING  ? "🔴 ĐANG ĐẤU GIÁ" : "🟢 ĐANG MỞ";
             Label catBadge = new Label(statusText + " · " + a.getItem().getClass().getSimpleName().toUpperCase());
             catBadge.setStyle("-fx-background-color: rgba(245,197,24,0.15); -fx-text-fill: #F5C518; " +
-                              "-fx-font-size: 10px; -fx-padding: 2 7; -fx-background-radius: 3; -fx-font-weight: bold;");
+                    "-fx-font-size: 10px; -fx-padding: 2 7; -fx-background-radius: 3; -fx-font-weight: bold;");
 
             Label title = new Label(a.getItem().getNameItem());
             title.setStyle("-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;");
@@ -456,9 +481,9 @@ public class SellerDashboardController {
 
             Button btnView = new Button(isOwn ? "Xem phiên của tôi" : "Xem →");
             btnView.setStyle("-fx-background-color: " + (isOwn ? "#2A2A2A" : "transparent") +
-                "; -fx-text-fill: " + (isOwn ? "#F5C518" : "#A0A0A0") +
-                "; -fx-border-color: " + (isOwn ? "#F5C518" : "#444") +
-                "; -fx-border-radius: 4; -fx-cursor: hand; -fx-padding: 5 12; -fx-font-size: 11px;");
+                    "; -fx-text-fill: " + (isOwn ? "#F5C518" : "#A0A0A0") +
+                    "; -fx-border-color: " + (isOwn ? "#F5C518" : "#444") +
+                    "; -fx-border-radius: 4; -fx-cursor: hand; -fx-padding: 5 12; -fx-font-size: 11px;");
             btnView.setMaxWidth(Double.MAX_VALUE);
             btnView.setOnAction(e -> openAuctionDetail(a));
 
@@ -511,7 +536,7 @@ public class SellerDashboardController {
         FileChooser fc = new FileChooser();
         fc.setTitle("Chọn ảnh sản phẩm");
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("Ảnh", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.webp"));
+                new FileChooser.ExtensionFilter("Ảnh", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.webp"));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         File f = fc.showOpenDialog(stage);
         if (f != null) {
@@ -548,16 +573,16 @@ public class SellerDashboardController {
         HBox row = new HBox(20);
         if ("Art".equals(cat)) {
             row.getChildren().addAll(
-                createInputField("TÊN HỌA SĨ / NGHỆ NHÂN", "VD: Pablo Picasso"),
-                createInputField("NĂM SÁNG TÁC", "VD: 1937"));
+                    createInputField("TÊN HỌA SĨ / NGHỆ NHÂN", "VD: Pablo Picasso"),
+                    createInputField("NĂM SÁNG TÁC", "VD: 1937"));
         } else if ("Electronics".equals(cat)) {
             row.getChildren().addAll(
-                createInputField("THƯƠNG HIỆU", "VD: Apple, Samsung"),
-                createInputField("BẢO HÀNH (THÁNG)", "VD: 24"));
+                    createInputField("THƯƠNG HIỆU", "VD: Apple, Samsung"),
+                    createInputField("BẢO HÀNH (THÁNG)", "VD: 24"));
         } else if ("Vehicle".equals(cat)) {
             row.getChildren().addAll(
-                createInputField("LOẠI ĐỘNG CƠ", "VD: 4.0L V8"),
-                createInputField("SỐ KM (MILEAGE)", "VD: 12000"));
+                    createInputField("LOẠI ĐỘNG CƠ", "VD: 4.0L V8"),
+                    createInputField("SỐ KM (MILEAGE)", "VD: 12000"));
         }
         dynamicFormContainer.getChildren().add(row);
     }
@@ -717,14 +742,14 @@ public class SellerDashboardController {
         try {
             return switch (cat) {
                 case "Art" -> new Art(name, desc, price,
-                    d.size() > 0 ? d.get(0) : "Unknown",
-                    d.size() > 1 ? Integer.parseInt(d.get(1).isEmpty() ? "2000" : d.get(1)) : 2000);
+                        d.size() > 0 ? d.get(0) : "Unknown",
+                        d.size() > 1 ? Integer.parseInt(d.get(1).isEmpty() ? "2000" : d.get(1)) : 2000);
                 case "Electronics" -> new Electronics(name, desc, price,
-                    d.size() > 0 ? d.get(0) : "Unknown",
-                    d.size() > 1 ? Integer.parseInt(d.get(1).isEmpty() ? "12" : d.get(1)) : 12);
+                        d.size() > 0 ? d.get(0) : "Unknown",
+                        d.size() > 1 ? Integer.parseInt(d.get(1).isEmpty() ? "12" : d.get(1)) : 12);
                 case "Vehicle" -> new Vehicle(name, desc, price,
-                    d.size() > 0 ? d.get(0) : "Unknown",
-                    d.size() > 1 ? Double.parseDouble(d.get(1).isEmpty() ? "0" : d.get(1)) : 0);
+                        d.size() > 0 ? d.get(0) : "Unknown",
+                        d.size() > 1 ? Double.parseDouble(d.get(1).isEmpty() ? "0" : d.get(1)) : 0);
                 default -> null;
             };
         } catch (Exception e) { return null; }
@@ -743,6 +768,47 @@ public class SellerDashboardController {
     }
 
     // ─── Điều hướng ────────────────────────────────────────────────────────────
+
+    @FXML public void onViewAllInventoryClick(ActionEvent event) {
+        List<Auction> mine = allAuctions.stream()
+                .filter(a -> a.getSeller() != null &&
+                        a.getSeller().getUserName().equals(currentUser.getUserName()))
+                .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
+                .collect(Collectors.toList());
+
+        Stage popup = new Stage();
+        popup.setTitle("Kho Hàng — " + currentUser.getUserName() + " (" + mine.size() + " sản phẩm)");
+        popup.initOwner((Stage) rootPane.getScene().getWindow());
+        popup.initModality(javafx.stage.Modality.WINDOW_MODAL);
+
+        javafx.scene.layout.FlowPane flow = new javafx.scene.layout.FlowPane();
+        flow.setHgap(18);
+        flow.setVgap(18);
+        flow.setPadding(new Insets(24));
+        flow.setPrefWrapLength(900);
+        flow.setStyle("-fx-background-color: #0F0F0F;");
+
+        if (mine.isEmpty()) {
+            Label lbl = new Label("Chưa có sản phẩm nào.");
+            lbl.setStyle("-fx-text-fill: #555; -fx-font-size: 14px;");
+            flow.getChildren().add(lbl);
+        } else {
+            for (Auction auction : mine) {
+                VBox card = buildInventoryCard(auction, a -> {
+                    popup.close();
+                    openAuctionDetail(a);
+                });
+                flow.getChildren().add(card);
+            }
+        }
+
+        ScrollPane scroll = new ScrollPane(flow);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: #0F0F0F; -fx-background: #0F0F0F;");
+
+        popup.setScene(new Scene(scroll, 980, 620));
+        popup.show();
+    }
 
     @FXML public void onViewAllAuctionsClick(ActionEvent event) {
         try {
@@ -801,18 +867,18 @@ public class SellerDashboardController {
         dlg.setTitle("📸 Định Giá Sản Phẩm");
         dlg.setHeaderText("Hướng dẫn định giá sản phẩm đấu giá");
         dlg.setContentText(
-            "💡 Gợi ý định giá theo danh mục:\n\n" +
-            "🎨 Nghệ thuật (Art):\n" +
-            "   • Tác phẩm nổi tiếng: từ 10.000.000 VNĐ\n" +
-            "   • Nghệ sĩ mới nổi: từ 500.000 VNĐ\n\n" +
-            "💻 Điện tử (Electronics):\n" +
-            "   • Dựa theo giá thị trường hiện tại\n" +
-            "   • Khởi điểm = 60-70% giá mới\n\n" +
-            "🚗 Phương tiện (Vehicle):\n" +
-            "   • Dựa theo năm sản xuất và km đã đi\n" +
-            "   • Tham khảo chợ xe oto trực tuyến\n\n" +
-            "✅ Lời khuyên: Đặt giá khởi điểm thấp để thu hút\n" +
-            "   nhiều bidder, giá cuối thường cao hơn dự kiến!"
+                "💡 Gợi ý định giá theo danh mục:\n\n" +
+                        "🎨 Nghệ thuật (Art):\n" +
+                        "   • Tác phẩm nổi tiếng: từ 10.000.000 VNĐ\n" +
+                        "   • Nghệ sĩ mới nổi: từ 500.000 VNĐ\n\n" +
+                        "💻 Điện tử (Electronics):\n" +
+                        "   • Dựa theo giá thị trường hiện tại\n" +
+                        "   • Khởi điểm = 60-70% giá mới\n\n" +
+                        "🚗 Phương tiện (Vehicle):\n" +
+                        "   • Dựa theo năm sản xuất và km đã đi\n" +
+                        "   • Tham khảo chợ xe oto trực tuyến\n\n" +
+                        "✅ Lời khuyên: Đặt giá khởi điểm thấp để thu hút\n" +
+                        "   nhiều bidder, giá cuối thường cao hơn dự kiến!"
         );
         dlg.showAndWait();
     }
@@ -869,8 +935,8 @@ public class SellerDashboardController {
 
         if (isCritical) {
             NotificationUtil.showAlert(
-                rootPane != null && rootPane.getScene() != null ? rootPane.getScene().getWindow() : null,
-                title, content, type
+                    rootPane != null && rootPane.getScene() != null ? rootPane.getScene().getWindow() : null,
+                    title, content, type
             );
         } else {
             // Toast: hiển thị message ngắn gọn
