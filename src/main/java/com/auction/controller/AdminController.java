@@ -48,7 +48,14 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     @FXML private BorderPane rootPane;
-    @FXML private TabPane mainTabPane;
+    @FXML private TabPane    mainTabPane;
+    @FXML private Tab        tabApproval;
+    @FXML private Tab        tabOverview;
+    @FXML private Tab        tabUsers;
+
+    @FXML private Button     btnNavApproval;
+    @FXML private Button     btnNavOverview;
+    @FXML private Button     btnNavUsers;
 
     @FXML private Label lblAdminName;
     @FXML private Label lblNavTotalUsers;
@@ -583,6 +590,34 @@ public class AdminController {
             lblFeedback.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 13px; -fx-font-weight: bold; " +
                     "-fx-padding: 10 28; -fx-background-color: #0a0a0a; " +
                     "-fx-border-color: #1E1E1E; -fx-border-width: 1 0 0 0;");
+        }
+    }
+
+    @FXML public void onTabApprovalClick(ActionEvent e) {
+        mainTabPane.getSelectionModel().select(tabApproval);
+        setActiveNav(btnNavApproval);
+    }
+    @FXML public void onTabOverviewClick(ActionEvent e) {
+        mainTabPane.getSelectionModel().select(tabOverview);
+        setActiveNav(btnNavOverview);
+    }
+    @FXML public void onTabUsersClick(ActionEvent e) {
+        mainTabPane.getSelectionModel().select(tabUsers);
+        setActiveNav(btnNavUsers);
+    }
+
+    private void setActiveNav(Button active) {
+        String inactive = "-fx-pref-height:50px;-fx-padding:0 0 0 22px;-fx-cursor:hand;"
+            + "-fx-background-color:transparent;-fx-text-fill:#A6A6A6;"
+            + "-fx-font-size:13px;-fx-font-weight:600;-fx-alignment:center-left;"
+            + "-fx-border-color:transparent;";
+        String activeStyle = "-fx-pref-height:50px;-fx-padding:0 0 0 22px;-fx-cursor:hand;"
+            + "-fx-background-color:rgba(255,255,255,0.04);-fx-text-fill:#F5E6C8;"
+            + "-fx-font-size:13px;-fx-font-weight:600;-fx-alignment:center-left;"
+            + "-fx-border-color:transparent transparent transparent #E8D4A2;"
+            + "-fx-border-width:0 0 0 3;";
+        for (Button b : new Button[]{btnNavApproval, btnNavOverview, btnNavUsers}) {
+            if (b != null) b.setStyle(b == active ? activeStyle : inactive);
         }
     }
 }
