@@ -26,9 +26,8 @@ import java.util.List;
 
 public class UserProfileController {
 
-    // ── Header / Avatar ──────────────────────────────────────────────────────
+    // ── Header ────────────────────────────────────────────────────────────────
     @FXML private StackPane rootPane;
-    @FXML private Label lblAvatar;
     @FXML private Label lblUsername;
     @FXML private Label lblMemberBadge;
 
@@ -86,7 +85,7 @@ public class UserProfileController {
 
         String name = currentUser.getUserName();
 
-        if (lblAvatar   != null) lblAvatar.setText(name.substring(0, 1).toUpperCase());
+
         if (lblUsername != null) lblUsername.setText(name);
         if (lblCardName != null) lblCardName.setText(name.toUpperCase());
 

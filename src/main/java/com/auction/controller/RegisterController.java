@@ -45,6 +45,11 @@ public class RegisterController {
         // Lắng nghe thay đổi role để hiện/ẩn ô mã Admin và cập nhật style
         if (roleToggleGroup != null) {
             roleToggleGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+                // Không cho phép bỏ chọn tất cả — nếu user click lại nút đang chọn, giữ nguyên
+                if (newVal == null) {
+                    roleToggleGroup.selectToggle(oldVal);
+                    return;
+                }
                 updateRoleStyles(newVal);
             });
         }
@@ -105,19 +110,24 @@ public class RegisterController {
 
         // Xác định role từ ToggleButton
         Toggle selected = (roleToggleGroup != null) ? roleToggleGroup.getSelectedToggle() : null;
+
+        // ─── Validate ─────────────────────────────────────────────────────────
+        if (selected == null) {
+            showStatus("❌ Vui lòng chọn vai trò (Người mua / Người bán / Admin)!", "#e74c3c"); return;
+        }
+
         boolean isAdmin  = (selected == btnAdmin);
         boolean isSeller = (selected == btnSeller);
         String role = isAdmin ? "Admin" : (isSeller ? "Seller" : "Bidder");
 
-        // ─── Validate ─────────────────────────────────────────────────────────
         if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
             showStatus("❌ Vui lòng điền đầy đủ thông tin!", "#e74c3c"); return;
         }
         if (username.length() < 4) {
             showStatus("❌ Tên đăng nhập phải có ít nhất 4 ký tự!", "#e74c3c"); return;
         }
-        if (!email.contains("@") || !email.contains(".")) {
-            showStatus("❌ Email không hợp lệ!", "#e74c3c"); return;
+        if (!email.toLowerCase().endsWith("@gmail.com")) {
+            showStatus("❌ Email phải có định dạng @gmail.com!", "#e74c3c"); return;
         }
         if (password.length() < 6) {
             showStatus("❌ Mật khẩu phải có ít nhất 6 ký tự!", "#e74c3c"); return;
