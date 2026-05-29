@@ -94,6 +94,13 @@ public class Bidder extends User implements AuctionObserver {
         System.out.println("======================================");
     }
 
+    /**
+     * @deprecated BUG-01 FIX: Server path dùng ManualBidStrategy.execute() → holdFunds().
+     * Gọi method này song song với ManualBidStrategy sẽ gây DOUBLE-DEDUCTION.
+     * Giữ lại để tương thích ngược với test console, nhưng ĐÃ XÓA dòng trừ tiền.
+     * Deduction được quản lý duy nhất bởi ManualBidStrategy.holdFunds().
+     */
+    @Deprecated
     public void placeBid(Auction auction, double amount) throws AuctionException {
         if(amount > this.getBalance()){
             throw new InsufficientBalanceException(
@@ -104,8 +111,8 @@ public class Bidder extends User implements AuctionObserver {
         }
         BidTransaction newTransaction = new BidTransaction(auction,this,amount);
         auction.processBid(newTransaction);
-        // đã sửa level 1: Trừ balance khi đặt giá thành công
-        this.balance -= amount;
+        // BUG-01 FIX: KHÔNG trừ tiền ở đây — ManualBidStrategy.holdFunds() đã xử lý.
+        // Giữ lại addTransaction() để lịch sử giao dịch vẫn được ghi nhận.
         System.out.println("Bidder " + this.getUserName() + " đã đấu giá thành công " + amount + " vào phiên " + auction.getAuctionId());
         this.addTransaction(newTransaction);
     }

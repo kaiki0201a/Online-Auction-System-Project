@@ -31,16 +31,17 @@ public class ManualBidStrategy implements BidStrategy {
         // Delegate toàn bộ validation + concurrency vào processBid() đã synchronized
         auction.processBid(transaction);
 
-        // Trừ tiền từ ví bidder sau khi đặt thành công
-        transaction.getBidder().setBalance(
-            transaction.getBidder().getBalance() - transaction.getBidAmount()
-        );
+        // BUG-06 FIX: Dùng holdFunds() thay vì setBalance(balance - amount) trực tiếp.
+        // holdFunds(amount) → balance -= amount; heldBalance += amount
+        // → getTotalBalance() luôn đúng, heldBalance phản ánh tiền đang giữ cho phiên này.
+        transaction.getBidder().holdFunds(transaction.getBidAmount());
 
         System.out.printf(
-            "✋ [MANUAL BID] %s đặt $%.2f cho phiên \"%s\"%n",
+            "✋ [MANUAL BID] %s đặt $%.2f cho phiên \"%s\" (khả dụng còn: $%.2f)%n",
             transaction.getBidder().getUserName(),
             transaction.getBidAmount(),
-            auction.getItem().getNameItem()
+            auction.getItem().getNameItem(),
+            transaction.getBidder().getBalance()
         );
     }
 

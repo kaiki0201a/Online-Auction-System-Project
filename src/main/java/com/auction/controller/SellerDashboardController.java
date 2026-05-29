@@ -215,9 +215,17 @@ public class SellerDashboardController {
             String targetUsername = msg.split("\\|")[1];
             if (targetUsername.equals(currentUser.getUserName())) {
                 AuctionEarning earning = (AuctionEarning) data;
-                currentUser.addEarning(earning);
+                // BUG-05 FIX: Deduplication — kiểm tra auctionId trước khi thêm.
+                // Tránh earning bị thêm 2 lần nếu server broadcast nhiều lần hoặc client reconnect.
+                boolean alreadyExists = currentUser.getEarningHistory().stream()
+                        .anyMatch(e -> e.getAuctionId().equals(earning.getAuctionId()));
+                if (!alreadyExists) {
+                    currentUser.addEarning(earning);
+                    System.out.println("💰 [SELLER UI] Nhận earning mới: " + earning.getItemName());
+                } else {
+                    System.out.println("ℹ️ [SELLER UI] Earning đã tồn tại, bỏ qua: " + earning.getItemName());
+                }
                 Platform.runLater(this::loadPaymentHistory);
-                System.out.println("💰 [SELLER UI] Nhận earning: " + earning.getItemName());
             }
         }
 

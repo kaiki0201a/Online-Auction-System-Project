@@ -16,10 +16,11 @@ public class UserManager {
     private final Map<String, User> users = new ConcurrentHashMap<>();
 
     private UserManager() {
-        // Tài khoản mặc định để test
-        users.put("bidder", new Bidder("bidder", "123", "bidder@gmail.com", 50000.0));
-        users.put("admin", new Admin("admin", "123", "admin@gmail.com", "admin_code"));
-        users.put("seller", new Seller("seller", "123", "seller@gmail.com"));
+        // BUG-03 FIX: Không hardcode tài khoản mặc định ở đây.
+        // Dữ liệu được nạp từ file bởi UserDAOImpl.loadDataFromFile() khi server khởi động.
+        // Nếu file chưa tồn tại, ServerApp sẽ tạo seed data trong block kiểm tra isEmpty().
+        // Nếu hardcode ở đây: khi file bị hỏng/mất, balance bị reset về giá trị cứng ($50,000)
+        // thay vì giữ nguyên giá trị thực đã tích lũy.
     }
 
     public static UserManager getInstance() {

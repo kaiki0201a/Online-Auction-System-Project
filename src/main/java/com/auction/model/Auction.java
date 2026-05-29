@@ -62,24 +62,25 @@ public class Auction extends Entity implements Serializable {
         // Kích hoạt anti-sniping để xem có cần gia hạn thời gian không
         applyAntiSniping();
 
-        // Fix #11: Xử lý hoàn tiền khi có bid mới
-        // Nguyên lý: mỗi lúc chỉ có 1 người "giữ" tiền đặt cọc.
+        // BUG-06 FIX: Dùng releaseHeldFunds() thay vì setBalance(+refund) trực tiếp.
+        // Nguyên lý: holdFunds() đã giảm balance + tăng heldBalance khi bid thành công.
+        // releaseHeldFunds() đảo ngược chính xác khoản đó: tăng balance, reset heldBalance = 0.
+        // → heldBalance luôn phản ánh đúng số tiền đang bị giữ tại một thời điểm.
         if (this.highestBidder != null) {
-            double refund = this.currentHighestBid;
             if (!this.highestBidder.getId().equals(transaction.getBidder().getId())) {
-                // Người KHÁC vượt qua → hoàn tiền đầy đủ cho highestBidder cũ
-                this.highestBidder.setBalance(this.highestBidder.getBalance() + refund);
+                // Người KHÁC vượt qua → giải phóng toàn bộ tiền đang giữ cho highestBidder cũ
+                double refunded = this.highestBidder.releaseHeldFunds();
                 System.out.printf("↩️  [REFUND] Hoàn %.2f cho %s (bị vượt bởi %s)%n",
-                    refund, this.highestBidder.getUserName(), transaction.getBidder().getUserName());
+                    refunded, this.highestBidder.getUserName(), transaction.getBidder().getUserName());
             } else {
-                // CÙNG bidder tự nâng giá (self-raise) → hoàn lại tiền cũ trước
-                // ManualBidStrategy sẽ trừ giá mới ngay sau đó
+                // CÙNG bidder tự nâng giá (self-raise) → giải phóng hold cũ.
+                // ManualBidStrategy sẽ holdFunds(giá mới) ngay sau đó.
                 // → net effect = chỉ trừ delta (giá mới - giá cũ)
-                this.highestBidder.setBalance(this.highestBidder.getBalance() + refund);
-                System.out.printf("🔄 [SELF-RAISE] Hoàn %.2f cho %s (tự nâng từ %.2f → %.2f, chỉ trừ delta %.2f)%n",
-                    refund, this.highestBidder.getUserName(),
-                    this.currentHighestBid, transaction.getBidAmount(),
-                    transaction.getBidAmount() - this.currentHighestBid);
+                double refunded = this.highestBidder.releaseHeldFunds();
+                System.out.printf("🔄 [SELF-RAISE] Giải phóng %.2f cho %s (tự nâng → %.2f, delta %.2f)%n",
+                    refunded, this.highestBidder.getUserName(),
+                    transaction.getBidAmount(),
+                    transaction.getBidAmount() - refunded);
             }
         }
 
@@ -186,12 +187,12 @@ public class Auction extends Entity implements Serializable {
 
                         validateBid(autoTx);
 
-                        // Fix #11: Hoàn tiền bidder cũ nếu bị vượt (tương tự ManualBidStrategy)
+                        // BUG-06 FIX: Dùng releaseHeldFunds()/holdFunds() thay vì setBalance() trực tiếp
                         if (previousHighest != null
                                 && !previousHighest.getId().equals(topRule.getBidder().getId())) {
-                            previousHighest.setBalance(previousHighest.getBalance() + previousBidAmount);
+                            double refunded = previousHighest.releaseHeldFunds();
                             System.out.printf("↩️  [AUTOBID REFUND] Hoàn %.2f cho %s%n",
-                                    previousBidAmount, previousHighest.getUserName());
+                                    refunded, previousHighest.getUserName());
                         }
 
                         this.currentHighestBid = targetPrice;
@@ -199,9 +200,9 @@ public class Auction extends Entity implements Serializable {
                         this.bidHistory.add(autoTx);
                         topRule.getBidder().addTransaction(autoTx);
 
-                        // Fix #11: Trừ tiền bidder mới sau khi autobid thành công
-                        topRule.getBidder().setBalance(topRule.getBidder().getBalance() - targetPrice);
-                        System.out.printf("💸 [AUTOBID DEDUCT] Trừ %.2f từ %s (số dư còn: %.2f)%n",
+                        // BUG-06 FIX: holdFunds() thay vì setBalance() — balance giảm + heldBalance tăng
+                        topRule.getBidder().holdFunds(targetPrice);
+                        System.out.printf("💸 [AUTOBID HOLD] Khóa %.2f từ %s (khả dụng còn: %.2f)%n",
                                 targetPrice, topRule.getBidder().getUserName(),
                                 topRule.getBidder().getBalance());
 
@@ -307,9 +308,15 @@ public class Auction extends Entity implements Serializable {
     }
 
     // Settlement: xử lý thanh toán sau khi phiên kết thúc
-    // FIX BUG #1: Bidder đã bị trừ tiền trong placeBid() khi đặt giá.
-    // settleAuction() CHỈ cộng tiền cho Seller, KHÔNG trừ lại bidder tránh trừ 2 lần.
+    // Bidder thắng đã bị holdFunds() khi đặt giá — tiền đang nằm ở heldBalance.
+    // settleAuction() CHỈ cộng tiền cho Seller, KHÔNG trừ lại bidder để tránh trừ 2 lần.
     public synchronized void settleAuction() {
+        // BUG-04 FIX: Check PAID trước để in đúng message khi gọi lại (không in "phải FINISHED")
+        if (this.status == AuctionStatus.PAID) {
+            System.out.println("ℹ️ Phiên đấu giá " + this.id + " đã được settlement rồi! Bỏ qua.");
+            return;
+        }
+
         if (this.status != AuctionStatus.FINISHED) {
             System.out.println("⚠️ Lỗi: Phiên đấu giá phải ở trạng thái FINISHED mới có thể settlement!");
             return;
@@ -321,15 +328,9 @@ public class Auction extends Entity implements Serializable {
         }
 
         try {
-            if (this.status == AuctionStatus.PAID) {
-                System.out.println("ℹ️ Phiên đấu giá " + this.id + " đã được settlement rồi!");
-                return;
-            }
-
             double bidAmount = this.currentHighestBid;
 
-            // FIX: KHÔNG trừ tiền bidder — tiền đã bị trừ khi họ gọi placeBid().
-            // Chỉ cộng tiền cho Seller.
+            // Chỉ cộng tiền cho Seller — tiền bidder thắng đang nằm ở heldBalance (đã holdFunds khi bid).
             double newBalance = this.seller.getBalance() + bidAmount;
             this.seller.setBalance(newBalance);
 
@@ -346,7 +347,7 @@ public class Auction extends Entity implements Serializable {
 
             System.out.println("💰 [Settlement] Cộng $" + bidAmount + " vào tài khoản Seller "
                     + this.seller.getUserName() + " (Bidder " + this.highestBidder.getUserName()
-                    + " đã bị trừ tiền khi đặt giá)");
+                    + " đã holdFunds khi đặt giá)");
 
             this.status = AuctionStatus.PAID;
             System.out.println("✅ [Settlement] Hoàn tất! Trạng thái: " + this.status);

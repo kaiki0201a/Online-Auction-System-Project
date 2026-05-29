@@ -166,6 +166,9 @@ public class ClientHandler implements Runnable {
                         return new Response(StatusType.ERROR, "Tài khoản không hợp lệ.", null);
                     }
 
+                    // BUG-02 FIX: Ghi nhớ highestBidder CŨ trước khi bid để broadcast hoàn tiền sau
+                    Bidder previousHighestBidder = auction.getHighestBidder();
+
                     // ─── Áp dụng Strategy Pattern: Manual Bid ───
                     // Thay thế cách gọi trực tiếp realBidder.placeBid() bằng BidContext
                     // ⇒ Cho phép hoán đổi sang AutoBidStrategy hoặc strategy khác không sửa code này
@@ -186,6 +189,21 @@ public class ClientHandler implements Runnable {
 
                     // Lưu số dư mới của bidder
                     ServerApp.getUserDAO().saveDataToFile();
+
+                    // BUG-02 FIX: Broadcast balance mới cho bidder vừa bị vượt giá.
+                    // Trong processBid(), tiền đã được hoàn IN-MEMORY nhưng client không biết.
+                    // → Gửi BIDDER_REFUND để UI bidder cũ cập nhật số dư ngay lập tức.
+                    if (previousHighestBidder != null
+                            && !previousHighestBidder.getUserName().equals(realBidder.getUserName())) {
+                        String refundMsg = "BIDDER_REFUND|" + previousHighestBidder.getUserName();
+                        ServerApp.broadcast(new Response(
+                                StatusType.SUCCESS,
+                                refundMsg,
+                                previousHighestBidder.getBalance()
+                        ));
+                        System.out.printf("💸 [REFUND BROADCAST] Gửi balance mới %.2f cho bidder bị vượt: %s%n",
+                                previousHighestBidder.getBalance(), previousHighestBidder.getUserName());
+                    }
 
                     return new Response(StatusType.SUCCESS, "Đặt giá thành công!", realBidder.getBalance());
 

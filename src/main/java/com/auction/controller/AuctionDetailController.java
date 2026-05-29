@@ -942,7 +942,7 @@ public class AuctionDetailController {
             Label icon = new Label("😔");
             icon.setStyle("-fx-font-size: 52px;");
 
-            Label title = new Label("PHÊN ĐẤU GIÁ ĐÃ KẾT THÚC");
+            Label title = new Label("PHIÊN ĐẤU GIÁ ĐÃ KẾT THÚC");
             title.setStyle("-fx-text-fill: #aaa; -fx-font-size: 20px; -fx-font-weight: bold; "
                     + "-fx-font-family: 'Arial Black';");
             title.setAlignment(Pos.CENTER);
@@ -966,7 +966,7 @@ public class AuctionDetailController {
             priceBox.setStyle("-fx-background-color: rgba(80,80,80,0.15); "
                     + "-fx-border-color: rgba(100,100,100,0.3); -fx-border-radius: 10; "
                     + "-fx-background-radius: 10; -fx-padding: 14 28;");
-            Label priceLbl = new Label("GIÁ THẬNG CUỐI CÙNG");
+            Label priceLbl = new Label("GIÁ THẮNG CUỐI CÙNG");
             priceLbl.setStyle("-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;");
             Label priceVal = new Label(CurrencyFormatter.format(ended.getCurrentHighestBid()));
             priceVal.setStyle("-fx-text-fill: #aaa; -fx-font-size: 28px; -fx-font-weight: bold;");
