@@ -34,22 +34,6 @@
                     <!-- ── Avatar + Name + Badge ── -->
                     <VBox alignment="CENTER" spacing="8"
                         style="-fx-padding: 32 0 24 0; -fx-background-color: #0d0d0d;">
-                        <!-- Avatar circle -->
-                        <StackPane prefWidth="90" prefHeight="90"
-                            style="-fx-background-color: #2a2a2a; -fx-background-radius: 45; -fx-border-color: #F5C518; -fx-border-width: 2.5; -fx-border-radius: 45;">
-                            <Label fx:id="lblAvatar" text="?"
-                                style="-fx-text-fill: #F5C518; -fx-font-size: 34px; -fx-font-weight: bold;"/>
-                            <!-- Verified badge -->
-                            <StackPane alignment="BOTTOM_RIGHT">
-                                <StackPane prefWidth="24" prefHeight="24"
-                                    style="-fx-background-color: #F5C518; -fx-background-radius: 12;"
-                                    StackPane.alignment="BOTTOM_RIGHT">
-                                    <Label text="✓"
-                                        style="-fx-text-fill: #000; -fx-font-size: 10px; -fx-font-weight: bold;"/>
-                                </StackPane>
-                            </StackPane>
-                        </StackPane>
-
                         <Label fx:id="lblUsername" text="Đang tải..."
                             style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;"/>
 
