@@ -34,7 +34,7 @@ public class Auction extends Entity implements Serializable {
     private List<BidTransaction> bidHistory;
     private List<AuctionObserver> observers;
     private transient ExecutorService notificationPool = Executors.newCachedThreadPool();
-    private List<AutoBid> autoBids = new ArrayList<>(); // ← THÊM MỚI
+    private List<AutoBid> autoBids = new ArrayList<>();
 
     // Scheduler để tự động kết thúc phiên khi hết thời gian
     private transient ScheduledFuture<?> autoCloseTask;
@@ -149,17 +149,18 @@ public class Auction extends Entity implements Serializable {
     }
 
     private void triggerAutoBids() {
-        java.util.List<AutoBidRule> sortedRules = new java.util.ArrayList<>();
+        // Lọc ra các rule đang active, sắp xếp: MaxBid cao nhất trước (tie-break: đăng ký sớm hơn)
+        List<AutoBidRule> activeRules = new ArrayList<>();
         for (AutoBidRule rule : this.autoBidRules) {
             if (rule.isActive()) {
-                sortedRules.add(rule);
+                activeRules.add(rule);
             }
         }
 
-        sortedRules.sort((r1, r2) -> {
-            int priceCompare = Double.compare(r2.getMaxBid(), r1.getMaxBid());
+        activeRules.sort((ruleA, ruleB) -> {
+            int priceCompare = Double.compare(ruleB.getMaxBid(), ruleA.getMaxBid());
             if (priceCompare == 0) {
-                return r1.getRegisterTime().compareTo(r2.getRegisterTime());
+                return ruleA.getRegisterTime().compareTo(ruleB.getRegisterTime());
             }
             return priceCompare;
         });
@@ -168,7 +169,7 @@ public class Auction extends Entity implements Serializable {
         do {
             hasNewAction = false;
 
-            for (AutoBidRule topRule : sortedRules) {
+            for (AutoBidRule topRule : activeRules) {
                 if (!topRule.isActive() || (this.highestBidder != null
                         && topRule.getBidder().getId().equals(this.highestBidder.getId()))) {
                     continue;
@@ -180,18 +181,18 @@ public class Auction extends Entity implements Serializable {
                     try {
                         BidTransaction autoTx = new BidTransaction(this, topRule.getBidder(), targetPrice);
 
-                        // Snapshot highestBidder CŨ trước khi processBid() thay đổi
-                        Bidder previousHighest = this.highestBidder;
+                        // Snapshot highestBidder CŨ trước khi validateBid() thay đổi trạng thái
+                        Bidder previousLeader = this.highestBidder;
                         double previousBidAmount = this.currentHighestBid;
 
                         validateBid(autoTx);
 
                         // Fix #11: Hoàn tiền bidder cũ nếu bị vượt (tương tự ManualBidStrategy)
-                        if (previousHighest != null
-                                && !previousHighest.getId().equals(topRule.getBidder().getId())) {
-                            previousHighest.setBalance(previousHighest.getBalance() + previousBidAmount);
+                        if (previousLeader != null
+                                && !previousLeader.getId().equals(topRule.getBidder().getId())) {
+                            previousLeader.setBalance(previousLeader.getBalance() + previousBidAmount);
                             System.out.printf("↩️  [AUTOBID REFUND] Hoàn %.2f cho %s%n",
-                                    previousBidAmount, previousHighest.getUserName());
+                                    previousBidAmount, previousLeader.getUserName());
                         }
 
                         this.currentHighestBid = targetPrice;

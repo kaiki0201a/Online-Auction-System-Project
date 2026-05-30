@@ -48,16 +48,18 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
- * AuctionDetailController — FIX HOÀN CHỈNH:
+ * AuctionDetailController — Controller cho màn hình chi tiết phiên đấu giá.
  *
- * 1. FIX LISTENER: đổi setOnResponseReceived → addEventListener("auctionDetail", ...)
- *    → không còn bị ghi đè bởi màn hình khác. Giải quyết bug #1 (xem phiên) và #3 (đặt giá).
+ * Chức năng chính:
+ * - Hiển thị thông tin sản phẩm, đồng hồ đếm ngược, lịch sử bid.
+ * - Cho phép Bidder đặt giá thủ công và bật/tắt AutoBid.
+ * - Lắng nghe realtime broadcast từ server qua addEventListener("auctionDetail").
  *
- * 2. THÊM THÔNG TIN THỜI GIAN: hiển thị startTime + endTime trong UI.
- *
- * 3. THÊM AUTOBID PANEL: TextField maxBid + increment, nút BẬT/TẮT AutoBid.
- *    Giao tiếp qua ActionType.SET_AUTOBID với AutoBidPayload.
- *    Giải quyết bug #5.
+ * Network listener được tách thành các private handler methods:
+ * {@link #handleForceLogout}, {@link #handleBalanceUpdate},
+ * {@link #handleAuctionUpdate}, {@link #handleAuctionEnded},
+ * {@link #handleAuctionCanceled}, {@link #handleBidSuccess},
+ * {@link #handleBidError}, {@link #handleAutoBidResponse}.
  */
 public class AuctionDetailController {
 
@@ -625,218 +627,220 @@ public class AuctionDetailController {
             Platform.runLater(() -> {
                 String msg = response.getMessage();
 
-                // FIX: Xử lý FORCE_LOGOUT — user bị admin khóa khi đang xem phiên
-                if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
-                    String logoutTarget = msg.split("\\|")[1];
-                    if (sessionUser != null && logoutTarget.equals(sessionUser.getUserName())) {
-                        if (countdownTimeline != null) countdownTimeline.stop();
-                        NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
-                        AppContext.logout();
-                        try {
-                            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
-                            Stage stage = (Stage) (lblProductName != null && lblProductName.getScene() != null
-                                    ? lblProductName.getScene().getWindow() : null);
-                            if (stage != null) {
-                                stage.setScene(new Scene(root, 900, 600));
-                                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-                                        javafx.scene.control.Alert.AlertType.WARNING);
-                                alert.setTitle("⚠️ Tài khoản bị khóa");
-                                alert.setHeaderText(null);
-                                alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\nBạn đã được đăng xuất tự động.");
-                                alert.show();
-                            }
-                        } catch (IOException ex) { ex.printStackTrace(); }
-                    }
-                    return;
-                }
+                if (msg != null && msg.startsWith("FORCE_LOGOUT|"))  { handleForceLogout(msg);  return; }
+                if (msg != null && msg.startsWith("BIDDER_BALANCE_UPDATE|")) { handleBalanceUpdate(msg, response); return; }
 
-                // FIX BUG D: Cập nhật balance cho bidder thua cuộc ngay khi phiên kết thúc.
-                // Server broadcast BIDDER_BALANCE_UPDATE sau settlement — bidder đang xem
-                // màn hình này cũng cần nhận cập nhật để balance hiển thị đúng.
-                if (msg != null && msg.startsWith("BIDDER_BALANCE_UPDATE|")
-                        && response.getData() instanceof Double newBal
-                        && sessionUser instanceof Bidder bidderSession) {
-                    String target = msg.split("\\|")[1];
-                    if (target.equals(sessionUser.getUserName())) {
-                        bidderSession.setBalance(newBal);
-                        System.out.println("💰 [AuctionDetail] Balance bidder cập nhật: " + newBal);
-                    }
-                    return;
-                }
+                if ("UPDATE_AUCTION".equals(msg))   handleAuctionUpdate(response);
+                if ("AUCTION_ENDED".equals(msg))    handleAuctionEnded(response);
+                if ("AUCTION_CANCELED".equals(msg)) handleAuctionCanceled(response);
 
-                // Cập nhật khi có bid mới (broadcast UPDATE_AUCTION kèm List<Auction>)
-                if ("UPDATE_AUCTION".equals(msg) && response.getData() instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<Auction> list = (List<Auction>) response.getData();
-                    list.stream()
-                            .filter(a -> a.getAuctionId().equals(currentAuction.getAuctionId()))
-                            .findFirst()
-                            .ifPresent(updated -> {
-                                boolean wasExtended = updated.getEndTime().isAfter(currentAuction.getEndTime());
-                                currentAuction = updated;
-                                updateUI();
-                                renderBidHistory();
-                                startCountdown();
-                                // FIX #3: Cập nhật biểu đồ realtime khi có bid mới
-                                if (priceLineChart != null && priceSeries != null) {
-                                    priceSeries = PriceChartHelper.buildHistoricalChart(
-                                            priceLineChart, currentAuction.getBidHistory());
-                                    updateChartLabel();
-                                }
-                                if (wasExtended) {
-                                    showBidNotification("⏱️", "Gia hạn thêm thời gian",
-                                            "Phiên được mở rộng thêm",
-                                            "#f39c12", 2.0);
-                                } else if (canBid && updated.getHighestBidder() != null
-                                        && !updated.getHighestBidder().getUserName().equals(sessionUser.getUserName())) {
-                                    showBidNotification("🔥", "Bạn vừa bị vượt giá!",
-                                            CurrencyFormatter.format(updated.getCurrentHighestBid()),
-                                            "#e74c3c", 1.5);
-                                }
-                            });
-                }
+                if (response.getStatus() == StatusType.SUCCESS && "Đặt giá thành công!".equals(msg))
+                    handleBidSuccess(response);
+                if (response.getStatus() == StatusType.ERROR)
+                    handleBidError(response);
 
-                // Phiên kết thúc broadcast
-                if ("AUCTION_ENDED".equals(msg) && response.getData() instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<Auction> list = (List<Auction>) response.getData();
-                    list.stream()
-                            .filter(a -> a.getAuctionId().equals(currentAuction.getAuctionId()))
-                            .findFirst()
-                            .ifPresent(ended -> {
-                                currentAuction = ended;
-                                updateUI();
-                                renderBidHistory();
-                                // FIX #3: Cập nhật biểu đồ lần cuối khi phiên kết thúc
-                                if (priceLineChart != null) {
-                                    priceSeries = PriceChartHelper.buildHistoricalChart(
-                                            priceLineChart, currentAuction.getBidHistory());
-                                    updateChartLabel();
-                                }
-                                if (countdownTimeline != null) countdownTimeline.stop();
-                                if (lblTimeLeft != null) {
-                                    lblTimeLeft.setText("ĐÃ KẾT THÚC");
-                                    lblTimeLeft.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-font-size: 18px;");
-                                }
-                                // Thông báo kết quả
-                                if (canBid && ended.getHighestBidder() != null) {
-                                    boolean won = ended.getHighestBidder().getUserName()
-                                            .equals(sessionUser.getUserName());
-                                    if (won) {
-                                        showWinDialog(ended);
-                                    } else {
-                                        showLoseDialog(ended);
-                                    }
-                                } else if (ended.getHighestBidder() == null
-                                        && (ended.getStatus() == AuctionStatus.FINISHED
-                                        || ended.getStatus() == AuctionStatus.PAID)) {
-                                    showEndedNoWinnerDialog();
-                                }
-                                // Tắt controls
-                                canBid = false;
-                                setupBidControls();
-                                if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
-                            });
-                }
-
-                // Phiên bị hủy giữa chừng — broadcast
-                if ("AUCTION_CANCELED".equals(msg) && response.getData() instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<Auction> list = (List<Auction>) response.getData();
-                    list.stream()
-                            .filter(a -> a.getAuctionId().equals(currentAuction.getAuctionId()))
-                            .findFirst()
-                            .ifPresent(canceled -> {
-                                currentAuction = canceled;
-                                updateUI();
-                                if (countdownTimeline != null) countdownTimeline.stop();
-                                if (lblTimeLeft != null) {
-                                    lblTimeLeft.setText("ĐÃ HỦY");
-                                    lblTimeLeft.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold; -fx-font-size: 18px;");
-                                }
-                                showBidNotification("🚫", "Phiên đã bị hủy",
-                                        "Tiền đặt cọc đã được hoàn lại",
-                                        "#7f8c8d", 3.0);
-                                canBid = false;
-                                setupBidControls();
-                                if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
-                            });
-                }
-
-                // Response trực tiếp cho PLACE_BID thành công
-                if (response.getStatus() == StatusType.SUCCESS
-                        && "Đặt giá thành công!".equals(msg)) {
-                    String bidAmountText = (txtBidAmount != null && !txtBidAmount.getText().isEmpty())
-                            ? txtBidAmount.getText().trim() : null;
-                    String bidAmountDisplay = "---";
-                    try {
-                        if (bidAmountText != null)
-                            bidAmountDisplay = CurrencyFormatter.format(Double.parseDouble(bidAmountText));
-                    } catch (NumberFormatException ignored) {}
-                    showBidNotification("✅", "Đặt giá thành công!",
-                            bidAmountDisplay,
-                            "#27ae60", 1.5);
-                    // Toast riêng biệt để rõ ràng hơn
-                    NotificationService.get().success(
-                            "✅ Đặt giá " + bidAmountDisplay + " thành công!",
-                            lblMessage
-                    );
-                    if (txtBidAmount != null) txtBidAmount.clear();
-                    if (bidValidator != null) bidValidator.clearValidation();
-                    if (btnBid != null) btnBid.setDisable(false);
-                    // Cập nhật số dư local
-                    if (response.getData() instanceof Double newBalance) {
-                        ((Bidder) sessionUser).setBalance(newBalance);
-                    }
-                }
-
-                // Response lỗi PLACE_BID — phân loại lỗi cụ thể
-                if (response.getStatus() == StatusType.ERROR) {
-                    String errMsg = response.getMessage();
-                    String toastMsg;
-                    if (errMsg != null && errMsg.toLowerCase().contains("giá")) {
-                        toastMsg = "⚠️ " + errMsg; // Giá quá thấp
-                        showBidNotification("⚠️", "Giá không hợp lệ", errMsg, "#f39c12", 1.5);
-                        NotificationService.get().warning(toastMsg, lblMessage);
-                    } else if (errMsg != null && errMsg.toLowerCase().contains("số dư")) {
-                        toastMsg = "❌ Số dư không đủ!";
-                        showBidNotification("❌", "Số dư không đủ", errMsg, "#e74c3c", 1.5);
-                        NotificationService.get().error(toastMsg, lblMessage);
-                    } else if (errMsg != null && errMsg.toLowerCase().contains("kết thúc")) {
-                        toastMsg = "⛔ Phiên đấu giá đã kết thúc!";
-                        showBidNotification("⛔", "Phiên đã kết thúc", errMsg, "#e74c3c", 1.5);
-                        NotificationService.get().error(toastMsg, lblMessage);
-                    } else {
-                        toastMsg = "❌ Đặt giá thất bại: " + errMsg;
-                        showBidNotification("❌", "Đặt giá thất bại", errMsg, "#e74c3c", 1.5);
-                        NotificationService.get().error(toastMsg, lblMessage);
-                    }
-                    setMessage("❌ " + errMsg, "#e74c3c");
-                    if (btnBid != null) btnBid.setDisable(false);
-                }
-
-                // Response cho SET_AUTOBID
-                if ("AUTOBID_OK".equals(msg)) {
-                    boolean nowActive = !autoBidActive;
-                    updateAutoBidButtonStyle(nowActive);
-                    if (nowActive) {
-                        setAutoBidStatus("🤖 AutoBid đang hoạt động! Hệ thống sẽ tự trả giá thay bạn.", "#27ae60");
-                        showBidNotification("🤖", "AutoBid đã bật",
-                                "Tự đặt giá khi bị vượt", "#8e44ad", 1.5);
-                    } else {
-                        setAutoBidStatus("AutoBid đã TẮT.", "#666");
-                        if (txtAutoBidMax       != null) txtAutoBidMax.setDisable(false);
-                        if (txtAutoBidIncrement != null) txtAutoBidIncrement.setDisable(false);
-                        setMessage("ℹ️ AutoBid đã tắt.", "#A0A0A0");
-                    }
-                }
-                if ("AUTOBID_ERROR".equals(msg)) {
-                    setAutoBidStatus("❌ " + response.getMessage(), "#e74c3c");
-                    if (txtAutoBidMax       != null) txtAutoBidMax.setDisable(false);
-                    if (txtAutoBidIncrement != null) txtAutoBidIncrement.setDisable(false);
-                }
+                if ("AUTOBID_OK".equals(msg) || "AUTOBID_ERROR".equals(msg))
+                    handleAutoBidResponse(msg, response);
             });
         });
+    }
+
+    // ─── Network event handlers ─────────────────────────────────────────────────
+
+    /** Xử lý khi Admin khóa tài khoản đang đăng nhập — bắt buộc đăng xuất. */
+    private void handleForceLogout(String msg) {
+        String logoutTarget = msg.split("\\|")[1];
+        if (sessionUser == null || !logoutTarget.equals(sessionUser.getUserName())) return;
+
+        if (countdownTimeline != null) countdownTimeline.stop();
+        NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+        AppContext.logout();
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+            Stage stage = (Stage) (lblProductName != null && lblProductName.getScene() != null
+                    ? lblProductName.getScene().getWindow() : null);
+            if (stage != null) {
+                stage.setScene(new Scene(root, 900, 600));
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                        javafx.scene.control.Alert.AlertType.WARNING);
+                alert.setTitle("⚠️ Tài khoản bị khóa");
+                alert.setHeaderText(null);
+                alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\nBạn đã được đăng xuất tự động.");
+                alert.show();
+            }
+        } catch (IOException ex) { ex.printStackTrace(); }
+    }
+
+    /** Cập nhật số dư bidder khi server broadcast BIDDER_BALANCE_UPDATE. */
+    private void handleBalanceUpdate(String msg,
+                                     com.auction.protocol.Response response) {
+        if (!(response.getData() instanceof Double newBal)) return;
+        if (!(sessionUser instanceof Bidder bidderSession)) return;
+        String target = msg.split("\\|")[1];
+        if (target.equals(sessionUser.getUserName())) {
+            bidderSession.setBalance(newBal);
+            System.out.println("💰 [AuctionDetail] Balance bidder cập nhật: " + newBal);
+        }
+    }
+
+    /** Cập nhật UI khi có bid mới — broadcast UPDATE_AUCTION kèm List<Auction>. */
+    @SuppressWarnings("unchecked")
+    private void handleAuctionUpdate(com.auction.protocol.Response response) {
+        if (!(response.getData() instanceof List)) return;
+        List<Auction> list = (List<Auction>) response.getData();
+        list.stream()
+                .filter(a -> a.getAuctionId().equals(currentAuction.getAuctionId()))
+                .findFirst()
+                .ifPresent(updated -> {
+                    boolean wasExtended = updated.getEndTime().isAfter(currentAuction.getEndTime());
+                    currentAuction = updated;
+                    updateUI();
+                    renderBidHistory();
+                    startCountdown();
+                    if (priceLineChart != null && priceSeries != null) {
+                        priceSeries = PriceChartHelper.buildHistoricalChart(
+                                priceLineChart, currentAuction.getBidHistory());
+                        updateChartLabel();
+                    }
+                    if (wasExtended) {
+                        showBidNotification("⏱️", "Gia hạn thêm thời gian",
+                                "Phiên được mở rộng thêm", "#f39c12", 2.0);
+                    } else if (canBid && updated.getHighestBidder() != null
+                            && !updated.getHighestBidder().getUserName().equals(sessionUser.getUserName())) {
+                        showBidNotification("🔥", "Bạn vừa bị vượt giá!",
+                                CurrencyFormatter.format(updated.getCurrentHighestBid()),
+                                "#e74c3c", 1.5);
+                    }
+                });
+    }
+
+    /** Xử lý khi phên kết thúc — broadcast AUCTION_ENDED. */
+    @SuppressWarnings("unchecked")
+    private void handleAuctionEnded(com.auction.protocol.Response response) {
+        if (!(response.getData() instanceof List)) return;
+        List<Auction> list = (List<Auction>) response.getData();
+        list.stream()
+                .filter(a -> a.getAuctionId().equals(currentAuction.getAuctionId()))
+                .findFirst()
+                .ifPresent(ended -> {
+                    currentAuction = ended;
+                    updateUI();
+                    renderBidHistory();
+                    if (priceLineChart != null) {
+                        priceSeries = PriceChartHelper.buildHistoricalChart(
+                                priceLineChart, currentAuction.getBidHistory());
+                        updateChartLabel();
+                    }
+                    if (countdownTimeline != null) countdownTimeline.stop();
+                    if (lblTimeLeft != null) {
+                        lblTimeLeft.setText("ĐÃ KẾT THÚC");
+                        lblTimeLeft.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-font-size: 18px;");
+                    }
+                    if (canBid && ended.getHighestBidder() != null) {
+                        boolean won = ended.getHighestBidder().getUserName()
+                                .equals(sessionUser.getUserName());
+                        if (won) showWinDialog(ended);
+                        else     showLoseDialog(ended);
+                    } else if (ended.getHighestBidder() == null
+                            && (ended.getStatus() == AuctionStatus.FINISHED
+                            || ended.getStatus() == AuctionStatus.PAID)) {
+                        showEndedNoWinnerDialog();
+                    }
+                    canBid = false;
+                    setupBidControls();
+                    if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
+                });
+    }
+
+    /** Xử lý khi phiên bị hủy giữa chừng — broadcast AUCTION_CANCELED. */
+    @SuppressWarnings("unchecked")
+    private void handleAuctionCanceled(com.auction.protocol.Response response) {
+        if (!(response.getData() instanceof List)) return;
+        List<Auction> list = (List<Auction>) response.getData();
+        list.stream()
+                .filter(a -> a.getAuctionId().equals(currentAuction.getAuctionId()))
+                .findFirst()
+                .ifPresent(canceled -> {
+                    currentAuction = canceled;
+                    updateUI();
+                    if (countdownTimeline != null) countdownTimeline.stop();
+                    if (lblTimeLeft != null) {
+                        lblTimeLeft.setText("ĐÃ HỦY");
+                        lblTimeLeft.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold; -fx-font-size: 18px;");
+                    }
+                    showBidNotification("🚫", "Phiên đã bị hủy",
+                            "Tiền đặt cọc đã được hoàn lại", "#7f8c8d", 3.0);
+                    canBid = false;
+                    setupBidControls();
+                    if (autoBidPane != null) { autoBidPane.setVisible(false); autoBidPane.setManaged(false); }
+                });
+    }
+
+    /** Xử lý khi đặt giá thành công — response trực tiếp từ server. */
+    private void handleBidSuccess(com.auction.protocol.Response response) {
+        String bidAmountText = (txtBidAmount != null && !txtBidAmount.getText().isEmpty())
+                ? txtBidAmount.getText().trim() : null;
+        String bidAmountDisplay = "---";
+        try {
+            if (bidAmountText != null)
+                bidAmountDisplay = CurrencyFormatter.format(Double.parseDouble(bidAmountText));
+        } catch (NumberFormatException ignored) {}
+
+        showBidNotification("✅", "Đặt giá thành công!", bidAmountDisplay, "#27ae60", 1.5);
+        NotificationService.get().success("✅ Đặt giá " + bidAmountDisplay + " thành công!", lblMessage);
+        if (txtBidAmount != null) txtBidAmount.clear();
+        if (bidValidator != null) bidValidator.clearValidation();
+        if (btnBid != null) btnBid.setDisable(false);
+        if (response.getData() instanceof Double newBalance) {
+            ((Bidder) sessionUser).setBalance(newBalance);
+        }
+    }
+
+    /** Xử lý khi đặt giá thất bại — phân loại lỗi cụ thể để hiển thị đúng thông điệp. */
+    private void handleBidError(com.auction.protocol.Response response) {
+        String errMsg = response.getMessage();
+        String toastMsg;
+        if (errMsg != null && errMsg.toLowerCase().contains("giá")) {
+            toastMsg = "⚠️ " + errMsg;
+            showBidNotification("⚠️", "Giá không hợp lệ", errMsg, "#f39c12", 1.5);
+            NotificationService.get().warning(toastMsg, lblMessage);
+        } else if (errMsg != null && errMsg.toLowerCase().contains("số dư")) {
+            toastMsg = "❌ Số dư không đủ!";
+            showBidNotification("❌", "Số dư không đủ", errMsg, "#e74c3c", 1.5);
+            NotificationService.get().error(toastMsg, lblMessage);
+        } else if (errMsg != null && errMsg.toLowerCase().contains("kết thúc")) {
+            toastMsg = "⛔ Phiên đấu giá đã kết thúc!";
+            showBidNotification("⛔", "Phiên đã kết thúc", errMsg, "#e74c3c", 1.5);
+            NotificationService.get().error(toastMsg, lblMessage);
+        } else {
+            toastMsg = "❌ Đặt giá thất bại: " + errMsg;
+            showBidNotification("❌", "Đặt giá thất bại", errMsg, "#e74c3c", 1.5);
+            NotificationService.get().error(toastMsg, lblMessage);
+        }
+        setMessage("❌ " + errMsg, "#e74c3c");
+        if (btnBid != null) btnBid.setDisable(false);
+    }
+
+    /** Xử lý response AUTOBID_OK / AUTOBID_ERROR từ server. */
+    private void handleAutoBidResponse(String msg,
+                                        com.auction.protocol.Response response) {
+        if ("AUTOBID_OK".equals(msg)) {
+            boolean nowActive = !autoBidActive;
+            updateAutoBidButtonStyle(nowActive);
+            if (nowActive) {
+                setAutoBidStatus("🤖 AutoBid đang hoạt động! Hệ thống sẽ tự trả giá thay bạn.", "#27ae60");
+                showBidNotification("🤖", "AutoBid đã bật", "Tự đặt giá khi bị vượt", "#8e44ad", 1.5);
+            } else {
+                setAutoBidStatus("AutoBid đã TẮT.", "#666");
+                if (txtAutoBidMax       != null) txtAutoBidMax.setDisable(false);
+                if (txtAutoBidIncrement != null) txtAutoBidIncrement.setDisable(false);
+                setMessage("ℹ️ AutoBid đã tắt.", "#A0A0A0");
+            }
+        } else { // AUTOBID_ERROR
+            setAutoBidStatus("❌ " + response.getMessage(), "#e74c3c");
+            if (txtAutoBidMax       != null) txtAutoBidMax.setDisable(false);
+            if (txtAutoBidIncrement != null) txtAutoBidIncrement.setDisable(false);
+        }
     }
 
     /**

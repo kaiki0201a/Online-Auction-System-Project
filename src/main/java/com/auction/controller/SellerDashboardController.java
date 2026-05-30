@@ -34,17 +34,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * SellerDashboardController — FIX hoàn chỉnh.
+ * SellerDashboardController — Controller dashboard của Seller.
  *
- * FIXES THỰC HIỆN:
- * 1. Dùng addEventListener("seller", ...) thay vì setOnResponseReceived
- *    → không còn bị ghi đè bởi màn hình khác
- * 2. onPublishClick: bỏ pattern "listener tạm + restoreMainListener" phức tạp.
- *    Gửi CREATE_AUCTION, chờ broadcast AUCTION_CREATED với data=List → renderInventory ngay
- * 3. buildStatusBadge: thêm case APPROVED, REJECTED
- * 4. renderInventory: filter bằng seller.getUserName() (robust)
- * 5. Xử lý broadcast AUCTION_WENT_LIVE, AUCTION_ENDED
- * 6. onLogout: removeEventListener("seller") thay vì removeOnResponseReceived
+ * Chức năng chính:
+ * - Hiển thị kho hàng (sản phẩm của seller) và các phiên đang chạy.
+ * - Form tạo phiên đấu giá mới (tên, giá, thời gian, ảnh, thông số động).
+ * - Lịch sử thanh toán (AuctionEarning).
+ * - Lắng nghe broadcast từ server qua addEventListener("seller").
  */
 public class SellerDashboardController {
 
@@ -256,24 +252,29 @@ public class SellerDashboardController {
 
         // BUG #8 FIX: Nhận FORCE_LOGOUT → tự đăng xuất nếu username khớp
         if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
-            String logoutTarget = msg.split("\\|")[1];
-            if (logoutTarget.equals(currentUser.getUserName())) {
-                NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
-                AppContext.logout();
-                try {
-                    Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
-                    Stage stage = (Stage) rootPane.getScene().getWindow();
-                    stage.setScene(new Scene(root, 900, 600));
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-                            javafx.scene.control.Alert.AlertType.WARNING);
-                    alert.setTitle("⚠️ Tài khoản bị khóa");
-                    alert.setHeaderText(null);
-                    alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\n"
-                            + "Bạn đã được đăng xuất tự động.");
-                    alert.show();
-                } catch (IOException ex) { ex.printStackTrace(); }
-            }
+            handleForceLogout(msg);
         }
+    }
+
+    /** Xử lý khi Admin khóa tài khoản Seller đang đăng nhập — bắt buộc đăng xuất. */
+    private void handleForceLogout(String msg) {
+        String logoutTarget = msg.split("\\|")[1];
+        if (!logoutTarget.equals(currentUser.getUserName())) return;
+
+        NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
+        AppContext.logout();
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
+            Stage stage = (Stage) rootPane.getScene().getWindow();
+            stage.setScene(new Scene(root, 900, 600));
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                    javafx.scene.control.Alert.AlertType.WARNING);
+            alert.setTitle("⚠️ Tài khoản bị khóa");
+            alert.setHeaderText(null);
+            alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\n"
+                    + "Bạn đã được đăng xuất tự động.");
+            alert.show();
+        } catch (IOException ex) { ex.printStackTrace(); }
     }
 
 
@@ -884,7 +885,6 @@ public class SellerDashboardController {
     }
 
 
-    // FIX: removeEventListener thay vì removeOnResponseReceived
     @FXML public void onLogoutClick(ActionEvent event) {
         NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
         AppContext.logout();

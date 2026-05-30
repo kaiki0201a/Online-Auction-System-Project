@@ -1,9 +1,14 @@
 package com.auction.utils;
 
 import com.auction.model.BidTransaction;
-// Hợp đồng "Lắng nghe cập nhật"
+
+/**
+ * AuctionObserver — Observer interface cho phép các đối tượng nhận cập nhật từ Auction.
+ * Biđder implements interface này để nhận thông báo khi có bid mới.
+ */
 public interface AuctionObserver {
-    // Hàm này sẽ bị ép phải chạy mỗi khi phiên đấu giá có biến động
+    /** Nhận thông báo dạng văn bản (ví dụ: anti-sniping, đóng phiên). */
     void update(String message);
+    /** Nhận sự kiện khi có bid mới được xử lý thành công. */
     void onNewBidPlaced(BidTransaction transaction);
 }

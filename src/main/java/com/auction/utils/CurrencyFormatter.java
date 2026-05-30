@@ -2,19 +2,24 @@ package com.auction.utils;
 
 import java.text.DecimalFormat;
 
+/**
+ * CurrencyFormatter — Utility class định dạng tiền tệ theo chuẩn Việt Nam (Đồng VNĐ).
+ */
 public class CurrencyFormatter {
 
-    // 1. Khóa constructor lại để không ai có thể dùng từ khóa 'new' tạo object
+    /** Utility class — không cho phép khởi tạo. */
     private CurrencyFormatter() {
         throw new UnsupportedOperationException("Đây là class tiện ích, không được khởi tạo!");
     }
 
     /**
-     * 2. Hàm định dạng tiền tệ (Sử dụng VNĐ)
-     * Ví dụ: 1000.0 -> 1,000 VNĐ
+     * Định dạng số thành chuỗi tiền VNĐ có dấu phẩy phân cách.
+     * Ví dụ: 1000.0 → "1,000 VNĐ"
+     *
+     * @param amount Số tiền cần định dạng
+     * @return Chuỗi đã định dạng
      */
     public static String format(double amount) {
-        // "#,###" tự động chèn dấu phẩy phân cách hàng nghìn
         DecimalFormat formatter = new DecimalFormat("#,### VNĐ");
         return formatter.format(amount);
     }

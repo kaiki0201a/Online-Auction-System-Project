@@ -32,9 +32,9 @@ public class Seller extends User implements Serializable {
         this.earningHistory = new CopyOnWriteArrayList<>();
     }
 
-    // Các chức năng, nghiệp vụ
+    // ─── QUẢN LÝ KHO HÀNG ─────────────────────────────────────────────────────
 
-    // Tạo auction trực tiếp qua AuctionManager (không cần item trong kho)
+    /** Tạo phiên đấu giá mới qua AuctionManager (không cần thêm vào kho trước). */
     public void createAuction(Item item, LocalDateTime start, LocalDateTime end) throws InvalidAuctionException {
         if (item == null) {
             throw new InvalidAuctionException("Lỗi: Sản phẩm không hợp lệ!");
@@ -60,7 +60,7 @@ public class Seller extends User implements Serializable {
         System.out.println("Đã cập nhật thông tin cho sản phẩm: " + item.getNameItem());
     }
 
-    // Getter & Setter
+    // ─── GETTERS & SETTERS ────────────────────────────────────────────────────
     public float getRating() {
         return rating;
     }
@@ -81,6 +81,10 @@ public class Seller extends User implements Serializable {
         return inventory;
     }
 
+
+    // ─── LỊCH SỬ VÍ & THU NHẬP ────────────────────────────────────────────────
+
+    /** Lịch sử nạp/rút tiền của Seller. */
     public List<WalletTransaction> getWalletHistory() {
         if (walletHistory == null) walletHistory = new CopyOnWriteArrayList<>();
         return walletHistory;

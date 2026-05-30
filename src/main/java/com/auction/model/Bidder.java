@@ -1,8 +1,5 @@
 package com.auction.model;
 import com.auction.exception.AuctionException;
-import com.auction.model.Auction;
-import com.auction.model.BidTransaction;
-import com.auction.model.User;
 
 
 import java.io.Serializable;
@@ -102,12 +99,12 @@ public class Bidder extends User implements AuctionObserver {
                     amount
             );
         }
-        BidTransaction newTransaction = new BidTransaction(auction,this,amount);
-        auction.processBid(newTransaction);
+        BidTransaction transaction = new BidTransaction(auction, this, amount);
+        auction.processBid(transaction);
         // đã sửa level 1: Trừ balance khi đặt giá thành công
         this.balance -= amount;
         System.out.println("Bidder " + this.getUserName() + " đã đấu giá thành công " + amount + " vào phiên " + auction.getAuctionId());
-        this.addTransaction(newTransaction);
+        this.addTransaction(transaction);
     }
     public void setupAutoBid(Auction auction, double maxBid, double increment)
             throws AuctionException {

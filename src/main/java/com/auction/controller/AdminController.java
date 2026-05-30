@@ -34,16 +34,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * AdminController — FIX hoàn chỉnh.
+ * AdminController — Controller dashboard quản trị hệ thống.
  *
- * FIXES THỰC HIỆN:
- * 1. Dùng addEventListener("admin", ...) → không bị ghi đè
- * 2. handleResponse: khi nhận AUCTION_APPROVED/REJECTED với data=List → cập nhật trực tiếp
- *    Không cần gửi thêm GET_AUCTION_LIST (đã có data đầy đủ trong response)
- * 3. updateStats: đếm APPROVED cùng với RUNNING cho "đang hoạt động"
- * 4. setupAuctionTable: thêm case APPROVED và REJECTED trong display text
- * 5. renderPendingList: chỉ hiển thị PENDING_APPROVAL
- * 6. buildPendingCard: hiển thị đủ thông tin để admin quyết định
+ * Quản lý 3 tab chính:
+ * - Tab Duyệt: phê duyệt / từ chối sản phẩm của Seller.
+ * - Tab Tổng quan: thống kê số liệu hệ thống.
+ * - Tab User: tra cứu, khóa / mở khóa tài khoản.
+ *
+ * Lắng nghe network qua addEventListener("admin") — không bị ghi đè bởi các listener khác.
  */
 public class AdminController {
 
@@ -96,8 +94,22 @@ public class AdminController {
 
     private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("dd/MM HH:mm");
 
-    // FIX: Key riêng cho admin listener
+    /** Key riêng cho listener của AdminController — không bị ghi đè bởi các màn hình khác. */
     private static final String LISTENER_KEY = "admin";
+
+    private static final String NAV_INACTIVE_STYLE =
+            "-fx-pref-height:50px;-fx-padding:0 0 0 22px;-fx-cursor:hand;"
+            + "-fx-background-color:transparent;-fx-text-fill:#A6A6A6;"
+            + "-fx-font-size:13px;-fx-font-weight:600;-fx-alignment:center-left;"
+            + "-fx-border-color:transparent;";
+
+    private static final String NAV_ACTIVE_STYLE =
+            "-fx-pref-height:50px;-fx-padding:0 0 0 22px;-fx-cursor:hand;"
+            + "-fx-background-color:rgba(255,255,255,0.04);-fx-text-fill:#F5E6C8;"
+            + "-fx-font-size:13px;-fx-font-weight:600;-fx-alignment:center-left;"
+            + "-fx-border-color:transparent transparent transparent #E8D4A2;"
+            + "-fx-border-width:0 0 0 3;";
+
 
     // ─── INITIALIZE ────────────────────────────────────────────────────────────
 
@@ -607,17 +619,8 @@ public class AdminController {
     }
 
     private void setActiveNav(Button active) {
-        String inactive = "-fx-pref-height:50px;-fx-padding:0 0 0 22px;-fx-cursor:hand;"
-            + "-fx-background-color:transparent;-fx-text-fill:#A6A6A6;"
-            + "-fx-font-size:13px;-fx-font-weight:600;-fx-alignment:center-left;"
-            + "-fx-border-color:transparent;";
-        String activeStyle = "-fx-pref-height:50px;-fx-padding:0 0 0 22px;-fx-cursor:hand;"
-            + "-fx-background-color:rgba(255,255,255,0.04);-fx-text-fill:#F5E6C8;"
-            + "-fx-font-size:13px;-fx-font-weight:600;-fx-alignment:center-left;"
-            + "-fx-border-color:transparent transparent transparent #E8D4A2;"
-            + "-fx-border-width:0 0 0 3;";
         for (Button b : new Button[]{btnNavApproval, btnNavOverview, btnNavUsers}) {
-            if (b != null) b.setStyle(b == active ? activeStyle : inactive);
+            if (b != null) b.setStyle(b == active ? NAV_ACTIVE_STYLE : NAV_INACTIVE_STYLE);
         }
     }
 }

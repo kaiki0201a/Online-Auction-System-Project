@@ -11,8 +11,18 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
+/**
+ * UIUtils — Utility class các hiệu ứng UI dùng chung (fade-in, spinner overlay).
+ */
 public class UIUtils {
 
+    /** Utility class — không cho phép khởi tạo. */
+    private UIUtils() {}
+
+    /** Thời gian hiển thị spinner trước khi chạy action (ms). */
+    private static final int SPINNER_DELAY_MS = 1500;
+
+    /** Áp dụng hiệu ứng fade-in vào một Node JavaFX (500ms). */
     public static void applyFadeIn(Node node) {
         FadeTransition ft = new FadeTransition(Duration.millis(500), node);
         ft.setFromValue(0.0);
@@ -20,33 +30,35 @@ public class UIUtils {
         ft.play();
     }
 
+    /**
+     * Hiển thị overlay spinner trong {@code SPINNER_DELAY_MS}ms, sau đó chạy {@code actionAfterDelay}.
+     *
+     * Lưu ý: spinner là fixed delay — không gắn với thời gian response server thực tế.
+     */
     public static void showLoadingSpinner(StackPane root, Runnable actionAfterDelay) {
-        // Create an overlay rectangle
         Rectangle overlay = new Rectangle(root.getWidth(), root.getHeight(), Color.rgb(0, 0, 0, 0.4));
         overlay.widthProperty().bind(root.widthProperty());
         overlay.heightProperty().bind(root.heightProperty());
-        
+
         ProgressIndicator spinner = new ProgressIndicator();
         spinner.setStyle("-fx-progress-color: white;");
         spinner.setMaxSize(50, 50);
-        
+
         VBox loadingBox = new VBox(spinner);
         loadingBox.setAlignment(Pos.CENTER);
-        
+
         StackPane overlayPane = new StackPane(overlay, loadingBox);
         root.getChildren().add(overlayPane);
-        
-        // Fade in overlay
+
         FadeTransition fadeIn = new FadeTransition(Duration.millis(200), overlayPane);
         fadeIn.setFromValue(0);
         fadeIn.setToValue(1);
         fadeIn.play();
 
-        // Simulate server response delay
         Task<Void> task = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                Thread.sleep(1500); // Simulate 1.5s delay
+                Thread.sleep(SPINNER_DELAY_MS);
                 return null;
             }
         };
