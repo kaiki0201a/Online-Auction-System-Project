@@ -32,7 +32,7 @@
 
             <!-- Logo -->
             <VBox style="-fx-padding:28 20 18 20;                          -fx-border-color:transparent transparent rgba(255,255,255,0.06) transparent;                          -fx-border-width:1;">
-                <Label style="-fx-text-fill:#F5C518;-fx-font-size:20px;-fx-font-weight:900;                               -fx-font-family:'Arial Black';" text="BIDPRECISION" />
+                <Label prefHeight="38.0" prefWidth="169.0" style="-fx-text-fill: #E7D29B; -fx-font-size: 20px; -fx-font-weight: 900; -fx-font-family: 'Arial Black';" text="BIDPRECISION" />
                 <Label style="-fx-text-fill:#555;-fx-font-size:10px;-fx-font-weight:bold;                               -fx-padding:3 0 0 0;" text="HỆ THỐNG QUẢN TRỊ" />
             </VBox>
 
@@ -59,7 +59,7 @@
 
             <!-- Đăng Xuất -->
             <VBox style="-fx-padding:14 16 22 16;                          -fx-border-color:rgba(255,255,255,0.06) transparent transparent transparent;                          -fx-border-width:1;">
-                <Button maxWidth="Infinity" onAction="#onLogoutClick" style="-fx-pref-height:44px;-fx-background-color:transparent;                                -fx-border-color:#7A6B46;-fx-border-radius:4;                                -fx-text-fill:#F5E6C8;-fx-font-size:12px;-fx-font-weight:700;                                -fx-cursor:hand;" text="⎋  Đăng Xuất" />
+                <Button maxWidth="Infinity" onAction="#onLogoutClick" style="-fx-pref-height: 44px; -fx-background-color: transparent; -fx-border-color: #7A6B46; -fx-border-radius: 8; -fx-text-fill: #F5E6C8; -fx-font-size: 12px; -fx-font-weight: 700; -fx-cursor: hand;" text="⎋  Đăng Xuất" />
             </VBox>
         </VBox>
     </left>
