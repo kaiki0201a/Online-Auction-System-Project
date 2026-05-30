@@ -1,211 +1,417 @@
-/* --- ROOT CONTAINER --- */
+/* ═══════════════════════════════════════════════════════════════════
+   ADD PRODUCT — Luxury Dark Dashboard + Premium Gold Accent
+   Auction Platform / Fintech Dashboard Style
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── PAGE FOUNDATION ──────────────────────────────────────────── */
+.page-background {
+    -fx-background-color: #0F0F0F;
+}
+
 .dark-scroll {
     -fx-background-color: transparent;
-    -fx-background: #151515; /* Fallback */
+    -fx-background: #0F0F0F;
+    -fx-border-color: transparent;
+    -fx-control-inner-background: transparent;
 }
 .dark-scroll .viewport {
     -fx-background-color: transparent;
 }
-.form-container {
-    -fx-background-color: linear-gradient(to right, #121212 0%, #171717 50%, #1A1A1A 100%);
-    -fx-padding: 40px 44px;
-    -fx-pref-width: 1350px;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
+.dark-scroll > .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 6px;
+}
+.dark-scroll > .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+.dark-scroll > .scroll-bar:vertical .thumb {
+    -fx-background-color: #2A2A2A;
+    -fx-background-radius: 3px;
+}
+.dark-scroll > .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #3A3A3A;
+}
+.dark-scroll > .scroll-bar:vertical .increment-button,
+.dark-scroll > .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+.dark-scroll > .scroll-bar:vertical .increment-arrow,
+.dark-scroll > .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
 }
 
-/* --- TYPOGRAPHY & HEADERS --- */
+/* ─── MAIN FORM CONTAINER ──────────────────────────────────────── */
+.form-container {
+    -fx-background-color: #111111;
+    -fx-border-color: #1E1E1E;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 36 40;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 20, 0, 0, 4);
+}
+
+/* ─── HEADER ───────────────────────────────────────────────────── */
+.header-section {
+    -fx-padding: 0 0 4 0;
+}
+.header-icon-wrap {
+    -fx-background-color: rgba(245, 197, 24, 0.08);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(245, 197, 24, 0.15);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+}
 .header-title {
-    -fx-font-family: "SansSerif";
-    -fx-font-size: 56px;
+    -fx-font-family: "Segoe UI", "SF Pro Display", "Inter", "SansSerif";
+    -fx-font-size: 24px;
     -fx-font-weight: 800;
-    -fx-text-fill: #F3F3F3;
+    -fx-text-fill: #FFFFFF;
 }
 .header-subtitle {
-    -fx-font-family: "SansSerif";
-    -fx-font-size: 20px;
-    -fx-text-fill: #B9B1A4;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 13px;
+    -fx-text-fill: #666666;
 }
+
+/* ─── DIVIDER ──────────────────────────────────────────────────── */
 .divider {
-    -fx-background-color: #3A3126;
-    -fx-min-height: 1px;
-    -fx-pref-height: 1px;
-    -fx-opacity: 0.7;
+    -fx-background-color: #242424;
+    -fx-min-height: 1;
+    -fx-pref-height: 1;
+    -fx-max-height: 1;
 }
 
-/* --- LABELS --- */
+/* ─── SECTION CARDS ────────────────────────────────────────────── */
+.section-card {
+    -fx-background-color: #171717;
+    -fx-border-color: #242424;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 24;
+}
+.section-title {
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F5C518;
+    -fx-letter-spacing: 1.2;
+}
+
+/* ─── FIELD LABELS ─────────────────────────────────────────────── */
 .field-label {
-    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 11px;
     -fx-font-weight: 700;
-    -fx-text-fill: #CDBB95;
+    -fx-text-fill: #888888;
 }
 
-/* --- INPUT FIELDS STANDARD --- */
+/* ─── FORM INPUTS ──────────────────────────────────────────────── */
 .form-input {
-    -fx-background-color: #111111;
-    -fx-border-color: #2A2A2A;
-    -fx-border-width: 1px;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #333333;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
     -fx-text-fill: #F1F1F1;
-    -fx-font-size: 18px;
-    -fx-pref-height: 58px;
-    -fx-padding: 0 15px;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 14px;
+    -fx-pref-height: 44;
+    -fx-padding: 0 14;
+    -fx-prompt-text-fill: #444444;
 }
-.form-input:focused, .spec-input:focused, .price-input-wrapper:focused-within {
-    -fx-border-color: #C9A86A;
-    -fx-effect: dropshadow(three-pass-box, rgba(201,168,106,0.25), 8, 0, 0, 0);
+.form-input:focused {
+    -fx-border-color: #F5C518;
+    -fx-effect: dropshadow(three-pass-box, rgba(245,197,24,0.15), 6, 0, 0, 0);
 }
-.form-input:hover, .spec-input:hover, .price-input-wrapper:hover {
-    -fx-border-color: #4A4A4A;
+.form-input:hover {
+    -fx-border-color: #444444;
 }
-.form-input:focused:hover, .spec-input:focused:hover {
-    -fx-border-color: #C9A86A;
+.form-input:focused:hover {
+    -fx-border-color: #F5C518;
 }
 
-/* --- DYNAMIC SPECS BOX --- */
+/* ─── TEXTAREA ─────────────────────────────────────────────────── */
+.form-textarea {
+    -fx-background-color: #1A1A1A;
+    -fx-control-inner-background: #1A1A1A;
+    -fx-border-color: #333333;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-text-fill: #F1F1F1;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 14px;
+    -fx-padding: 12;
+    -fx-prompt-text-fill: #444444;
+}
+.form-textarea:focused {
+    -fx-border-color: #F5C518;
+    -fx-effect: dropshadow(three-pass-box, rgba(245,197,24,0.15), 6, 0, 0, 0);
+}
+.form-textarea .content {
+    -fx-background-color: #1A1A1A;
+}
+
+/* ─── DYNAMIC SPECS BOX ────────────────────────────────────────── */
 .spec-box {
-    -fx-border-color: #6D5A37;
+    -fx-background-color: rgba(245, 197, 24, 0.02);
+    -fx-border-color: #3A3020;
     -fx-border-style: dashed;
-    -fx-border-width: 1px;
-    -fx-border-radius: 8px;
-    -fx-background-color: rgba(255, 255, 255, 0.01);
-    -fx-background-radius: 8px;
-    -fx-padding: 28px;
-}
-.spec-title {
-    -fx-font-size: 24px;
-    -fx-font-weight: 700;
-    -fx-text-fill: #F1D49B;
-}
-.spec-divider {
-    -fx-background-color: #2A2A2A;
-    -fx-min-height: 1px;
-}
-.spec-input {
-    -fx-background-color: #101010;
-    -fx-border-color: #262626;
-    -fx-border-width: 1px;
-    -fx-border-radius: 4px;
-    -fx-text-fill: #F1F1F1;
-    -fx-font-size: 16px;
-    -fx-pref-height: 52px;
-    -fx-padding: 0 15px;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 24;
 }
 
-/* --- PRICE INPUT SPECIAL --- */
+/* ─── PRICE INPUT ──────────────────────────────────────────────── */
 .price-input-wrapper {
-    -fx-background-color: #111111;
-    -fx-border-color: #2A2A2A;
-    -fx-border-width: 1px;
-    -fx-border-radius: 4px;
-    -fx-pref-height: 58px;
-    -fx-padding: 0 15px;
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #333333;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-pref-height: 44;
+    -fx-padding: 0 14;
+}
+.price-input-wrapper:hover {
+    -fx-border-color: #444444;
 }
 .price-prefix {
-    -fx-font-size: 28px;
+    -fx-font-size: 18px;
     -fx-font-weight: 700;
-    -fx-text-fill: #E0C58D;
+    -fx-text-fill: #F5C518;
+    -fx-padding: 0 6 0 0;
+}
+.price-suffix {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F5C518;
+    -fx-padding: 0 0 0 6;
 }
 .price-input {
     -fx-background-color: transparent;
     -fx-text-fill: #F1F1F1;
-    -fx-font-size: 28px;
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
+    -fx-prompt-text-fill: #444444;
+    -fx-padding: 0;
 }
 .price-input:focused {
-    -fx-background-color: transparent; /* Loại bỏ viền focus mặc định của textfield bên trong */
+    -fx-background-color: transparent;
 }
 
-/* --- TIME & TRANSPARENT INPUTS --- */
+/* ─── TIME INPUT ───────────────────────────────────────────────── */
+.time-input-wrapper {
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #333333;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-pref-height: 44;
+    -fx-padding: 0 14;
+}
+.time-input-wrapper:hover {
+    -fx-border-color: #444444;
+}
 .transparent-input {
     -fx-background-color: transparent;
     -fx-text-fill: #F1F1F1;
-    -fx-font-size: 18px;
+    -fx-font-size: 14px;
+    -fx-prompt-text-fill: #444444;
     -fx-padding: 0;
 }
 .time-icon {
-    -fx-text-fill: #D5BE8C;
-    -fx-font-size: 20px;
+    -fx-text-fill: #F5C518;
+    -fx-font-size: 16px;
+    -fx-padding: 0 0 0 6;
 }
 
-/* --- UPLOAD AREA --- */
+/* ─── UPLOAD AREA ──────────────────────────────────────────────── */
 .upload-area {
-    -fx-background-color: #121212;
-    -fx-border-color: #D2B57B;
+    -fx-background-color: #141414;
+    -fx-border-color: #333333;
     -fx-border-style: dashed;
-    -fx-border-width: 2px;
-    -fx-border-radius: 4px;
-    -fx-pref-height: 300px;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 40 30;
     -fx-cursor: hand;
 }
 .upload-area:hover {
-    -fx-border-color: #F1D49B;
-    -fx-background-color: rgba(241,212,155,0.03);
+    -fx-border-color: #F5C518;
+    -fx-background-color: rgba(245, 197, 24, 0.02);
 }
 .upload-title {
-    -fx-font-size: 42px;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 16px;
     -fx-font-weight: 700;
-    -fx-text-fill: #F2F2F2;
+    -fx-text-fill: #FFFFFF;
 }
 .upload-subtitle {
-    -fx-font-size: 18px;
-    -fx-text-fill: #B6AA94;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 12px;
+    -fx-text-fill: #666666;
 }
 
-/* --- BUTTONS --- */
+/* ─── BUTTONS ──────────────────────────────────────────────────── */
 .btn-browse {
     -fx-background-color: transparent;
-    -fx-border-color: #D4B97C;
-    -fx-border-radius: 4px;
-    -fx-text-fill: #E6D1A0;
-    -fx-font-size: 15px;
+    -fx-border-color: #F5C518;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-text-fill: #F5C518;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 13px;
     -fx-font-weight: 600;
-    -fx-pref-width: 150px;
-    -fx-pref-height: 46px;
+    -fx-padding: 8 28;
     -fx-cursor: hand;
 }
 .btn-browse:hover {
-    -fx-background-color: #D4B97C;
-    -fx-text-fill: #111111;
+    -fx-background-color: rgba(245, 197, 24, 0.1);
 }
-
-.footer-divider {
-    -fx-background-color: #2E2A22;
-    -fx-min-height: 1px;
+.btn-browse:pressed {
+    -fx-background-color: rgba(245, 197, 24, 0.18);
 }
 
 .btn-draft {
     -fx-background-color: transparent;
-    -fx-border-color: #5B5447;
-    -fx-border-radius: 4px;
-    -fx-text-fill: #D6C8AA;
-    -fx-font-size: 16px;
+    -fx-border-color: #333333;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-text-fill: #BDBDBD;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 14px;
     -fx-font-weight: 600;
-    -fx-pref-width: 170px;
-    -fx-pref-height: 58px;
+    -fx-padding: 12 28;
+    -fx-pref-height: 46;
     -fx-cursor: hand;
 }
 .btn-draft:hover {
     -fx-background-color: rgba(255,255,255,0.04);
+    -fx-border-color: #555555;
+}
+.btn-draft:pressed {
+    -fx-background-color: rgba(255,255,255,0.07);
 }
 
 .btn-create {
-    -fx-background-color: #E4C98F;
-    -fx-background-radius: 4px;
-    -fx-text-fill: #151515;
-    -fx-font-size: 16px;
+    -fx-background-color: #F5C518;
+    -fx-background-radius: 4;
+    -fx-text-fill: #111111;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 14px;
     -fx-font-weight: 700;
-    -fx-pref-width: 240px;
-    -fx-pref-height: 58px;
+    -fx-padding: 12 32;
+    -fx-pref-height: 46;
     -fx-cursor: hand;
 }
 .btn-create:hover {
-    -fx-background-color: #F0D9A8;
-    -fx-translate-y: -1px;
+    -fx-background-color: #FFD233;
+    -fx-effect: dropshadow(three-pass-box, rgba(245,197,24,0.25), 8, 0, 0, 2);
+}
+.btn-create:pressed {
+    -fx-background-color: #E0B410;
+    -fx-effect: none;
 }
 
-/* Fix ComboBox / DatePicker mũi tên dropdown */
-.combo-box .arrow, .date-picker .arrow {
-    -fx-background-color: #C8B38A;
+/* ─── COMBOBOX & DATEPICKER OVERRIDES ──────────────────────────── */
+.combo-box {
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #333333;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+.combo-box .arrow {
+    -fx-background-color: #F5C518;
+}
+.combo-box .list-cell {
+    -fx-text-fill: #F1F1F1;
+    -fx-font-family: "Segoe UI", "Inter", "SansSerif";
+    -fx-font-size: 14px;
+    -fx-background-color: transparent;
+}
+.combo-box-popup .list-view {
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #333333;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+}
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: #1A1A1A;
+    -fx-text-fill: #BDBDBD;
+    -fx-padding: 10 14;
+    -fx-font-size: 14px;
+}
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #242424;
+}
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: rgba(245, 197, 24, 0.1);
+    -fx-text-fill: #F5C518;
+}
+
+.date-picker {
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #333333;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+.date-picker .arrow-button {
+    -fx-background-color: transparent;
+}
+.date-picker .arrow-button .arrow {
+    -fx-background-color: #F5C518;
+}
+.date-picker .text-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: #F1F1F1;
+    -fx-font-size: 14px;
+}
+.date-picker-popup {
+    -fx-background-color: #1A1A1A;
+    -fx-border-color: #333333;
+}
+.date-picker-popup > .month-year-pane {
+    -fx-background-color: #171717;
+}
+.date-picker-popup > .month-year-pane .label {
+    -fx-text-fill: #FFFFFF;
+}
+.date-picker-popup .day-cell {
+    -fx-text-fill: #BDBDBD;
+    -fx-background-color: transparent;
+}
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: #242424;
+}
+.date-picker-popup .selected {
+    -fx-background-color: #F5C518;
+    -fx-text-fill: #111111;
+}
+
+/* ─── SCROLLBAR FIX FOR TEXTAREA ───────────────────────────────── */
+.form-textarea .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 6px;
+}
+.form-textarea .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+.form-textarea .scroll-bar:vertical .thumb {
+    -fx-background-color: #333333;
+    -fx-background-radius: 3px;
+}
+
+/* ─── ROOT STACKPANE ───────────────────────────────────────────── */
+#rootPane {
+    -fx-background-color: #0F0F0F;
 }
