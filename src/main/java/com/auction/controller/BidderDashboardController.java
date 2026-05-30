@@ -141,6 +141,22 @@ public class BidderDashboardController {
             return;
         }
 
+        // FIX BUG D: Cập nhật balance cho bidder thua cuộc sau khi phiên kết thúc bình thường.
+        // Server broadcast BIDDER_BALANCE_UPDATE sau settlement để mỗi loser thấy số dư đúng
+        // ngay lập tức mà không cần logout/login lại.
+        if (msg != null && msg.startsWith("BIDDER_BALANCE_UPDATE|") && response.getData() instanceof Double) {
+            String targetUsername = msg.split("\\|")[1];
+            if (targetUsername.equals(currentUser.getUserName())) {
+                double newBalance = (Double) response.getData();
+                currentUser.setBalance(newBalance);
+                updateBalance();
+                // Thông báo nhẹ nhàng — không dùng Alert để không làm gián đoạn
+                System.out.println("💰 [CLIENT] Balance cập nhật sau phiên: " + newBalance);
+            }
+            return;
+        }
+
+
         // BUG #8 FIX: Nhận FORCE_LOGOUT → tự đăng xuất nếu username khớp
         if (msg != null && msg.startsWith("FORCE_LOGOUT|")) {
             String logoutTarget = msg.split("\\|")[1];

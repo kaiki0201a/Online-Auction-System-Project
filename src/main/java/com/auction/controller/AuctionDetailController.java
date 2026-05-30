@@ -650,6 +650,20 @@ public class AuctionDetailController {
                     return;
                 }
 
+                // FIX BUG D: Cập nhật balance cho bidder thua cuộc ngay khi phiên kết thúc.
+                // Server broadcast BIDDER_BALANCE_UPDATE sau settlement — bidder đang xem
+                // màn hình này cũng cần nhận cập nhật để balance hiển thị đúng.
+                if (msg != null && msg.startsWith("BIDDER_BALANCE_UPDATE|")
+                        && response.getData() instanceof Double newBal
+                        && sessionUser instanceof Bidder bidderSession) {
+                    String target = msg.split("\\|")[1];
+                    if (target.equals(sessionUser.getUserName())) {
+                        bidderSession.setBalance(newBal);
+                        System.out.println("💰 [AuctionDetail] Balance bidder cập nhật: " + newBal);
+                    }
+                    return;
+                }
+
                 // Cập nhật khi có bid mới (broadcast UPDATE_AUCTION kèm List<Auction>)
                 if ("UPDATE_AUCTION".equals(msg) && response.getData() instanceof List) {
                     @SuppressWarnings("unchecked")

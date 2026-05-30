@@ -514,7 +514,7 @@ public class ClientHandler implements Runnable {
                     return new Response(StatusType.ERROR, "AUTOBID_ERROR: Lỗi hệ thống khi xử lý AutoBid.", null);
                 }
 
-                // ─── NẠP TIỀN ─────────────────────────────────────────────────────
+                // ─── NẠP TIỀN ────────────────────────────────────────────────────────
             case DEPOSIT:
                 try {
                     String depositData = (String) request.getPayload();
@@ -527,13 +527,25 @@ public class ClientHandler implements Runnable {
 
                     User user = UserManager.getInstance().getUser(targetUser);
                     if (user instanceof Bidder bidder) {
-                        bidder.setBalance(bidder.getBalance() + amount);
+                        double newBalance = bidder.getBalance() + amount;
+                        bidder.setBalance(newBalance);
+                        // FIX BUG B: Tạo WalletTransaction trên server và persist vào User object
+                        WalletTransaction wt = new WalletTransaction(
+                                WalletTransaction.Type.DEPOSIT, amount, newBalance);
+                        bidder.addWalletTransaction(wt);
                         ServerApp.getUserDAO().saveDataToFile();
-                        return new Response(StatusType.SUCCESS, "Nạp tiền thành công!", bidder.getBalance());
+                        // Trả về WalletTransaction để client không cần tự tạo nữa
+                        return new Response(StatusType.SUCCESS, "Nạp tiền thành công!", wt);
                     } else if (user instanceof Seller seller) {
-                        seller.setBalance(seller.getBalance() + amount);
+                        double newBalance = seller.getBalance() + amount;
+                        seller.setBalance(newBalance);
+                        // FIX BUG B: Tạo WalletTransaction trên server và persist vào User object
+                        WalletTransaction wt = new WalletTransaction(
+                                WalletTransaction.Type.DEPOSIT, amount, newBalance);
+                        seller.addWalletTransaction(wt);
                         ServerApp.getUserDAO().saveDataToFile();
-                        return new Response(StatusType.SUCCESS, "Nạp tiền thành công!", seller.getBalance());
+                        // Trả về WalletTransaction để client không cần tự tạo nữa
+                        return new Response(StatusType.SUCCESS, "Nạp tiền thành công!", wt);
                     }
                     return new Response(StatusType.ERROR, "Không tìm thấy tài khoản.", null);
                 } catch (Exception e) {
@@ -556,21 +568,32 @@ public class ClientHandler implements Runnable {
                         if (bidder.getBalance() < amount) {
                             return new Response(StatusType.ERROR, "Số dư không đủ để rút tiền!", null);
                         }
-                        bidder.setBalance(bidder.getBalance() - amount);
+                        double newBalance = bidder.getBalance() - amount;
+                        bidder.setBalance(newBalance);
+                        // FIX BUG B: Tạo WalletTransaction trên server và persist vào User object
+                        WalletTransaction wt = new WalletTransaction(
+                                WalletTransaction.Type.WITHDRAW, amount, newBalance);
+                        bidder.addWalletTransaction(wt);
                         ServerApp.getUserDAO().saveDataToFile();
-                        return new Response(StatusType.SUCCESS, "Rút tiền thành công!", bidder.getBalance());
+                        return new Response(StatusType.SUCCESS, "Rút tiền thành công!", wt);
                     } else if (user instanceof Seller seller) {
                         if (seller.getBalance() < amount) {
                             return new Response(StatusType.ERROR, "Số dư không đủ để rút tiền!", null);
                         }
-                        seller.setBalance(seller.getBalance() - amount);
+                        double newBalance = seller.getBalance() - amount;
+                        seller.setBalance(newBalance);
+                        // FIX BUG B: Tạo WalletTransaction trên server và persist vào User object
+                        WalletTransaction wt = new WalletTransaction(
+                                WalletTransaction.Type.WITHDRAW, amount, newBalance);
+                        seller.addWalletTransaction(wt);
                         ServerApp.getUserDAO().saveDataToFile();
-                        return new Response(StatusType.SUCCESS, "Rút tiền thành công!", seller.getBalance());
+                        return new Response(StatusType.SUCCESS, "Rút tiền thành công!", wt);
                     }
                     return new Response(StatusType.ERROR, "Không tìm thấy tài khoản.", null);
                 } catch (Exception e) {
                     return new Response(StatusType.ERROR, "Lỗi khi rút tiền: " + e.getMessage(), null);
                 }
+
 
                 // ─── CẬP NHẬT HỒ SƠ ──────────────────────────────────────────────
             case UPDATE_PROFILE:

@@ -4,16 +4,23 @@ import com.auction.dao.impl.AuctionDAOImpl;
 import com.auction.dao.impl.UserDAOImpl;
 import com.auction.model.Auction;
 import com.auction.model.AuctionStatus;
+import com.auction.model.Bidder;
+import com.auction.model.BidTransaction;
+import com.auction.model.Seller;
+import com.auction.model.User;
 import com.auction.protocol.Response;
 import com.auction.protocol.StatusType;
 import com.auction.utils.AuctionManager;
+import com.auction.utils.UserManager;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -257,7 +264,25 @@ public class ServerApp {
         auction.setStatus(AuctionStatus.FINISHED);
         System.out.println("⏰ [AUTO-CLOSE] Phiên \"" + auction.getItem().getNameItem() + "\" kết thúc!");
 
-        // FIX: Settle tiền — chuyển từ bidder sang seller
+        // FIX BUG E (CRITICAL): Sync Seller object từ UserManager trước khi settle.
+        // Sau khi deserialize Auction từ file, auction.getSeller() là bản COPY riêng biệt,
+        // không phải tham chiếu đến object trong UserManager.
+        // Nếu không sync, settleAuction() sẽ cộng tiền vào bản copy → userDAO.saveDataToFile()
+        // sẽ lưu balance cũ từ UserManager, không phải balance mới.
+        Seller auctionSeller = auction.getSeller();
+        if (auctionSeller != null) {
+            User managedSellerUser = UserManager.getInstance().getUser(auctionSeller.getUserName());
+            if (managedSellerUser instanceof Seller managedSeller
+                    && managedSeller != auctionSeller) {
+                // Hai object khác nhau (desync) — đồng bộ balance hiện tại từ UserManager
+                // vào Auction's seller để settleAuction() cộng đúng vào object được quản lý
+                auction.setSeller(managedSeller);
+                System.out.println("🔄 [SYNC] Đã đồng bộ Seller object '" + managedSeller.getUserName()
+                    + "' từ UserManager vào Auction (tránh desync sau restart).");
+            }
+        }
+
+        // Settle tiền — chuyển từ bidder sang seller
         auction.settleAuction();
 
         AuctionManager.getInstance().updateAuction(auction);
@@ -267,38 +292,65 @@ public class ServerApp {
         // Broadcast với toàn bộ list
         broadcastAuctionUpdate(AuctionManager.getInstance().getAllAuctions(), "AUCTION_ENDED");
 
-        // FIX BUG #2: Sau khi settle, broadcast balance mới cho Seller để client cập nhật UI
-        // Message format: "SELLER_BALANCE_UPDATE|<username>" để client filter đúng người
         if (auction.getHighestBidder() != null && auction.getSeller() != null) {
-            com.auction.model.Seller seller = auction.getSeller();
+            Seller seller = auction.getSeller();
+
+            // Broadcast balance mới cho Seller
             String sellerMsg = "SELLER_BALANCE_UPDATE|" + seller.getUserName();
-            broadcast(new com.auction.protocol.Response(
-                com.auction.protocol.StatusType.SUCCESS,
+            broadcast(new Response(
+                StatusType.SUCCESS,
                 sellerMsg,
                 seller.getBalance()
             ));
             System.out.println("💰 [SETTLEMENT BROADCAST] Seller " + seller.getUserName()
                 + " số dư mới: " + seller.getBalance());
 
-            // Fix #10: Broadcast AuctionEarning để client sync lịch sử nhận tiền ngay lập tức
-            // Lấy earning mới nhất vừa được thêm vào (addEarning thêm vào đầu danh sách)
+            // Broadcast AuctionEarning để client sync lịch sử nhận tiền ngay lập tức
             if (!seller.getEarningHistory().isEmpty()) {
                 com.auction.model.AuctionEarning latestEarning = seller.getEarningHistory().get(0);
                 String earningMsg = "SELLER_EARNING_UPDATE|" + seller.getUserName();
-                broadcast(new com.auction.protocol.Response(
-                    com.auction.protocol.StatusType.SUCCESS,
+                broadcast(new Response(
+                    StatusType.SUCCESS,
                     earningMsg,
                     latestEarning
                 ));
                 System.out.println("📋 [EARNING BROADCAST] Seller " + seller.getUserName()
                     + " nhận earning: " + latestEarning.getItemName());
             }
+
+            // FIX BUG D: Broadcast balance update cho TẤT CẢ bidders đã tham gia (trừ winner).
+            // Trong quá trình đấu giá, mỗi khi bị vượt giá, highestBidder cũ đã được hoàn tiền
+            // trong RAM server (qua processBid/triggerAutoBids), nhưng client chưa nhận được
+            // balance update sau khi phiên kết thúc hoàn toàn.
+            String winnerName = auction.getHighestBidder().getUserName();
+            Set<String> notifiedBidders = new HashSet<>();
+            notifiedBidders.add(winnerName); // Winner đã nhận balance qua PLACE_BID response
+
+            for (BidTransaction bt : auction.getBidHistory()) {
+                String bidderName = bt.getBidder().getUserName();
+                if (notifiedBidders.contains(bidderName)) continue;
+                notifiedBidders.add(bidderName);
+
+                // Lấy bidder từ UserManager (đảm bảo lấy object đúng)
+                User managedUser = UserManager.getInstance().getUser(bidderName);
+                if (managedUser instanceof Bidder loser) {
+                    String loserMsg = "BIDDER_BALANCE_UPDATE|" + bidderName;
+                    broadcast(new Response(
+                        StatusType.SUCCESS,
+                        loserMsg,
+                        loser.getBalance()
+                    ));
+                    System.out.println("💸 [LOSER BALANCE BROADCAST] Bidder " + bidderName
+                        + " số dư sau phiên: " + loser.getBalance());
+                }
+            }
+
         } else if (auction.getHighestBidder() == null && auction.getSeller() != null) {
-            // BUG #3 FIX: Phiên kết thúc không có người mua — thông báo cho Seller
+            // Phiên kết thúc không có người mua — thông báo cho Seller
             String nobuyer = "AUCTION_NO_BUYER|" + auction.getSeller().getUserName()
                 + "|" + auction.getItem().getNameItem();
-            broadcast(new com.auction.protocol.Response(
-                com.auction.protocol.StatusType.SUCCESS,
+            broadcast(new Response(
+                StatusType.SUCCESS,
                 nobuyer,
                 null
             ));

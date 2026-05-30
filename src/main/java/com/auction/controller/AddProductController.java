@@ -15,6 +15,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,30 +24,42 @@ import java.util.List;
 public class AddProductController {
 
     @FXML private StackPane rootPane;
-    @FXML private TextField txtName, txtStartingPrice;
+    @FXML private TextField txtName;
+    // FIX C-02: tên field đổi cho khớp fx:id="txtPrice" trong AddProduct.fxml
+    @FXML private TextField txtPrice;
     @FXML private TextArea txtDescription;
-    @FXML private ComboBox<String> categoryBox;
-    @FXML private VBox dynamicForm;
+    // FIX C-02: tên field đổi cho khớp fx:id="comboCategory" trong AddProduct.fxml
+    @FXML private ComboBox<String> comboCategory;
+    // FIX C-02: tên field đổi cho khớp fx:id="dynamicSpecContainer" trong AddProduct.fxml
+    @FXML private VBox dynamicSpecContainer;
+    // FIX C-02: thêm 2 field mới tồn tại trong FXML nhưng chưa được inject
+    @FXML private DatePicker dpStartDate;
+    @FXML private TextField txtStartTime;
 
     @FXML
     public void initialize() {
-        txtStartingPrice.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+        // FIX C-02: use txtPrice (matched fx:id) instead of removed txtStartingPrice
+        txtPrice.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
             if (change.getControlNewText().matches("\\d*(\\.\\d*)?")) {
                 return change;
             }
             return null;
         }));
-        categoryBox.setItems(FXCollections.observableArrayList("Art", "Electronics", "Vehicle"));
+        // FIX C-02: use comboCategory (matched fx:id) instead of removed categoryBox
+        comboCategory.setItems(FXCollections.observableArrayList("Art", "Electronics", "Vehicle"));
 
-        categoryBox.setOnAction(e -> {
-            dynamicForm.getChildren().clear();
-            dynamicForm.setVisible(true);
-            dynamicForm.setManaged(true);
+        // onCategoryChange is already wired via onAction="#onCategoryChange" in FXML;
+        // the listener below drives dynamic form — keep it here and delegate from onCategoryChange()
+        comboCategory.setOnAction(e -> {
+            // FIX C-02: use dynamicSpecContainer (matched fx:id) instead of removed dynamicForm
+            dynamicSpecContainer.getChildren().clear();
+            dynamicSpecContainer.setVisible(true);
+            dynamicSpecContainer.setManaged(true);
 
-            String cat = categoryBox.getValue();
+            String cat = comboCategory.getValue();
             Label lbl = new Label("Thông tin " + cat + ":");
             lbl.setStyle("-fx-font-weight: bold;");
-            dynamicForm.getChildren().add(lbl);
+            dynamicSpecContainer.getChildren().add(lbl);
 
             if ("Art".equals(cat)) {
                 TextField txtArtist = new TextField();
@@ -54,24 +67,24 @@ public class AddProductController {
                 TextField txtYear = new TextField();
                 txtYear.setPromptText("Năm sáng tác (VD: 1990)");
                 txtYear.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches("\\d*") ? change : null));
-                dynamicForm.getChildren().addAll(txtArtist, txtYear);
+                dynamicSpecContainer.getChildren().addAll(txtArtist, txtYear);
             } else if ("Electronics".equals(cat)) {
                 TextField txtBrand = new TextField();
                 txtBrand.setPromptText("Thương hiệu");
                 TextField txtWarranty = new TextField();
                 txtWarranty.setPromptText("Số tháng bảo hành (VD: 12)");
                 txtWarranty.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches("\\d*") ? change : null));
-                dynamicForm.getChildren().addAll(txtBrand, txtWarranty);
+                dynamicSpecContainer.getChildren().addAll(txtBrand, txtWarranty);
             } else if ("Vehicle".equals(cat)) {
                 TextField txtEngine = new TextField();
                 txtEngine.setPromptText("Loại động cơ (VD: V8)");
                 TextField txtMileage = new TextField();
                 txtMileage.setPromptText("Số dặm đã đi (VD: 1000 hoặc 1000.5)");
                 txtMileage.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches("\\d*(\\.\\d*)?") ? change : null));
-                dynamicForm.getChildren().addAll(txtEngine, txtMileage);
+                dynamicSpecContainer.getChildren().addAll(txtEngine, txtMileage);
             }
 
-            UIUtils.applyFadeIn(dynamicForm);
+            UIUtils.applyFadeIn(dynamicSpecContainer);
 
             Platform.runLater(() -> {
                 if (rootPane.getScene() != null && rootPane.getScene().getWindow() != null) {
@@ -84,9 +97,9 @@ public class AddProductController {
     @FXML
     public void handleSubmit() {
         String name     = txtName != null ? txtName.getText().trim() : "";
-        String priceStr = txtStartingPrice != null ? txtStartingPrice.getText().trim() : "";
+        String priceStr = txtPrice != null ? txtPrice.getText().trim() : "";
         String desc     = txtDescription != null ? txtDescription.getText().trim() : "";
-        String category = categoryBox != null ? categoryBox.getValue() : null;
+        String category = comboCategory != null ? comboCategory.getValue() : null;
 
         // ── Validate ──────────────────────────────────────────────────────────
         if (name.isEmpty()) {
@@ -111,7 +124,7 @@ public class AddProductController {
 
         // ── Đọc các field động theo category ─────────────────────────────────
         List<String> dynamicValues = new ArrayList<>();
-        for (Node node : dynamicForm.getChildren()) {
+        for (Node node : dynamicSpecContainer.getChildren()) {
             if (node instanceof TextField tf) {
                 dynamicValues.add(tf.getText().trim());
             }
@@ -175,12 +188,38 @@ public class AddProductController {
     }
 
     private void resetForm() {
-        txtName.clear(); txtStartingPrice.clear(); txtDescription.clear();
-        categoryBox.getSelectionModel().clearSelection();
-        dynamicForm.getChildren().clear();
-        dynamicForm.setVisible(false); dynamicForm.setManaged(false);
+        txtName.clear(); txtPrice.clear(); txtDescription.clear();
+        comboCategory.getSelectionModel().clearSelection();
+        dynamicSpecContainer.getChildren().clear();
+        dynamicSpecContainer.setVisible(false); dynamicSpecContainer.setManaged(false);
     }
 
     public void onCategoryChange(ActionEvent event) {
+        // Delegate to the comboCategory.setOnAction listener set up in initialize()
+        // No additional logic needed here — the setOnAction handler handles it.
+    }
+
+    /** FIX M-01: handler cho nút "Duyệt File" — browse image (standalone AddProduct form) */
+    @FXML
+    public void onBrowseImageClick(ActionEvent event) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Chọn hình ảnh sản phẩm");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Image Files", "*.jpg", "*.jpeg", "*.png")
+        );
+        java.io.File file = chooser.showOpenDialog(
+                rootPane != null ? rootPane.getScene().getWindow() : null
+        );
+        if (file != null) {
+            NotificationUtil.showToast("Đã chọn: " + file.getName(), rootPane, "success");
+        }
+    }
+
+    /** FIX M-01: handler cho nút "Lưu Bản Nháp" — clear form */
+    @FXML
+    public void onSaveDraftClick(ActionEvent event) {
+        // Hiện tại chỉ reset form — có thể mở rộng lưu nháp sau
+        resetForm();
+        NotificationUtil.showToast("Đã xóa form. Bản nháp chưa được hỗ trợ.", rootPane, "warning");
     }
 }
