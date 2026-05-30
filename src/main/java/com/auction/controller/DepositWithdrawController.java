@@ -98,52 +98,72 @@ public class DepositWithdrawController {
 
     private void handleNetworkResponse(com.auction.protocol.Response response) {
         String msg = response.getMessage();
-
         // Bỏ qua mọi broadcast không liên quan
         if (isIgnoredBroadcast(msg)) return;
 
-        if (response.getStatus() == StatusType.SUCCESS
-                && response.getData() instanceof Double newBalance) {
+        if (response.getStatus() == StatusType.SUCCESS) {
+            // FIX BUG B: Server trả về WalletTransaction đã được persist — dùng trực tiếp
+            if (response.getData() instanceof WalletTransaction serverTx) {
+                double newBalance = serverTx.getBalanceAfter();
+                // Cập nhật balance trong model local
+                setBalance(newBalance);
+                // Thêm WalletTransaction từ server vào list local (server đã lưu vào file)
+                addWalletHistory(serverTx);
 
-            double oldBalance = getBalance();
-            double diff = newBalance - oldBalance;
+                String savedType = pendingType;
+                pendingType = null;
+                updateSummaryCards();
+                renderHistory();
 
-            // Cập nhật model
-            setBalance(newBalance);
-
-            // Ghi lịch sử
-            if (pendingType != null) {
-                WalletTransaction.Type wType = "deposit".equals(pendingType)
-                    ? WalletTransaction.Type.DEPOSIT
-                    : WalletTransaction.Type.WITHDRAW;
-                double amount = Math.abs(diff) > 0.001 ? Math.abs(diff)
-                    : (pendingType.equals("deposit") ? extractAmount(txtDepositAmount) : extractAmount(txtWithdrawAmount));
-                addWalletHistory(new WalletTransaction(wType, amount, newBalance));
-            }
-
-            // Fix #2: Dùng pendingType thay vì diff để chọn đúng label
-            String savedType = pendingType;
-            pendingType = null;
-            updateSummaryCards();
-            renderHistory();
-
-            // Phản hồi UI dựa theo loại giao dịch đang chờ
-            if ("deposit".equals(savedType)) {
-                setMsg(lblDepositMessage,
-                    "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
-                clearField(txtDepositAmount);
-            } else if ("withdraw".equals(savedType)) {
-                setMsg(lblWithdrawMessage,
-                    "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
-                clearField(txtWithdrawAmount);
-            } else {
-                // Fallback: dùng diff nếu không xác định được type
-                if (diff >= 0) {
+                if ("deposit".equals(savedType) || serverTx.getType() == WalletTransaction.Type.DEPOSIT) {
                     setMsg(lblDepositMessage,
                         "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
-                } else {
+                    clearField(txtDepositAmount);
+                } else if ("withdraw".equals(savedType) || serverTx.getType() == WalletTransaction.Type.WITHDRAW) {
                     setMsg(lblWithdrawMessage,
                         "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                    clearField(txtWithdrawAmount);
+                }
+                return;
+            }
+
+            // Backward compat: Server cũ trả về Double balance (không có WalletTransaction)
+            if (response.getData() instanceof Double newBalance) {
+                double oldBalance = getBalance();
+                double diff = newBalance - oldBalance;
+
+                setBalance(newBalance);
+
+                if (pendingType != null) {
+                    WalletTransaction.Type wType = "deposit".equals(pendingType)
+                        ? WalletTransaction.Type.DEPOSIT
+                        : WalletTransaction.Type.WITHDRAW;
+                    double amount = Math.abs(diff) > 0.001 ? Math.abs(diff)
+                        : (pendingType.equals("deposit") ? extractAmount(txtDepositAmount) : extractAmount(txtWithdrawAmount));
+                    addWalletHistory(new WalletTransaction(wType, amount, newBalance));
+                }
+
+                String savedType = pendingType;
+                pendingType = null;
+                updateSummaryCards();
+                renderHistory();
+
+                if ("deposit".equals(savedType)) {
+                    setMsg(lblDepositMessage,
+                        "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                    clearField(txtDepositAmount);
+                } else if ("withdraw".equals(savedType)) {
+                    setMsg(lblWithdrawMessage,
+                        "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                    clearField(txtWithdrawAmount);
+                } else {
+                    if (diff >= 0) {
+                        setMsg(lblDepositMessage,
+                            "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                    } else {
+                        setMsg(lblWithdrawMessage,
+                            "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                    }
                 }
             }
 
@@ -154,6 +174,7 @@ public class DepositWithdrawController {
             pendingType = null;
         }
     }
+
 
     // ─── Xử lý nút NẠP ──────────────────────────────────────────────────────
 

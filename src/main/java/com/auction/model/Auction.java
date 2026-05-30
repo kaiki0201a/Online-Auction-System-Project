@@ -482,6 +482,17 @@ public class Auction extends Entity implements Serializable {
         this.endTime = endTime;
     }
 
+    /**
+     * FIX BUG E: Setter cho seller — dùng bởi ServerApp.finishAuction() để sync
+     * Seller object từ UserManager vào Auction sau khi deserialize từ file.
+     * Sau khi restart, auction.getSeller() là bản copy riêng biệt, không phải
+     * tham chiếu đến UserManager's object. Nếu không sync trước settlement,
+     * tiền sẽ được cộng vào bản copy nhưng lưu xuống file là balance cũ.
+     */
+    public void setSeller(Seller seller) {
+        this.seller = seller;
+    }
+
     public List<AutoBidRule> getAutoBidRules() {
         return autoBidRules;
     }

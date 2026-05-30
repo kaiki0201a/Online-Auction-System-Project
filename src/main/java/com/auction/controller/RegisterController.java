@@ -142,9 +142,12 @@ public class RegisterController {
 
         if (btnRegister != null) btnRegister.setDisable(true);
 
-        // ─── Gửi request ──────────────────────────────────────────────────────
-        NetworkClient.getInstance().setOnResponseReceived(response -> {
+        // FIX C-04: dùng addEventListener("register", ...) thay vì setOnResponseReceived
+        // Tránh (1) ghi đè listener của màn hình khác, (2) bug gọi 2 lần liên tiếp.
+        NetworkClient.getInstance().addEventListener("register", response -> {
             Platform.runLater(() -> {
+                // Gỡ listener ngay sau khi nhận response đầu tiên
+                NetworkClient.getInstance().removeEventListener("register");
                 if (btnRegister != null) btnRegister.setDisable(false);
                 if (response.getStatus() == StatusType.SUCCESS) {
                     showStatus("✅ " + response.getMessage(), "#27ae60");
@@ -160,6 +163,7 @@ public class RegisterController {
 
         showStatus("⏳ Đang xử lý...", "#A0A0A0");
 
+        // ─── Gửi request ─────────────────────────────────────────────────────
         if (isAdmin) {
             String adminCode = txtAdminCode != null ? txtAdminCode.getText().trim() : "";
             NetworkClient.getInstance().register(username, password, email, role, adminCode);

@@ -47,17 +47,17 @@ public class LoginController {
         // Realtime validation — chỉ hiện lỗi sau khi user chạm vào field
         if (txtUsername != null && lblUsernameError != null) {
             usernameValidator = FormValidator.of(txtUsername)
-                .required("Vui lòng nhập tên đăng nhập")
-                .minLength(3, "Tên đăng nhập tối thiểu 3 ký tự")
-                .withErrorLabel(lblUsernameError)
-                .attach();
+                    .required("Vui lòng nhập tên đăng nhập")
+                    .minLength(3, "Tên đăng nhập tối thiểu 3 ký tự")
+                    .withErrorLabel(lblUsernameError)
+                    .attach();
         }
         if (txtPassword != null && lblPasswordError != null) {
             passwordValidator = FormValidator.of(txtPassword)
-                .required("Vui lòng nhập mật khẩu")
-                .minLength(1, "Vui lòng nhập mật khẩu")
-                .withErrorLabel(lblPasswordError)
-                .attach();
+                    .required("Vui lòng nhập mật khẩu")
+                    .minLength(1, "Vui lòng nhập mật khẩu")
+                    .withErrorLabel(lblPasswordError)
+                    .attach();
         }
     }
 
@@ -105,13 +105,13 @@ public class LoginController {
         if (box != null) {
             if (msg != null) {
                 box.setStyle(box.getStyle()
-                    .replace("-fx-border-color: #333333", "")
-                    .replace("-fx-border-color:#333333", "")
-                    + "; -fx-border-color: #e74c3c;");
+                        .replace("-fx-border-color: #333333", "")
+                        .replace("-fx-border-color:#333333", "")
+                        + "; -fx-border-color: #e74c3c;");
             } else {
                 String s = box.getStyle()
-                    .replaceAll(";?\\s*-fx-border-color:\\s*#e74c3c", "")
-                    .trim();
+                        .replaceAll(";?\\s*-fx-border-color:\\s*#e74c3c", "")
+                        .trim();
                 box.setStyle(s + "; -fx-border-color: #333333;");
             }
         }
@@ -131,7 +131,7 @@ public class LoginController {
 
         // Validate client-side trước khi gửi request
         boolean usernameOk = (usernameValidator != null) ? usernameValidator.validate()
-                             : !username.isEmpty();
+                : !username.isEmpty();
         boolean passwordOk = password.length() >= 1;
 
         if (!usernameOk) {
@@ -144,8 +144,12 @@ public class LoginController {
             return;
         }
 
-        NetworkClient.getInstance().setOnResponseReceived(response -> {
+        // FIX C-05: dùng addEventListener("login", ...) thay vì setOnResponseReceived.
+        // Mỗi lần click "Đăng Nhập" đăng ký lại key "login" (ghi đè lần trước nếu có) —
+        // listener sẽ tự remove ngay sau khi nhận response đầu tiên.
+        NetworkClient.getInstance().addEventListener("login", response -> {
             Platform.runLater(() -> {
+                NetworkClient.getInstance().removeEventListener("login");
                 if (response.getStatus() == StatusType.SUCCESS) {
                     try {
                         User userFromServer = (User) response.getData();
@@ -177,7 +181,7 @@ public class LoginController {
         });
 
         UIUtils.showLoadingSpinner(rootPane, () ->
-            NetworkClient.getInstance().login(username, password)
+                NetworkClient.getInstance().login(username, password)
         );
     }
 
@@ -214,15 +218,15 @@ public class LoginController {
     private void onForgotPasswordClick(ActionEvent event) {
         // Thay thế Alert mặc định bằng dark theme alert
         NotificationService.get().alert(
-            ((Node) event.getSource()).getScene().getWindow(),
-            "Hướng dẫn khôi phục tài khoản",
-            "Các bước đặt lại mật khẩu:\n\n" +
-            "1️⃣  Liên hệ Admin hệ thống BidPrecision\n" +
-            "2️⃣  Cung cấp tên đăng nhập và email đã đăng ký\n" +
-            "3️⃣  Admin sẽ reset và gửi mật khẩu mới cho bạn\n\n" +
-            "📧 admin@bidprecision.vn\n" +
-            "📞 Hotline: 1800-BIDPRECISION",
-            NotificationType.INFO
+                ((Node) event.getSource()).getScene().getWindow(),
+                "Hướng dẫn khôi phục tài khoản",
+                "Các bước đặt lại mật khẩu:\n\n" +
+                        "1️⃣  Liên hệ Admin hệ thống BidPrecision\n" +
+                        "2️⃣  Cung cấp tên đăng nhập và email đã đăng ký\n" +
+                        "3️⃣  Admin sẽ reset và gửi mật khẩu mới cho bạn\n\n" +
+                        "📧 admin@bidprecision.vn\n" +
+                        "📞 Hotline: 1800-BIDPRECISION",
+                NotificationType.INFO
         );
     }
 }

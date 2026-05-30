@@ -70,7 +70,7 @@
                     <VBox.margin><Insets top="10"/></VBox.margin>
                 </Label>
                 <Label text="Hỗ trợ JPG, PNG chất lượng cao. Tối đa 20MB." style="-fx-text-fill: #888888; -fx-font-size: 12px;"/>
-                <Button text="Duyệt File"
+                <Button text="Duyệt File" onAction="#onBrowseImageClick"
                         style="-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: #F5C71A; -fx-border-radius: 4; -fx-padding: 8 25; -fx-cursor: hand;">
                     <VBox.margin><Insets top="10"/></VBox.margin>
                 </Button>
@@ -82,9 +82,9 @@
                 <VBox.margin><Insets top="10"/></VBox.margin>
             </Region>
             <HBox spacing="15" alignment="CENTER_RIGHT">
-                <Button text="Lưu Bản Nháp"
+                <Button text="Lưu Bản Nháp" onAction="#onSaveDraftClick"
                         style="-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: #555555; -fx-border-radius: 4; -fx-padding: 10 25; -fx-cursor: hand;"/>
-                <Button text="Tạo Phiên Đấu Giá"
+                <Button text="Tạo Phiên Đấu Giá" onAction="#handleSubmit"
                         style="-fx-background-color: #FFE066; -fx-text-fill: black; -fx-font-weight: bold; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 10 25; -fx-font-size: 13px; -fx-cursor: hand;"/>
             </HBox>
         </VBox>
