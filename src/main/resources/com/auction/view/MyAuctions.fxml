@@ -11,16 +11,23 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="rootPane" prefHeight="800" prefWidth="1280" styleClass="dark-root" stylesheets="@fileCS/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.MyAuctionsController">
+<BorderPane fx:id="rootPane" prefHeight="800" prefWidth="1280"
+            styleClass="dark-root"
+            stylesheets="@fileCS/style.css"
+            xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.controller.MyAuctionsController">
 
     <!-- ====== TOP NAVBAR ====== -->
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="20" style="-fx-background-color: #0F0F0F; -fx-border-color: #2A2A2A; -fx-border-width: 0 0 1 0; -fx-padding: 12 25;">
-            <Button onAction="#onBackClick" style="-fx-background-color: transparent; -fx-text-fill: #F5C518; -fx-font-size: 14px; -fx-cursor: hand; -fx-border-color: #2A2A2A; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14;" text="← Quay Lại" />
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="navbar-dark" prefHeight="58">
+            <Button onAction="#onBackClick"
+                    styleClass="btn-back"
+                    style="-fx-border-color: #2D3138; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14;"
+                    text="← Quay Lại" />
             <Label style="-fx-font-size: 22px;" text="🏆" />
-            <Label style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;" text="PHIÊN ĐẤU GIÁ ĐANG THAM GIA" />
+            <Label styleClass="label-section-title" style="-fx-font-size: 18px;" text="PHIÊN ĐẤU GIÁ ĐANG THAM GIA" />
             <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="lblCount" style="-fx-text-fill: #555; -fx-font-size: 13px;" text="(0 phiên)" />
+            <Label fx:id="lblCount" styleClass="label-caption" text="(0 phiên)" />
         </HBox>
     </top>
 
@@ -31,31 +38,39 @@
 
                 <!-- Filter bar -->
                 <HBox alignment="CENTER_LEFT" spacing="12">
-                    <Label style="-fx-text-fill: #888; -fx-font-size: 13px;" text="Lọc:" />
-                    <ComboBox fx:id="comboFilter" prefWidth="200" style="-fx-background-color: #1a1a1a; -fx-text-fill: white; -fx-border-color: #333; -fx-border-radius: 10;" />
+                    <Label styleClass="label-sub" text="Lọc:" />
+                    <ComboBox fx:id="comboFilter" prefWidth="200"
+                              style="-fx-background-color: #15171B; -fx-text-fill: white; -fx-border-color: #2D3138; -fx-border-radius: 10;" />
                     <Region HBox.hgrow="ALWAYS" />
                 </HBox>
 
                 <!-- Stats cards -->
                 <HBox alignment="CENTER_LEFT" spacing="16">
-                    <VBox alignment="CENTER" prefWidth="220" spacing="6" style="-fx-background-color: #171717; -fx-border-color: #F5C518; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 16 24;">
-                        <Label style="-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;" text="ĐANG DẪN ĐẦU" />
+                    <VBox alignment="CENTER" prefWidth="220" spacing="6"
+                          styleClass="stat-mini-card"
+                          style="-fx-border-color: #E8D06E;">
+                        <Label styleClass="label-caption" text="ĐANG DẪN ĐẦU" />
                         <Label fx:id="lblLeading" style="-fx-text-fill: #27ae60; -fx-font-size: 28px; -fx-font-weight: bold;" text="0" />
                     </VBox>
-                    <VBox alignment="CENTER" prefWidth="220" spacing="6" style="-fx-background-color: #171717; -fx-border-color: #e74c3c; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 16 24;">
-                        <Label style="-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;" text="ĐANG BỊ VƯỢT" />
+                    <VBox alignment="CENTER" prefWidth="220" spacing="6"
+                          styleClass="stat-mini-card"
+                          style="-fx-border-color: #e74c3c;">
+                        <Label styleClass="label-caption" text="ĐANG BỊ VƯỢT" />
                         <Label fx:id="lblOutbid" style="-fx-text-fill: #e74c3c; -fx-font-size: 28px; -fx-font-weight: bold;" text="0" />
                     </VBox>
-                    <VBox alignment="CENTER" prefWidth="220" spacing="6" style="-fx-background-color: #171717; -fx-border-color: #27ae60; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 16 24;">
-                        <Label style="-fx-text-fill: #555; -fx-font-size: 10px; -fx-font-weight: bold;" text="ĐÃ THẮNG" />
-                        <Label fx:id="lblWon" style="-fx-text-fill: #F5C518; -fx-font-size: 28px; -fx-font-weight: bold;" text="0" />
+                    <VBox alignment="CENTER" prefWidth="220" spacing="6"
+                          styleClass="stat-mini-card"
+                          style="-fx-border-color: #27ae60;">
+                        <Label styleClass="label-caption" text="ĐÃ THẮNG" />
+                        <Label fx:id="lblWon" styleClass="label-gold" style="-fx-font-size: 28px; -fx-font-weight: bold;" text="0" />
                     </VBox>
                 </HBox>
 
                 <!-- Auction table -->
-                <VBox spacing="14" style="-fx-background-color: #171717; -fx-border-color: #2A2A2A; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 22;">
-                    <Label style="-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;" text="📋  DANH SÁCH PHIÊN" />
-                    <TableView fx:id="tableAuctions" prefHeight="500" style="-fx-background-color: transparent; -fx-border-color: #2A2A2A; -fx-border-radius: 4;">
+                <VBox spacing="14" styleClass="card-dark">
+                    <Label styleClass="label-section-title" text="📋  DANH SÁCH PHIÊN" />
+                    <TableView fx:id="tableAuctions" prefHeight="500"
+                               style="-fx-background-color: transparent; -fx-border-color: #2D3138; -fx-border-radius: 4;">
                         <columns>
                             <TableColumn fx:id="colItem" prefWidth="280" text="Sản Phẩm" />
                             <TableColumn fx:id="colStatus" prefWidth="140" text="Trạng Thái" />
@@ -67,8 +82,8 @@
                         <placeholder>
                             <VBox alignment="CENTER" spacing="14" style="-fx-padding: 40;">
                                 <Label style="-fx-font-size: 36px;" text="🏆" />
-                                <Label style="-fx-text-fill: #555; -fx-font-size: 14px;" text="Bạn chưa tham gia phiên đấu giá nào." />
-                                <Label style="-fx-text-fill: #444; -fx-font-size: 12px;" text="Hãy vào Thị Trường để tham gia đấu giá!" />
+                                <Label styleClass="label-caption" style="-fx-font-size: 14px;" text="Bạn chưa tham gia phiên đấu giá nào." />
+                                <Label styleClass="label-caption" text="Hãy vào Thị Trường để tham gia đấu giá!" />
                             </VBox>
                         </placeholder>
                     </TableView>

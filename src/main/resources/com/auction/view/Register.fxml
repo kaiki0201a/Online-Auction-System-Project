@@ -17,7 +17,7 @@
 
 <StackPane fx:id="rootPane" stylesheets="@fileCS/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.RegisterController">
 
-    <HBox prefHeight="700.0" prefWidth="1020.0" style="-fx-background-color: #0d0d0d;">
+    <HBox prefHeight="700.0" prefWidth="1020.0" style="-fx-background-color: #0A0B0D;">
 
         <!-- ========== Panel Trái: Ảnh Hero + Overlay ========== -->
         <StackPane minWidth="470.0" prefWidth="470.0">
@@ -28,7 +28,7 @@
             </ImageView>
 
             <!-- Lớp overlay tối -->
-            <Region style="-fx-background-color: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.6) 55%, rgba(0,0,0,0.85) 100%);" />
+            <Region style="-fx-background-color: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.6) 55%, rgba(0,0,0,0.88) 100%);" />
 
             <!-- Nội dung overlay -->
             <VBox alignment="BOTTOM_LEFT" prefWidth="470.0" StackPane.alignment="BOTTOM_LEFT">
@@ -36,7 +36,7 @@
                 <spacing>18.0</spacing>
 
                 <!-- Tag nhỏ trên cùng -->
-                <Label style="-fx-text-fill: #D4AF37; -fx-font-size: 11px; -fx-font-weight: bold; -fx-letter-spacing: 2.5px;" text="BẮT ĐẦU HÀNH TRÌNH" />
+                <Label styleClass="label-caption" style="-fx-text-fill: #E8D06E;" text="BẮT ĐẦU HÀNH TRÌNH" />
 
                 <!-- Tiêu đề lớn -->
                 <Label style="-fx-text-fill: white; -fx-font-size: 34px; -fx-font-weight: 900; -fx-line-spacing: 4;" text="Đẳng Cấp Đấu Giá&#10;Thượng Lưu" wrapText="true" />
@@ -45,18 +45,18 @@
                 <Label style="-fx-text-fill: rgba(255,255,255,0.72); -fx-font-size: 13px; -fx-line-spacing: 3;" text="Tham gia mạng lưới các nhà sưu tập và chuyên gia&#10;hàng đầu để sở hữu những báu vật hiếm có nhất." wrapText="true" />
 
                 <!-- Separator vàng -->
-                <Region prefHeight="1.0" prefWidth="60.0" style="-fx-background-color: #D4AF37;" />
+                <Region prefHeight="1.0" prefWidth="60.0" style="-fx-background-color: #E8D06E;" />
 
                 <!-- Thống kê -->
                 <HBox alignment="CENTER_LEFT" spacing="30.0">
                     <VBox alignment="CENTER_LEFT" spacing="2.0">
-                        <Label style="-fx-text-fill: #F5C518; -fx-font-size: 20px; -fx-font-weight: bold;" text="500+" />
+                        <Label styleClass="label-gold" style="-fx-font-size: 20px;" text="500+" />
                         <Label style="-fx-text-fill: rgba(255,255,255,0.65); -fx-font-size: 11px;" text="Sản Phẩm VIP" />
                     </VBox>
                     <!-- Divider dọc -->
                     <Region prefHeight="35.0" prefWidth="1.0" style="-fx-background-color: rgba(255,255,255,0.25);" />
                     <VBox alignment="CENTER_LEFT" spacing="2.0">
-                        <Label style="-fx-text-fill: #F5C518; -fx-font-size: 20px; -fx-font-weight: bold;" text="24/7" />
+                        <Label styleClass="label-gold" style="-fx-font-size: 20px;" text="24/7" />
                         <Label style="-fx-text-fill: rgba(255,255,255,0.65); -fx-font-size: 11px;" text="Phiên Đấu Giá" />
                     </VBox>
                 </HBox>
@@ -64,90 +64,90 @@
         </StackPane>
 
         <!-- ========== Panel Phải: Form Đăng Ký ========== -->
-        <VBox alignment="CENTER_LEFT" style="-fx-background-color: #111111;" HBox.hgrow="ALWAYS">
+        <VBox alignment="CENTER_LEFT" style="-fx-background-color: #0A0B0D;" HBox.hgrow="ALWAYS">
             <padding><Insets bottom="38.0" left="50.0" right="50.0" top="38.0" /></padding>
             <spacing>14.0</spacing>
 
             <!-- Tiêu đề form -->
-            <Label style="-fx-text-fill: #D4AF37; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 2.5px;" text="BẮT ĐẦU HÀNH TRÌNH" />
-            <Label style="-fx-text-fill: white; -fx-font-size: 26px; -fx-font-weight: 900;" text="Đăng Ký Tài Khoản" />
-            <Label style="-fx-text-fill: #888888; -fx-font-size: 12px;" text="Nhập thông tin chi tiết để truy cập phòng đấu giá." />
+            <Label styleClass="label-caption" style="-fx-text-fill: #E8D06E;" text="BẮT ĐẦU HÀNH TRÌNH" />
+            <Label styleClass="label-page-title" text="Đăng Ký Tài Khoản" />
+            <Label styleClass="label-sub" text="Nhập thông tin chi tiết để truy cập phòng đấu giá." />
             <Region prefHeight="4.0" />
 
             <!-- ===== Chọn vai trò (3 nút) ===== -->
             <VBox spacing="8.0">
-                <Label style="-fx-text-fill: #CCCCCC; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1.5px;" text="BẠN LÀ AI?" />
+                <Label styleClass="label-caption" text="BẠN LÀ AI?" />
                 <HBox spacing="10.0">
                     <!-- Nút Bidder -->
-                    <ToggleButton fx:id="btnBidder" maxWidth="Infinity" onAction="#onRoleToggle" prefHeight="41.0" prefWidth="106.0" selected="true" style="-fx-background-color: #D4AF37; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 13px; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 12 10;" text="🏷  Người mua" HBox.hgrow="ALWAYS">
+                    <ToggleButton fx:id="btnBidder" maxWidth="Infinity" onAction="#onRoleToggle" prefHeight="41.0" prefWidth="106.0" selected="true" styleClass="toggle-role-active" text="🏷  Người mua" HBox.hgrow="ALWAYS">
                         <toggleGroup><ToggleGroup fx:id="roleToggleGroup" /></toggleGroup>
                     </ToggleButton>
 
                     <!-- Nút Seller -->
-                    <ToggleButton fx:id="btnSeller" maxWidth="Infinity" onAction="#onRoleToggle" style="-fx-background-color: #1e1e1e; -fx-text-fill: #AAAAAA; -fx-font-weight: bold; -fx-font-size: 13px; -fx-border-color: #333; -fx-border-radius: 6; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 12 10;" text="🏪  Người bán" toggleGroup="$roleToggleGroup" HBox.hgrow="ALWAYS" />
+                    <ToggleButton fx:id="btnSeller" maxWidth="Infinity" onAction="#onRoleToggle" styleClass="toggle-role-inactive" text="🏪  Người bán" toggleGroup="$roleToggleGroup" HBox.hgrow="ALWAYS" />
 
                     <!-- Nút Admin -->
-                    <ToggleButton fx:id="btnAdmin" maxWidth="Infinity" onAction="#onRoleToggle" style="-fx-background-color: #1e1e1e; -fx-text-fill: #AAAAAA; -fx-font-weight: bold; -fx-font-size: 13px; -fx-border-color: #333; -fx-border-radius: 6; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 12 10;" text="👑  Admin" toggleGroup="$roleToggleGroup" HBox.hgrow="ALWAYS" />
+                    <ToggleButton fx:id="btnAdmin" maxWidth="Infinity" onAction="#onRoleToggle" styleClass="toggle-role-inactive" text="👑  Admin" toggleGroup="$roleToggleGroup" HBox.hgrow="ALWAYS" />
                 </HBox>
             </VBox>
 
             <!-- ===== Tên tài khoản ===== -->
             <VBox spacing="6.0">
-                <Label style="-fx-text-fill: #CCCCCC; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1px;" text="TÊN TÀI KHOẢN" />
-                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #1a1a1a; -fx-border-color: #2e2e2e; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 12 0 14;">
-                    <Label style="-fx-text-fill: #555; -fx-font-size: 13px;" text="👤 " />
-                    <TextField fx:id="txtUsername" promptText="vintage_collector" style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #444; -fx-font-size: 13px; -fx-padding: 11 8;" HBox.hgrow="ALWAYS" />
+                <Label styleClass="label-caption" text="TÊN TÀI KHOẢN" />
+                <HBox alignment="CENTER_LEFT" styleClass="input-wrapper">
+                    <Label style="-fx-text-fill: #55504A; -fx-font-size: 13px;" text="👤 " />
+                    <TextField fx:id="txtUsername" promptText="vintage_collector" styleClass="input-transparent" HBox.hgrow="ALWAYS" />
                 </HBox>
             </VBox>
 
             <!-- ===== Email ===== -->
             <VBox spacing="6.0">
-                <Label style="-fx-text-fill: #CCCCCC; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1px;" text="EMAIL" />
-                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #1a1a1a; -fx-border-color: #2e2e2e; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 12 0 14;">
-                    <Label style="-fx-text-fill: #555; -fx-font-size: 13px;" text="✉ " />
-                    <TextField fx:id="txtEmail" promptText="member@luxauction.com" style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #444; -fx-font-size: 13px; -fx-padding: 11 8;" HBox.hgrow="ALWAYS" />
+                <Label styleClass="label-caption" text="EMAIL" />
+                <HBox alignment="CENTER_LEFT" styleClass="input-wrapper">
+                    <Label style="-fx-text-fill: #55504A; -fx-font-size: 13px;" text="✉ " />
+                    <TextField fx:id="txtEmail" promptText="member@luxauction.com" styleClass="input-transparent" HBox.hgrow="ALWAYS" />
                 </HBox>
             </VBox>
 
             <!-- ===== Mật khẩu ===== -->
             <VBox spacing="6.0">
-                <Label style="-fx-text-fill: #CCCCCC; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1px;" text="MẬT KHẨU" />
-                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #1a1a1a; -fx-border-color: #2e2e2e; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 5 0 14;">
-                    <Label style="-fx-text-fill: #555; -fx-font-size: 13px;" text="🔒 " />
+                <Label styleClass="label-caption" text="MẬT KHẨU" />
+                <HBox alignment="CENTER_LEFT" styleClass="input-wrapper" style="-fx-padding: 0 5 0 14;">
+                    <Label style="-fx-text-fill: #55504A; -fx-font-size: 13px;" text="🔒 " />
                     <StackPane HBox.hgrow="ALWAYS">
-                        <PasswordField fx:id="txtPassword" promptText="••••••••••••" style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #444; -fx-font-size: 13px; -fx-padding: 11 8;" />
-                        <TextField fx:id="txtPasswordVisible" managed="false" promptText="••••••••••••" style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #444; -fx-font-size: 13px; -fx-padding: 11 8;" visible="false" />
+                        <PasswordField fx:id="txtPassword" promptText="••••••••••••" styleClass="input-transparent" />
+                        <TextField fx:id="txtPasswordVisible" managed="false" promptText="••••••••••••" styleClass="input-transparent" visible="false" />
                     </StackPane>
-                    <Button fx:id="btnTogglePassword" onAction="#onTogglePassword" style="-fx-background-color: transparent; -fx-text-fill: #555; -fx-cursor: hand; -fx-font-size: 14px; -fx-padding: 5 10;" text="👁" />
+                    <Button fx:id="btnTogglePassword" onAction="#onTogglePassword" styleClass="btn-eye" text="👁" />
                 </HBox>
             </VBox>
 
             <!-- ===== Mã Admin (ẩn theo mặc định) ===== -->
             <VBox fx:id="adminCodeBox" managed="false" spacing="6.0" visible="false">
-                <Label style="-fx-text-fill: #e74c3c; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1px;" text="MÃ XÁC NHẬN ADMIN" />
-                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #1a1a1a; -fx-border-color: #e74c3c; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 12 0 14;">
+                <Label style="-fx-text-fill: #e74c3c; -fx-font-size: 10px; -fx-font-weight: bold;" text="MÃ XÁC NHẬN ADMIN" />
+                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #15171B; -fx-border-color: #e74c3c; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 0 12 0 14;">
                     <Label style="-fx-text-fill: #e74c3c; -fx-font-size: 13px;" text="🛡 " />
-                    <PasswordField fx:id="txtAdminCode" promptText="Nhập mã bảo mật nội bộ" style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #444; -fx-font-size: 13px; -fx-padding: 11 8;" HBox.hgrow="ALWAYS" />
+                    <PasswordField fx:id="txtAdminCode" promptText="Nhập mã bảo mật nội bộ" styleClass="input-transparent" HBox.hgrow="ALWAYS" />
                 </HBox>
             </VBox>
 
             <!-- ===== Checkbox điều khoản ===== -->
             <HBox alignment="CENTER_LEFT" spacing="8.0">
-                <CheckBox fx:id="chkTerms" style="-fx-text-fill: #888; -fx-font-size: 11px;" text="Tôi đồng ý với các Điều khoản dịch vụ và Chính sách bảo mật của BidPrecision" wrapText="true" HBox.hgrow="ALWAYS" />
+                <CheckBox fx:id="chkTerms" style="-fx-text-fill: #B8B0A0; -fx-font-size: 11px;" text="Tôi đồng ý với các Điều khoản dịch vụ và Chính sách bảo mật của BidPrecision" wrapText="true" HBox.hgrow="ALWAYS" />
             </HBox>
 
             <!-- ===== Nhãn trạng thái ===== -->
             <Label fx:id="lblStatus" style="-fx-font-size: 11px; -fx-min-height: 14;" text="" wrapText="true" />
 
             <!-- ===== Nút Xác Nhận Đăng Ký ===== -->
-            <Button fx:id="btnRegister" maxWidth="Infinity" onAction="#onRegisterClick" style="-fx-background-color: #E7D29B; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 6; -fx-cursor: hand; -fx-letter-spacing: 1px;" text="XÁC NHẬN ĐĂNG KÝ">
+            <Button fx:id="btnRegister" maxWidth="Infinity" onAction="#onRegisterClick" styleClass="btn-gold-luxury" text="XÁC NHẬN ĐĂNG KÝ">
                 <padding><Insets bottom="14.0" top="14.0" /></padding>
             </Button>
 
             <!-- ===== Link quay lại đăng nhập ===== -->
             <HBox alignment="CENTER" spacing="6.0">
-                <Label style="-fx-text-fill: #555; -fx-font-size: 12px;" text="Đã có tài khoản?" />
-                <Button onAction="#onBackToLoginClick" style="-fx-background-color: transparent; -fx-text-fill: #D4AF37; -fx-font-weight: bold; -fx-cursor: hand; -fx-font-size: 12px; -fx-underline: false;" text="Đăng nhập ngay" />
+                <Label styleClass="label-sub" style="-fx-font-size: 12px;" text="Đã có tài khoản?" />
+                <Button onAction="#onBackToLoginClick" styleClass="btn-text-gold" text="Đăng nhập ngay" />
             </HBox>
 
         </VBox>

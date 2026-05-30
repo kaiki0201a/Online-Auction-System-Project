@@ -12,18 +12,25 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="rootPane" prefHeight="800" prefWidth="1280" styleClass="dark-root" stylesheets="@fileCS/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.AuctionListController">
+<BorderPane fx:id="rootPane" prefHeight="800" prefWidth="1280"
+            styleClass="dark-root"
+            stylesheets="@fileCS/style.css"
+            xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.auction.controller.AuctionListController">
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="14" style="-fx-background-color: #0F0F0F; -fx-border-color: #2A2A2A; -fx-border-width: 0 0 1 0; -fx-padding: 14 30;">
-            <Button onAction="#onBackClick" style="-fx-background-color: transparent; -fx-text-fill: #F7E1B9; -fx-font-size: 15px; -fx-cursor: hand; -fx-border-color: transparent; -fx-padding: 6 12;" text="← Quay Lại" />
-            <Label style="-fx-text-fill: #F7E1B9; -fx-font-size: 20px; -fx-font-weight: 900;" text="BIDPRECISION" />
-            <Separator orientation="VERTICAL" style="-fx-background-color: #2A2A2A;" />
-            <Label style="-fx-text-fill: #666; -fx-font-size: 12px; -fx-font-weight: bold;" text="TẤT CẢ PHIÊN ĐẤU GIÁ" />
+        <HBox alignment="CENTER_LEFT" spacing="14" styleClass="navbar-dark" prefHeight="58">
+            <Button onAction="#onBackClick" styleClass="btn-back" style="-fx-padding: 6 12;" text="← Quay Lại" />
+            <Label styleClass="brand-logo" style="-fx-font-size: 20px;" text="BIDPRECISION" />
+            <Separator orientation="VERTICAL" style="-fx-background-color: #2D3138;" />
+            <Label styleClass="label-caption" text="TẤT CẢ PHIÊN ĐẤU GIÁ" />
             <Region HBox.hgrow="ALWAYS" />
             <!-- Search bar -->
-            <HBox alignment="CENTER_LEFT" spacing="0" style="-fx-background-color: #1a1a1a; -fx-border-color: #333; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 0 6 0 16;">
-                <TextField fx:id="txtSearch" prefWidth="260" promptText="Tìm sản phẩm, người bán..." style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 8 10;" />
-                <Button onAction="#onSearchClick" style="-fx-background-color: #F5C518; -fx-text-fill: #000; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand; -fx-padding: 7 14; -fx-font-size: 13px;" text="🔍" />
+            <HBox alignment="CENTER_LEFT" spacing="0" styleClass="input-wrapper"
+                  style="-fx-background-radius: 20; -fx-border-radius: 20; -fx-padding: 0 6 0 16;">
+                <TextField fx:id="txtSearch" prefWidth="260" promptText="Tìm sản phẩm, người bán..."
+                           styleClass="input-transparent"
+                           style="-fx-padding: 8 10;" />
+                <Button onAction="#onSearchClick" styleClass="btn-gold" style="-fx-background-radius: 20; -fx-padding: 7 14; -fx-font-size: 13px;" text="🔍" />
             </HBox>
             <!-- Filters -->
             <ComboBox fx:id="comboCategory" promptText="📁 Danh mục" style="-fx-pref-width: 145;" styleClass="btn-outline" />
@@ -31,13 +38,13 @@
         </HBox>
     </top>
     <center>
-        <VBox spacing="0" style="-fx-background-color: #0F0F0F;">
+        <VBox spacing="0" style="-fx-background-color: #0A0B0D;">
             <HBox alignment="CENTER_LEFT" spacing="14" style="-fx-padding: 20 30 15 30;">
-                <Label style="-fx-text-fill: white; -fx-font-size: 22px; -fx-font-weight: bold;" text="TẤT CẢ PHIÊN ĐẤU GIÁ" />
-                <Label fx:id="lblCount" style="-fx-text-fill: #F7E1B9; -fx-font-size: 16px;" text="(0 phiên)" />
+                <Label styleClass="label-section-title" style="-fx-font-size: 22px;" text="TẤT CẢ PHIÊN ĐẤU GIÁ" />
+                <Label fx:id="lblCount" styleClass="label-gold" style="-fx-font-size: 16px;" text="(0 phiên)" />
                 <Region HBox.hgrow="ALWAYS" />
-                <!-- Sort button — click để toggle thứ tự sắp xếp -->
-                <Button fx:id="btnSort" onAction="#onSortClick" style="-fx-background-color: #1A1A1A; -fx-text-fill: #A0A0A0; -fx-border-color: #2A2A2A; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 7 16; -fx-cursor: hand; -fx-font-size: 12px;" styleClass="btn-sort" text="⇅  Mới nhất" />
+                <!-- Sort button -->
+                <Button fx:id="btnSort" onAction="#onSortClick" styleClass="btn-sort" text="⇅  Mới nhất" />
             </HBox>
             <ScrollPane fitToWidth="true" styleClass="scroll-pane" VBox.vgrow="ALWAYS">
                 <FlowPane fx:id="auctionGrid" hgap="22" style="-fx-padding: 10 30 30 30;" vgap="22" />

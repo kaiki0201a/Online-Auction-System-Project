@@ -789,3 +789,297 @@
 .dark-root .table-view:focused .column-header-background .filler {
     -fx-background-color: #171717;
 }
+
+/* =========================================
+   DARK LUXURY — SHARED DESIGN TOKENS
+   Palette:
+     nền chính : #0A0B0D
+     card      : #15171B
+     border    : #2D3138
+     text chính: #FFFFFF
+     text phụ  : #B8B0A0
+     gold      : #E8D06E
+     gold hover: #F4DD85
+   ========================================= */
+
+/* ── Brand Logo ── */
+.brand-logo {
+    -fx-text-fill: #E8D06E;
+    -fx-font-size: 26px;
+    -fx-font-weight: 800;
+    -fx-font-family: 'Arial Black', 'Segoe UI', sans-serif;
+}
+
+/* ── Navbar / Header ── */
+.navbar-dark {
+    -fx-background-color: #0A0B0D;
+    -fx-border-color: transparent transparent #2D3138 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 32 0 32;
+}
+
+/* ── Sidebar ── */
+.sidebar-dark {
+    -fx-background-color: #0A0B0D;
+    -fx-border-color: transparent #2D3138 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+/* ── Cards ── */
+.card-dark {
+    -fx-background-color: #15171B;
+    -fx-border-color: #2D3138;
+    -fx-border-width: 1;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 22;
+}
+.card-dark:hover {
+    -fx-border-color: #3A3F4A;
+}
+
+.card-premium {
+    -fx-background-color: #0B0B0D;
+    -fx-border-color: #2A2418;
+    -fx-border-width: 1;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-padding: 24;
+}
+
+/* ── Input Wrapper (HBox bọc TextField) ── */
+.input-wrapper {
+    -fx-background-color: #15171B;
+    -fx-border-color: #2D3138;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 0 12 0 14;
+}
+.input-wrapper:focused-within {
+    -fx-border-color: #E8D06E;
+    -fx-border-width: 1.5;
+}
+
+/* ── TextField trong input-wrapper ── */
+.input-transparent {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-text-fill: #FFFFFF;
+    -fx-prompt-text-fill: #55504A;
+    -fx-font-size: 14px;
+    -fx-padding: 11 8;
+}
+
+/* ── Labels ── */
+.label-caption {
+    -fx-text-fill: #B8B0A0;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+.label-section-title {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+.label-page-title {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+.label-sub {
+    -fx-text-fill: #B8B0A0;
+    -fx-font-size: 13px;
+}
+.label-gold {
+    -fx-text-fill: #E8D06E;
+    -fx-font-weight: bold;
+}
+
+/* ── Buttons Gold ── */
+/* btn-gold đã có — chỉ chuẩn hóa màu vàng */
+.btn-gold-luxury {
+    -fx-background-color: #E8D06E;
+    -fx-text-fill: #0A0B0D;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+}
+.btn-gold-luxury:hover {
+    -fx-background-color: #F4DD85;
+    -fx-effect: dropshadow(gaussian, rgba(232,208,110,0.45), 14, 0, 0, 0);
+}
+.btn-gold-luxury:pressed {
+    -fx-background-color: #C9B35A;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* ── Outline Gold Button ── */
+.btn-outline-gold {
+    -fx-background-color: transparent;
+    -fx-border-color: #4B3A1F;
+    -fx-border-width: 1;
+    -fx-text-fill: #E8D06E;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+.btn-outline-gold:hover {
+    -fx-border-color: #E8D06E;
+    -fx-background-color: rgba(232,208,110,0.06);
+}
+.btn-outline-gold:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* ── Text Gold Button (no border) ── */
+.btn-text-gold {
+    -fx-background-color: transparent;
+    -fx-text-fill: #E8D06E;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-border-color: transparent;
+}
+.btn-text-gold:hover {
+    -fx-text-fill: #F4DD85;
+}
+
+/* ── Back Button ── */
+.btn-back {
+    -fx-background-color: transparent;
+    -fx-text-fill: #E8D06E;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+.btn-back:hover {
+    -fx-text-fill: #F4DD85;
+}
+
+/* ── Logout Button ── */
+.btn-logout-danger {
+    -fx-background-color: #15171B;
+    -fx-text-fill: #E74C3C;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-background-radius: 8;
+    -fx-border-color: #3A1818;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+    -fx-border-width: 1;
+}
+.btn-logout-danger:hover {
+    -fx-background-color: rgba(231,76,60,0.08);
+    -fx-border-color: #E74C3C;
+}
+
+/* ── Balance Card ── */
+.balance-card {
+    -fx-background-color: #0B0B0D;
+    -fx-border-color: #2A2418;
+    -fx-border-width: 1;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-padding: 16 24;
+}
+
+/* ── Stat Mini Card ── */
+.stat-mini-card {
+    -fx-background-color: #15171B;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 16 24;
+}
+
+/* ── Setting Row ── */
+.setting-row {
+    -fx-background-color: #15171B;
+    -fx-padding: 16 18;
+    -fx-cursor: hand;
+    -fx-border-color: #2D3138;
+    -fx-border-width: 0 0 1 0;
+}
+.setting-row:hover {
+    -fx-background-color: #1C1E24;
+}
+
+/* ── Deposit Quick Buttons ── */
+.deposit-quick-btn {
+    -fx-background-color: rgba(39,174,96,0.08);
+    -fx-text-fill: #27AE60;
+    -fx-border-color: #1E4D1E;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-padding: 5 12;
+    -fx-font-weight: bold;
+}
+.deposit-quick-btn:hover {
+    -fx-background-color: rgba(39,174,96,0.18);
+    -fx-border-color: #27AE60;
+}
+
+/* ── Withdraw Quick Buttons ── */
+.withdraw-quick-btn {
+    -fx-background-color: rgba(231,76,60,0.08);
+    -fx-text-fill: #E74C3C;
+    -fx-border-color: #4D1E1E;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-padding: 5 12;
+    -fx-font-weight: bold;
+}
+.withdraw-quick-btn:hover {
+    -fx-background-color: rgba(231,76,60,0.18);
+    -fx-border-color: #E74C3C;
+}
+
+/* ── Section Header Divider ── */
+.section-divider {
+    -fx-border-color: #2D3138;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 0 10 0;
+}
+
+/* ── Avatar Circle ── */
+.avatar-circle {
+    -fx-background-color: #E8D06E;
+    -fx-background-radius: 24;
+    -fx-effect: dropshadow(gaussian, rgba(232,208,110,0.35), 8, 0, 0, 0);
+}
+.avatar-initials {
+    -fx-text-fill: #0A0B0D;
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+}
+
+/* ── Toggle Button (role selector) ── */
+.toggle-role-active {
+    -fx-background-color: #E8D06E;
+    -fx-text-fill: #0A0B0D;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.toggle-role-inactive {
+    -fx-background-color: #15171B;
+    -fx-text-fill: #B8B0A0;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-border-color: #2D3138;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.toggle-role-active:hover,
+.toggle-role-inactive:hover {
+    -fx-border-color: #E8D06E;
+    -fx-text-fill: #E8D06E;
+}

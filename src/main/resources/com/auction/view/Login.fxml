@@ -10,7 +10,7 @@
 <StackPane fx:id="rootPane" stylesheets="@fileCS/style.css" xmlns="http://javafx.com/javafx/21"
     xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.LoginController">
 
-    <HBox prefHeight="600.0" prefWidth="900.0" style="-fx-background-color: #0d0d0d; -fx-font-family: 'Segoe UI', Arial, sans-serif;">
+    <HBox prefHeight="600.0" prefWidth="900.0" style="-fx-background-color: #0A0B0D; -fx-font-family: 'Segoe UI', Arial, sans-serif;">
 
         <!-- Panel Trái: Branding -->
         <StackPane prefWidth="450.0">
@@ -21,40 +21,37 @@
                 </image>
             </ImageView>
 
-            <Region style="-fx-background-color: rgba(0, 0, 0, 0.4);" />
+            <Region style="-fx-background-color: rgba(0, 0, 0, 0.45);" />
 
             <VBox alignment="CENTER_LEFT" prefHeight="600.0" prefWidth="450.0" spacing="20.0" StackPane.alignment="CENTER">
                 <padding><Insets bottom="50.0" left="50.0" right="50.0" top="50.0" /></padding>
-                <Label style="-fx-text-fill: linear-gradient(to right, #FDEB94, #D4AF37); -fx-font-weight: 900; -fx-font-size: 38px;" text="BIDPRECISION" wrapText="true" />
-                <Label maxWidth="350.0" style="-fx-text-fill: #FFEBCD; -fx-font-size: 15px;" text="Tiếp cận thế giới của những kiệt tác độc quyền. Tham gia cộng đồng sưu tập tinh hoa của chúng tôi." wrapText="true" />
+                <Label styleClass="brand-logo" style="-fx-font-size: 38px;" text="BIDPRECISION" wrapText="true" />
+                <Label maxWidth="350.0" style="-fx-text-fill: rgba(255,235,205,0.85); -fx-font-size: 15px;" text="Tiếp cận thế giới của những kiệt tác độc quyền. Tham gia cộng đồng sưu tập tinh hoa của chúng tôi." wrapText="true" />
                 <Region VBox.vgrow="ALWAYS" />
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
-                    <SVGPath content="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" fill="#D4AF37" scaleX="0.8" scaleY="0.8" />
-                    <Label style="-fx-text-fill: #D4AF37; -fx-font-size: 12px; -fx-font-weight: bold;" text="UY TÍN HÀNG ĐẦU VIỆT NAM" />
+                    <SVGPath content="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" fill="#E8D06E" scaleX="0.8" scaleY="0.8" />
+                    <Label style="-fx-text-fill: #E8D06E; -fx-font-size: 12px; -fx-font-weight: bold;" text="UY TÍN HÀNG ĐẦU VIỆT NAM" />
                 </HBox>
             </VBox>
         </StackPane>
 
         <!-- Panel Phải: Form đăng nhập -->
-        <VBox alignment="CENTER_LEFT" prefWidth="450.0" spacing="18.0" style="-fx-background-color: #0a0a0a;">
+        <VBox alignment="CENTER_LEFT" prefWidth="450.0" spacing="18.0" style="-fx-background-color: #0A0B0D;">
             <padding><Insets bottom="60.0" left="50.0" right="50.0" top="60.0" /></padding>
 
-            <Label style="-fx-text-fill: white; -fx-font-size: 28px; -fx-font-weight: bold;" text="Đăng nhập" />
-            <Label style="-fx-text-fill: #FFEBCD; -fx-font-size: 13px;" text="Chào mừng trở lại. Nhập thông tin của bạn để tiếp tục." />
+            <Label styleClass="label-page-title" text="Đăng nhập" />
+            <Label styleClass="label-sub" text="Chào mừng trở lại. Nhập thông tin của bạn để tiếp tục." />
 
             <Region prefHeight="5.0" />
 
             <!-- Username -->
             <VBox spacing="8.0">
-                <Label style="-fx-text-fill: #e0e0e0; -fx-font-size: 11px; -fx-font-weight: bold;" text="TÊN ĐĂNG NHẬP" />
-                <HBox fx:id="hboxUsername" alignment="CENTER_LEFT" spacing="10.0"
-                    style="-fx-background-color: #1a1a1a; -fx-border-color: #333333; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 10 0 15;">
-                    <SVGPath content="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#666666" />
+                <Label styleClass="label-caption" text="TÊN ĐĂNG NHẬP" />
+                <HBox fx:id="hboxUsername" alignment="CENTER_LEFT" spacing="10.0" styleClass="input-wrapper">
+                    <SVGPath content="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#55504A" />
                     <TextField fx:id="txtUsername" promptText="Nhập tên đăng nhập"
-                        style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #666666; -fx-font-size: 14px;"
-                        HBox.hgrow="ALWAYS">
-                        <padding><Insets bottom="12.0" top="12.0" /></padding>
-                    </TextField>
+                        styleClass="input-transparent"
+                        HBox.hgrow="ALWAYS" />
                 </HBox>
                 <Label fx:id="lblUsernameError"
                     style="-fx-text-fill: #e74c3c; -fx-font-size: 11px;"
@@ -63,26 +60,26 @@
 
             <!-- Password với toggle hiển thị -->
             <VBox spacing="8.0">
-                <Label style="-fx-text-fill: #e0e0e0; -fx-font-size: 11px; -fx-font-weight: bold;" text="MẬT KHẨU" />
-                <HBox fx:id="hboxPassword" alignment="CENTER_LEFT"
-                    style="-fx-background-color: #1a1a1a; -fx-border-color: #333333; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 0 5 0 15;">
-                    <SVGPath content="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z" fill="#666666" />
+                <Label styleClass="label-caption" text="MẬT KHẨU" />
+                <HBox fx:id="hboxPassword" alignment="CENTER_LEFT" styleClass="input-wrapper"
+                    style="-fx-padding: 0 5 0 14;">
+                    <SVGPath content="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z" fill="#55504A" />
                     <!-- StackPane chồng PasswordField và TextField -->
                     <StackPane HBox.hgrow="ALWAYS">
                         <PasswordField fx:id="txtPassword" promptText="Nhập mật khẩu"
-                            style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #666666; -fx-font-size: 14px;">
+                            styleClass="input-transparent">
                             <padding><Insets bottom="12.0" top="12.0" /></padding>
                         </PasswordField>
                         <TextField fx:id="txtPasswordVisible" promptText="Nhập mật khẩu"
-                            style="-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: white; -fx-prompt-text-fill: #666666; -fx-font-size: 14px;"
+                            styleClass="input-transparent"
                             visible="false" managed="false">
                             <padding><Insets bottom="12.0" top="12.0" /></padding>
                         </TextField>
                     </StackPane>
-                    <!-- Nút mắt toggle: 🔒 ẩn / 👁 hiện -->
+                    <!-- Nút mắt toggle -->
                     <Button fx:id="btnTogglePassword" onAction="#onTogglePasswordVisibility"
                         text="🔒"
-                        style="-fx-background-color: transparent; -fx-text-fill: #888; -fx-cursor: hand; -fx-font-size: 15px; -fx-padding: 5 10;"/>
+                        styleClass="btn-eye"/>
                 </HBox>
                 <Label fx:id="lblPasswordError"
                     style="-fx-text-fill: #e74c3c; -fx-font-size: 11px;"
@@ -92,25 +89,25 @@
             <HBox alignment="CENTER_RIGHT">
                 <Hyperlink fx:id="linkForgotPassword" onAction="#onForgotPasswordClick"
                     text="Quên mật khẩu?"
-                    style="-fx-text-fill: #F5C518; -fx-border-color: transparent; -fx-underline: false; -fx-font-size: 12px;"/>
+                    style="-fx-text-fill: #E8D06E; -fx-border-color: transparent; -fx-underline: false; -fx-font-size: 12px;"/>
             </HBox>
 
             <Region prefHeight="5.0" />
 
             <Button fx:id="btnLogin" maxWidth="Infinity" onAction="#onLoginClick"
-                style="-fx-background-color: #FFC107; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 4; -fx-cursor: hand;"
+                styleClass="btn-gold-luxury"
                 text="ĐĂNG NHẬP  ➔">
                 <padding><Insets bottom="12.0" top="12.0" /></padding>
             </Button>
 
             <HBox alignment="CENTER" spacing="15.0">
-                <Region maxHeight="1.0" minHeight="1.0" prefHeight="1.0" prefWidth="140.0" style="-fx-background-color: #333333;" />
-                <Label style="-fx-text-fill: #666666; -fx-font-size: 11px; -fx-font-weight: bold;" text="HOẶC" />
-                <Region maxHeight="1.0" minHeight="1.0" prefHeight="1.0" prefWidth="140.0" style="-fx-background-color: #333333;" />
+                <Region maxHeight="1.0" minHeight="1.0" prefHeight="1.0" prefWidth="140.0" style="-fx-background-color: #2D3138;" />
+                <Label styleClass="label-caption" text="HOẶC" />
+                <Region maxHeight="1.0" minHeight="1.0" prefHeight="1.0" prefWidth="140.0" style="-fx-background-color: #2D3138;" />
             </HBox>
 
             <Button fx:id="btnRegister" maxWidth="Infinity" onAction="#onRegisterClick"
-                style="-fx-background-color: transparent; -fx-border-color: #FFC107; -fx-border-radius: 4; -fx-text-fill: #FFC107; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;"
+                styleClass="btn-outline-gold"
                 text="ĐĂNG KÝ TÀI KHOẢN MỚI">
                 <padding><Insets bottom="12.0" top="12.0" /></padding>
             </Button>
