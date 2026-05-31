@@ -435,5 +435,5 @@ flowchart TD
 
 | Tài nguyên | Đường dẫn |
 |-----------|-----------|
-| 📄 Báo cáo PDF | _[Thêm link Google Drive / GitHub báo cáo PDF tại đây]_ |
+| 📄 Báo cáo PDF | _https://drive.google.com/file/d/1pWpfG3nknAk-ad-wYdwFQufUQa3XeGsD/view?usp=sharing_ |
 | 🎬 Video demo | _[Thêm link YouTube / Google Drive video demo tại đây]_ |
