@@ -130,24 +130,24 @@ public class UserProfileController {
 
         if (colHisTime != null)
             colHisTime.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getTimestamp().format(dtf)));
+                    new SimpleStringProperty(data.getValue().getTimestamp().format(dtf)));
 
         if (colHisItem != null)
             colHisItem.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getAuction().getItem().getNameItem()));
+                    new SimpleStringProperty(data.getValue().getAuction().getItem().getNameItem()));
 
         if (colHisAmount != null)
             colHisAmount.setCellValueFactory(data ->
-                new SimpleStringProperty(CurrencyFormatter.format(data.getValue().getBidAmount())));
+                    new SimpleStringProperty(CurrencyFormatter.format(data.getValue().getBidAmount())));
 
         if (colHisStatus != null) {
             colHisStatus.setCellValueFactory(data -> {
                 BidTransaction tx  = data.getValue();
                 Auction        auc = tx.getAuction();
                 boolean isWinner = auc.getHighestBidder() != null &&
-                    auc.getHighestBidder().getUserName().equals(currentUser.getUserName());
+                        auc.getHighestBidder().getUserName().equals(currentUser.getUserName());
                 boolean isFinished = auc.getStatus() == AuctionStatus.FINISHED
-                    || auc.getStatus() == AuctionStatus.PAID;
+                        || auc.getStatus() == AuctionStatus.PAID;
                 String label;
                 if (isFinished) {
                     label = isWinner ? "✅ ĐÃ THẮNG" : "❌ THUA";
@@ -182,12 +182,12 @@ public class UserProfileController {
         }
         int total = history.size();
         long wins = history.stream()
-            .filter(tx -> {
-                Auction a = tx.getAuction();
-                return (a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID)
-                    && a.getHighestBidder() != null
-                    && a.getHighestBidder().getUserName().equals(bidder.getUserName());
-            }).count();
+                .filter(tx -> {
+                    Auction a = tx.getAuction();
+                    return (a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID)
+                            && a.getHighestBidder() != null
+                            && a.getHighestBidder().getUserName().equals(bidder.getUserName());
+                }).count();
         int rate = total > 0 ? (int)(wins * 100 / total) : 0;
 
         if (lblTotalBids != null) lblTotalBids.setText(String.valueOf(total));
@@ -221,7 +221,15 @@ public class UserProfileController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Settings.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 600, 530));
+            double _w = stage.getWidth();
+            double _h = stage.getHeight();
+            double _x = stage.getX();
+            double _y = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w);
+            stage.setHeight(_h);
+            stage.setX(_x);
+            stage.setY(_y);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -264,7 +272,15 @@ public class UserProfileController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/DepositWithdraw.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 500, 420));
+            double _w2 = stage.getWidth();
+            double _h2 = stage.getHeight();
+            double _x2 = stage.getX();
+            double _y2 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w2);
+            stage.setHeight(_h2);
+            stage.setX(_x2);
+            stage.setY(_y2);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -287,7 +303,15 @@ public class UserProfileController {
             }
             Parent root = FXMLLoader.load(getClass().getResource(path));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 1280, 800));
+            double _w3 = stage.getWidth();
+            double _h3 = stage.getHeight();
+            double _x3 = stage.getX();
+            double _y3 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w3);
+            stage.setHeight(_h3);
+            stage.setX(_x3);
+            stage.setY(_y3);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -297,7 +321,15 @@ public class UserProfileController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 900, 600));
+            double _w4 = stage.getWidth();
+            double _h4 = stage.getHeight();
+            double _x4 = stage.getX();
+            double _y4 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w4);
+            stage.setHeight(_h4);
+            stage.setX(_x4);
+            stage.setY(_y4);
         } catch (IOException e) { e.printStackTrace(); }
     }
 }

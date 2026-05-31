@@ -198,8 +198,15 @@ public class LoginController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
         Parent root = loader.load();
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(new Scene(root, 1280, 800));
-        stage.centerOnScreen();
+        double _w = stage.getWidth();
+        double _h = stage.getHeight();
+        double _x = stage.getX();
+        double _y = stage.getY();
+        stage.setScene(new Scene(root));
+        stage.setWidth(_w);
+        stage.setHeight(_h);
+        stage.setX(_x);
+        stage.setY(_y);
     }
 
     @FXML
@@ -207,7 +214,15 @@ public class LoginController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Register.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 900, 620));
+            double _w2 = stage.getWidth();
+            double _h2 = stage.getHeight();
+            double _x2 = stage.getX();
+            double _y2 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w2);
+            stage.setHeight(_h2);
+            stage.setX(_x2);
+            stage.setY(_y2);
         } catch (IOException e) {
             NotificationService.get().error("Không thể mở trang đăng ký!", rootPane);
         }

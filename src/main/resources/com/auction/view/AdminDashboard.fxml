@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="rootPane" prefHeight="900" prefWidth="1350"
+<BorderPane fx:id="rootPane" prefHeight="Infinity" prefWidth="Infinity"
             styleClass="dark-root"
             stylesheets="@fileCS/style.css"
             xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"

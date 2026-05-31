@@ -85,12 +85,12 @@ public class AddProductController {
             }
 
             UIUtils.applyFadeIn(dynamicSpecContainer);
-
+/*
             Platform.runLater(() -> {
                 if (rootPane.getScene() != null && rootPane.getScene().getWindow() != null) {
                     ((javafx.stage.Stage) rootPane.getScene().getWindow()).sizeToScene();
                 }
-            });
+            }); */
         });
     }
 

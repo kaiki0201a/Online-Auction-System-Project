@@ -72,7 +72,7 @@ public class DepositWithdrawController {
 
         if (lblUsername != null) {
             lblUsername.setText(currentUser.getUserName()
-                + " · " + (currentUser instanceof Bidder ? "Bidder" : "Seller"));
+                    + " · " + (currentUser instanceof Bidder ? "Bidder" : "Seller"));
         }
 
         // TextFormatter: chỉ nhận số
@@ -84,14 +84,14 @@ public class DepositWithdrawController {
 
         // Đăng ký listener
         NetworkClient.getInstance().addEventListener(LISTENER_KEY, response ->
-            Platform.runLater(() -> handleNetworkResponse(response))
+                Platform.runLater(() -> handleNetworkResponse(response))
         );
     }
 
     private void applyNumericFormatter(TextField tf) {
         if (tf == null) return;
         tf.setTextFormatter(new TextFormatter<>(change ->
-            change.getControlNewText().matches("\\d*(\\.\\d*)?") ? change : null));
+                change.getControlNewText().matches("\\d*(\\.\\d*)?") ? change : null));
     }
 
     // ─── Xử lý Response từ Server ────────────────────────────────────────────
@@ -117,11 +117,11 @@ public class DepositWithdrawController {
 
                 if ("deposit".equals(savedType) || serverTx.getType() == WalletTransaction.Type.DEPOSIT) {
                     setMsg(lblDepositMessage,
-                        "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                            "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
                     clearField(txtDepositAmount);
                 } else if ("withdraw".equals(savedType) || serverTx.getType() == WalletTransaction.Type.WITHDRAW) {
                     setMsg(lblWithdrawMessage,
-                        "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                            "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
                     clearField(txtWithdrawAmount);
                 }
                 return;
@@ -136,10 +136,10 @@ public class DepositWithdrawController {
 
                 if (pendingType != null) {
                     WalletTransaction.Type wType = "deposit".equals(pendingType)
-                        ? WalletTransaction.Type.DEPOSIT
-                        : WalletTransaction.Type.WITHDRAW;
+                            ? WalletTransaction.Type.DEPOSIT
+                            : WalletTransaction.Type.WITHDRAW;
                     double amount = Math.abs(diff) > 0.001 ? Math.abs(diff)
-                        : (pendingType.equals("deposit") ? extractAmount(txtDepositAmount) : extractAmount(txtWithdrawAmount));
+                            : (pendingType.equals("deposit") ? extractAmount(txtDepositAmount) : extractAmount(txtWithdrawAmount));
                     addWalletHistory(new WalletTransaction(wType, amount, newBalance));
                 }
 
@@ -150,19 +150,19 @@ public class DepositWithdrawController {
 
                 if ("deposit".equals(savedType)) {
                     setMsg(lblDepositMessage,
-                        "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                            "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
                     clearField(txtDepositAmount);
                 } else if ("withdraw".equals(savedType)) {
                     setMsg(lblWithdrawMessage,
-                        "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                            "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
                     clearField(txtWithdrawAmount);
                 } else {
                     if (diff >= 0) {
                         setMsg(lblDepositMessage,
-                            "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                                "✅ Nạp thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
                     } else {
                         setMsg(lblWithdrawMessage,
-                            "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
+                                "✅ Rút thành công! Số dư: " + CurrencyFormatter.format(newBalance), "#4CAF50");
                     }
                 }
             }
@@ -187,7 +187,7 @@ public class DepositWithdrawController {
         pendingType = "deposit";
         setMsg(lblDepositMessage, "⏳ Đang xử lý...", "#A0A0A0");
         NetworkClient.getInstance().sendRequest(
-            new Request(ActionType.DEPOSIT, currentUser.getUserName() + "|" + amount));
+                new Request(ActionType.DEPOSIT, currentUser.getUserName() + "|" + amount));
     }
 
     // Nút nhanh nạp
@@ -204,13 +204,13 @@ public class DepositWithdrawController {
         double balance = getBalance();
         if (amount > balance) {
             setMsg(lblWithdrawMessage,
-                "❌ Số dư không đủ! Bạn có: " + CurrencyFormatter.format(balance), "#e74c3c");
+                    "❌ Số dư không đủ! Bạn có: " + CurrencyFormatter.format(balance), "#e74c3c");
             return;
         }
         pendingType = "withdraw";
         setMsg(lblWithdrawMessage, "⏳ Đang xử lý...", "#A0A0A0");
         NetworkClient.getInstance().sendRequest(
-            new Request(ActionType.WITHDRAW, currentUser.getUserName() + "|" + amount));
+                new Request(ActionType.WITHDRAW, currentUser.getUserName() + "|" + amount));
     }
 
     // Nút nhanh rút
@@ -278,9 +278,9 @@ public class DepositWithdrawController {
         List<WalletTransaction> history = getWalletHistory();
 
         double totalDeposit  = history.stream().filter(t -> t.getType() == WalletTransaction.Type.DEPOSIT)
-            .mapToDouble(WalletTransaction::getAmount).sum();
+                .mapToDouble(WalletTransaction::getAmount).sum();
         double totalWithdraw = history.stream().filter(t -> t.getType() == WalletTransaction.Type.WITHDRAW)
-            .mapToDouble(WalletTransaction::getAmount).sum();
+                .mapToDouble(WalletTransaction::getAmount).sum();
         long countDeposit  = history.stream().filter(t -> t.getType() == WalletTransaction.Type.DEPOSIT).count();
         long countWithdraw = history.stream().filter(t -> t.getType() == WalletTransaction.Type.WITHDRAW).count();
 
@@ -355,10 +355,10 @@ public class DepositWithdrawController {
     private boolean isIgnoredBroadcast(String msg) {
         if (msg == null) return false;
         return msg.startsWith("AUCTION_") || msg.startsWith("UPDATE_AUCTION")
-            || msg.startsWith("SELLER_BALANCE_UPDATE|")
-            || msg.startsWith("DUYỆT_OK|") || msg.startsWith("TỪ_CHỐI_OK|")
-            || msg.equals("Đặt giá thành công!") || msg.equals("AUTOBID_OK")
-            || msg.startsWith("AUTOBID_ERROR");
+                || msg.startsWith("SELLER_BALANCE_UPDATE|")
+                || msg.startsWith("DUYỆT_OK|") || msg.startsWith("TỪ_CHỐI_OK|")
+                || msg.equals("Đặt giá thành công!") || msg.equals("AUTOBID_OK")
+                || msg.startsWith("AUTOBID_ERROR");
     }
 
     // ─── Navigation ──────────────────────────────────────────────────────────
@@ -377,7 +377,15 @@ public class DepositWithdrawController {
 
             Parent root = FXMLLoader.load(getClass().getResource(fxml));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 1200, 800));
+            double _w = stage.getWidth();
+            double _h = stage.getHeight();
+            double _x = stage.getX();
+            double _y = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w);
+            stage.setHeight(_h);
+            stage.setX(_x);
+            stage.setY(_y);
         } catch (IOException e) {
             e.printStackTrace();
         }

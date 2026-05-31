@@ -186,7 +186,23 @@ public class DashboardController {
             AuctionDetailController detailController = loader.getController();
             detailController.setAuctionData(auction);
             Stage stage = (Stage) rootPane.getScene().getWindow();
+            double _w = stage.getWidth();
+            double _h = stage.getHeight();
+            double _x = stage.getX();
+            double _y = stage.getY();
+            double _w2 = stage.getWidth();
+            double _h2 = stage.getHeight();
+            double _x2 = stage.getX();
+            double _y2 = stage.getY();
             stage.setScene(new Scene(root));
+            stage.setWidth(_w2);
+            stage.setHeight(_h2);
+            stage.setX(_x2);
+            stage.setY(_y2);
+            stage.setWidth(_w);
+            stage.setHeight(_h);
+            stage.setX(_x);
+            stage.setY(_y);
         } catch (IOException e) {
             showError("Lỗi", "Không thể mở chi tiết phiên đấu giá.");
         }
@@ -217,7 +233,15 @@ public class DashboardController {
                 profileController.setUserData((Bidder) currentUser);
             }
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            double _w3 = stage.getWidth();
+            double _h3 = stage.getHeight();
+            double _x3 = stage.getX();
+            double _y3 = stage.getY();
             stage.setScene(new Scene(root));
+            stage.setWidth(_w3);
+            stage.setHeight(_h3);
+            stage.setX(_x3);
+            stage.setY(_y3);
             stage.setTitle("Trang cá nhân");
         } catch (IOException e) {
             showError("Lỗi", "Không thể mở trang cá nhân.");
@@ -230,7 +254,15 @@ public class DashboardController {
             AppContext.logout();
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            double _w4 = stage.getWidth();
+            double _h4 = stage.getHeight();
+            double _x4 = stage.getX();
+            double _y4 = stage.getY();
             stage.setScene(new Scene(root));
+            stage.setWidth(_w4);
+            stage.setHeight(_h4);
+            stage.setX(_x4);
+            stage.setY(_y4);
         } catch (Exception e) {
             showError("Lỗi", "Lỗi đăng xuất.");
         }

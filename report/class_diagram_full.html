@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<title>Class Diagram — BidPrecision (Full)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+
+/* ─── PRINT ─── */
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  body { background: white !important; }
+  .page { box-shadow: none !important; margin: 0 !important; }
+  .page-break { page-break-before: always; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .print-hide { display: none !important; }
+}
+
+/* ─── BASE ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background: #d4dce8;
+  font-size: 10pt;
+}
+
+/* ─── PAGE (Landscape A4 = 297 × 210 mm) ─── */
+.page {
+  width: 297mm;
+  height: 210mm;
+  margin: 12px auto;
+  background: white;
+  box-shadow: 0 6px 32px rgba(0,0,0,.2);
+  display: grid;
+  grid-template-rows: 14mm 1fr 7mm;
+  overflow: hidden;
+}
+
+/* ─── HEADER ─── */
+.ph {
+  background: #0f2744;
+  border-bottom: 3px solid #d4a017;
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  padding: 0 8mm;
+}
+.ph-badge {
+  background: #d4a017;
+  color: #0f2744;
+  font-weight: 800;
+  font-size: 8.5pt;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+.ph-pkg {
+  background: rgba(255,255,255,.12);
+  color: #90c8f8;
+  font-size: 8pt;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+.ph-title { color: white; font-weight: 700; font-size: 13pt; }
+.ph-sub   { color: #90c8f8; font-size: 8.5pt; margin-left: auto; font-style: italic; }
+
+/* ─── BODY ─── */
+.pb {
+  padding: 4mm 5mm 3mm;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+/* ─── FOOTER ─── */
+.pf {
+  background: #f1f5f9;
+  border-top: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8mm;
+  font-size: 7.5pt;
+  color: #64748b;
+}
+
+/* ─── MERMAID ─── */
+.mermaid { width: 100%; }
+.mermaid svg { max-width: 100% !important; height: auto !important; }
+
+/* ─── LEGEND ─── */
+.legend {
+  position: absolute;
+  bottom: 10mm;
+  right: 8mm;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5mm;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  padding: 2.5mm 4mm;
+  font-size: 7.5pt;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+  color: #334155;
+}
+.legend-line {
+  width: 18px;
+  height: 2px;
+  display: inline-block;
+}
+
+/* ─── PRINT TIP ─── */
+.print-hint {
+  width: 297mm;
+  margin: 0 auto 12px;
+  padding: 3mm 8mm;
+  background: #fef9ec;
+  border: 1px solid #d97706;
+  border-radius: 6px;
+  font-size: 9pt;
+  color: #78350f;
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+}
+</style>
+</head>
+<body>
+
+<div class="print-hint print-hide">
+  💡 <strong>In PDF:</strong> Cmd+P → Layout: <strong>Landscape</strong> → Background graphics: <strong>ON</strong> → Đợi 3–4 giây để diagram render xong trước khi in.
+</div>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'base',
+  themeVariables: {
+    background:          '#ffffff',
+    primaryColor:        '#dbeafe',
+    primaryTextColor:    '#1e293b',
+    primaryBorderColor:  '#3b82f6',
+    lineColor:           '#334155',
+    secondaryColor:      '#fef3c7',
+    tertiaryColor:       '#f0fdf4',
+    edgeLabelBackground: '#ffffff',
+    clusterBkg:          '#f8fafc',
+    clusterBorder:       '#94a3b8',
+    titleColor:          '#0f2744',
+    fontFamily:          "'Inter','Segoe UI',Arial,sans-serif",
+    fontSize:            '12px',
+  },
+  classDiagram: { useMaxWidth: true, diagramPadding: 8 },
+});
+</script>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     PAGE 1 — DOMAIN MODEL
+     Entity · User · Admin · Seller · Bidder · Item · Art · Electronics · Vehicle
+     Auction · AuctionStatus · AutoBidRule · BidTransaction · WalletTransaction · AuctionEarning
+════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="ph">
+    <span class="ph-badge">Class Diagram</span>
+    <span class="ph-pkg">com.auction.model</span>
+    <span class="ph-title">Domain Model — Lớp nghiệp vụ cốt lõi</span>
+    <span class="ph-sub">Trang 1 / 2 &nbsp;·&nbsp; Entity · User · Item · Auction · Transaction</span>
+  </div>
+
+  <div class="pb">
+    <div class="mermaid">
+classDiagram
+  direction TB
+
+  %% ─── BASE ───
+  class Entity {
+    &lt;&lt;abstract&gt;&gt;
+    #String id
+    +Entity()
+    +getId() String
+    +setId(id String)
+  }
+
+  %% ─── USER HIERARCHY ───
+  class User {
+    &lt;&lt;abstract&gt;&gt;
+    -String userName
+    -String passWord
+    -String email
+    -boolean isBanned
+    +User(userName, passWord, email)
+    +login(pass String) boolean
+    +logout()
+    +hashPasswordPublic(pass String) String
+    +getUserName() String
+    +getEmail() String
+    +isBanned() boolean
+    +setBanned(banned boolean)
+  }
+
+  class Admin {
+    -String roleLevel
+    +Admin(userName, passWord, email, roleLevel)
+    +cancelAuction(auction Auction, reason String)
+    +banUser(user User, reason String)
+    +getRoleLevel() String
+  }
+
+  class Seller {
+    -double balance
+    -float rating
+    -int ratingCount
+    -List~Item~ inventory
+    -List~AuctionEarning~ earningHistory
+    -List~WalletTransaction~ walletHistory
+    +Seller(userName, passWord, email)
+    +createAuction(item Item, start LocalDateTime, end LocalDateTime)
+    +addItem(item Item)
+    +removeItem(item Item)
+    +addEarning(earning AuctionEarning)
+    +addWalletTransaction(wt WalletTransaction)
+    +getBalance() double
+    +setBalance(balance double)
+  }
+
+  class Bidder {
+    -double balance
+    -double heldBalance
+    -List~BidTransaction~ transactionHistory
+    -List~WalletTransaction~ walletHistory
+    +Bidder(userName, passWord, email, balance)
+    +placeBid(auction Auction, amount double)
+    +setupAutoBid(auction Auction, maxBid double, increment double)
+    +holdFunds(amount double)
+    +releaseHeldFunds() double
+    +getTotalBalance() double
+    +addTransaction(tx BidTransaction)
+    +addWalletTransaction(wt WalletTransaction)
+    +getBalance() double
+    +setBalance(balance double)
+    +update(message String)
+    +onNewBidPlaced(tx BidTransaction)
+  }
+
+  %% ─── ITEM HIERARCHY ───
+  class Item {
+    &lt;&lt;abstract&gt;&gt;
+    -String nameItem
+    -String descriptionItem
+    -double startingPrice
+    -String imagePath
+    +Item(nameItem, descriptionItem, startingPrice)
+    +printInfo()
+    +getNameItem() String
+    +getStartingPrice() double
+    +getDescriptionItem() String
+    +getImagePath() String
+    +setImagePath(path String)
+  }
+
+  class Art {
+    -String artist
+    -String medium
+    +Art(nameItem, desc, price, artist, medium)
+    +printInfo()
+  }
+
+  class Electronics {
+    -String brand
+    -String model
+    +Electronics(nameItem, desc, price, brand, model)
+    +printInfo()
+  }
+
+  class Vehicle {
+    -String make
+    -String year
+    +Vehicle(nameItem, desc, price, make, year)
+    +printInfo()
+  }
+
+  %% ─── AUCTION ───
+  class Auction {
+    -Item item
+    -Seller seller
+    -double currentHighestBid
+    -Bidder highestBidder
+    -LocalDateTime startTime
+    -LocalDateTime endTime
+    -AuctionStatus status
+    -List~BidTransaction~ bidHistory
+    -List~AutoBidRule~ autoBidRules
+    -List~AuctionObserver~ observers
+    -boolean isSettled
+    +Auction(item, seller, startTime, endTime)
+    +processBid(tx BidTransaction) ≪synchronized≫
+    +settleAuction() ≪synchronized≫
+    +refundOnCancel() ≪synchronized≫
+    +cancelAuction(requestor User, reason String) boolean
+    +updateAuctionDetails(requestor User, ...) boolean
+    +startAuction() ≪synchronized≫
+    +closeAuction() ≪synchronized≫
+    +registerAutoBid(bidder Bidder, maxBid double, inc double)
+    +addObserver(obs AuctionObserver)
+    +removeObserver(obs AuctionObserver)
+    +triggerAutoBidsPublic()
+    +getAuctionId() String
+    +getCurrentHighestBid() double
+    +getHighestBidder() Bidder
+    +getStatus() AuctionStatus
+    +setStatus(status AuctionStatus)
+    +setEndTime(endTime LocalDateTime)
+    +setSeller(seller Seller)
+  }
+
+  class AuctionStatus {
+    &lt;&lt;enumeration&gt;&gt;
+    PENDING_APPROVAL
+    APPROVED
+    OPEN
+    RUNNING
+    FINISHED
+    PAID
+    REJECTED
+    CANCELED
+  }
+
+  %% ─── TRANSACTION CLASSES ───
+  class AutoBidRule {
+    -final Bidder bidder
+    -final double maxBid
+    -final double increment
+    -final LocalDateTime registerTime
+    -boolean active
+    +AutoBidRule(bidder, maxBid, increment)
+    +getBidder() Bidder
+    +getMaxBid() double
+    +getIncrement() double
+    +getRegisterTime() LocalDateTime
+    +isActive() boolean
+    +setActive(v boolean)
+  }
+
+  class BidTransaction {
+    -Auction auction
+    -Bidder bidder
+    -double bidAmount
+    -LocalDateTime timestamp
+    +BidTransaction(auction, bidder, bidAmount)
+    +getAuction() Auction
+    +getBidder() Bidder
+    +getBidAmount() double
+    +getTimestamp() LocalDateTime
+  }
+
+  class WalletTransaction {
+    -final Type type
+    -final double amount
+    -final double balanceAfter
+    -final LocalDateTime timestamp
+    +WalletTransaction(type, amount, balanceAfter)
+    +getType() Type
+    +getAmount() double
+    +getBalanceAfter() double
+    +getFormattedTime() String
+  }
+
+  class WalletTransactionType {
+    &lt;&lt;enumeration&gt;&gt;
+    DEPOSIT
+    WITHDRAW
+  }
+
+  class AuctionEarning {
+    -final String auctionId
+    -final String itemName
+    -final String winnerId
+    -final double amount
+    -final double balanceAfter
+    -final LocalDateTime timestamp
+    -final String status
+    +AuctionEarning(auctionId, itemName, winnerId, amount, balanceAfter, status)
+    +getAuctionId() String
+    +getItemName() String
+    +getWinnerId() String
+    +getAmount() double
+    +getStatus() String
+  }
+
+  class AuctionObserver {
+    &lt;&lt;interface&gt;&gt;
+    +update(message String)
+    +onNewBidPlaced(tx BidTransaction)
+  }
+
+  %% ─── RELATIONSHIPS ───
+  Entity <|-- User           : extends
+  Entity <|-- Item           : extends
+  Entity <|-- Auction        : extends
+  User   <|-- Admin          : extends
+  User   <|-- Seller         : extends
+  User   <|-- Bidder         : extends
+  Item   <|-- Art            : extends
+  Item   <|-- Electronics    : extends
+  Item   <|-- Vehicle        : extends
+
+  Bidder ..|> AuctionObserver : implements
+
+  Auction --> AuctionStatus   : status
+  Auction "1" --> "1"   Item   : item
+  Auction "1" --> "1"   Seller : seller
+  Auction "1" --> "0..1" Bidder : highestBidder
+  Auction "1" *-- "*" BidTransaction : bidHistory
+  Auction "1" *-- "*" AutoBidRule    : autoBidRules
+
+  Seller  "1" o-- "*" Item           : inventory
+  Seller  "1" o-- "*" AuctionEarning : earningHistory
+  Seller  "1" o-- "*" WalletTransaction : walletHistory
+  Bidder  "1" o-- "*" BidTransaction : transactionHistory
+  Bidder  "1" o-- "*" WalletTransaction : walletHistory
+
+  AutoBidRule  --> Bidder      : bidder
+  BidTransaction --> Bidder    : bidder
+  BidTransaction --> Auction   : auction
+
+  WalletTransaction --> WalletTransactionType : type
+    </div>
+  </div>
+
+  <div class="pf">
+    <span>BidPrecision — Class Diagram (Full)</span>
+    <span>Trang 1 / 2 · Domain Model</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     PAGE 2 — INFRASTRUCTURE
+     DAO · Manager · Protocol · Exception · Utils
+════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="ph">
+    <span class="ph-badge">Class Diagram</span>
+    <span class="ph-pkg">com.auction.dao / utils / protocol / exception</span>
+    <span class="ph-title">Infrastructure — DAO · Manager · Protocol · Exception</span>
+    <span class="ph-sub">Trang 2 / 2 &nbsp;·&nbsp; Kiến trúc tầng dịch vụ và giao thức</span>
+  </div>
+
+  <div class="pb">
+    <div class="mermaid">
+classDiagram
+  direction LR
+
+  %% ─── DAO LAYER ───
+  class IGenericDAO~T~ {
+    &lt;&lt;interface&gt;&gt;
+    +save(obj T) boolean
+    +update(obj T) boolean
+    +delete(id String) boolean
+    +findById(id String) T
+    +findAll() List~T~
+  }
+
+  class IAuctionDAO {
+    &lt;&lt;interface&gt;&gt;
+  }
+
+  class FileDataManager {
+    &lt;&lt;utility&gt;&gt;
+    -String AUCTIONS_FILE
+    -String USERS_FILE
+    +saveAuctions(auctions List~Auction~)
+    +loadAuctions() List~Auction~
+    +saveUsers(users List~User~)
+    +loadUsers() List~User~
+  }
+
+  class AuctionDAOImpl {
+    -String filePath
+    +save(auction Auction) boolean
+    +update(auction Auction) boolean
+    +delete(id String) boolean
+    +findById(id String) Auction
+    +findAll() List~Auction~
+  }
+
+  class UserDAOImpl {
+    -String filePath
+    +save(user User) boolean
+    +update(user User) boolean
+    +delete(id String) boolean
+    +findById(id String) User
+    +findAll() List~User~
+  }
+
+  %% ─── MANAGER / SERVICE ───
+  class AuctionManager {
+    &lt;&lt;singleton&gt;&gt;
+    -static AuctionManager instance
+    -IAuctionDAO auctionDAO
+    +getInstance() AuctionManager$
+    +setAuctionDAO(dao IAuctionDAO)
+    +createAuction(item, seller, start, end) Auction
+    +getAllAuctions() List~Auction~
+    +getAuctionById(id String) Auction
+    +updateAuction(auction Auction)
+  }
+
+  class UserManager {
+    &lt;&lt;singleton&gt;&gt;
+    -static UserManager instance
+    -Map~String,User~ users
+    +getInstance() UserManager$
+    +authenticate(username, password) boolean
+    +register(username, password, email, role) boolean
+    +register(username, password, email, role, adminCode) boolean
+    +getUser(username String) User
+    +getUserById(id String) User
+    +addUser(user User)
+    +removeUser(username String) boolean
+    +getAllUsers() List~User~
+    +restoreUsers(users List~User~)
+  }
+
+  class AppContext {
+    &lt;&lt;utility&gt;&gt;
+    -static User currentUser
+    +getCurrentUser() User$
+    +setCurrentUser(user User)$
+    +clear()$
+  }
+
+  %% ─── PROTOCOL ───
+  class Request {
+    -ActionType action
+    -Object payload
+    +Request(action ActionType, payload Object)
+    +getAction() ActionType
+    +getPayload() Object
+  }
+
+  class Response {
+    -StatusType status
+    -String message
+    -Object data
+    +Response(status, message, data)
+    +getStatus() StatusType
+    +getMessage() String
+    +getData() Object
+  }
+
+  class ActionType {
+    &lt;&lt;enumeration&gt;&gt;
+    LOGIN · REGISTER · LOGOUT
+    CREATE_AUCTION · GET_AUCTION_LIST
+    UPDATE_AUCTION · CANCEL_AUCTION
+    PLACE_BID · SET_AUTOBID
+    GET_USER_LIST · BAN_USER
+    APPROVE_AUCTION · REJECT_AUCTION
+    DEPOSIT · WITHDRAW · UPDATE_PROFILE
+    BROADCAST_BID_UPDATE
+    BROADCAST_AUCTION_END
+    SELLER_BALANCE_UPDATE
+  }
+
+  class StatusType {
+    &lt;&lt;enumeration&gt;&gt;
+    SUCCESS
+    ERROR
+    UNAUTHORIZED
+  }
+
+  class BidPayload {
+    -String auctionId
+    -double amount
+    +BidPayload(auctionId, amount)
+  }
+
+  class AutoBidPayload {
+    -String auctionId
+    -double maxBid
+    -double increment
+    +AutoBidPayload(auctionId, maxBid, increment)
+  }
+
+  class LoginResponse {
+    -User user
+    -String role
+    +LoginResponse(user, role)
+    +getUser() User
+    +getRole() String
+  }
+
+  %% ─── EXCEPTION HIERARCHY ───
+  class AuctionException {
+    +AuctionException()
+    +AuctionException(message String)
+  }
+
+  class AuctionClosedException {
+    +AuctionClosedException(message String)
+  }
+
+  class AuctionFinishedException {
+    +AuctionFinishedException(message String)
+  }
+
+  class InvalidBidException {
+    -double currentBid
+    -double attemptedBid
+    +InvalidBidException(message String)
+    +InvalidBidException(msg, current, attempted)
+  }
+
+  class InsufficientBalanceException {
+    -double available
+    -double required
+    +InsufficientBalanceException(msg, available, required)
+  }
+
+  class InvalidAuctionException {
+    +InvalidAuctionException(message String)
+  }
+
+  class AuthenticationException {
+    +AuthenticationException(message String)
+  }
+
+  %% ─── SERVER LAYER ───
+  class ServerApp {
+    &lt;&lt;application&gt;&gt;
+    -ServerSocket serverSocket
+    -static IAuctionDAO auctionDAO
+    -ScheduledExecutorService scheduler
+    +main(args String[])$
+    +start()
+    +getAuctionDAO() IAuctionDAO$
+    +scheduleAutoLive(auction Auction)
+    +finishAuction(auction Auction)
+  }
+
+  class ClientHandler {
+    -Socket clientSocket
+    -ObjectInputStream in
+    -ObjectOutputStream out
+    -User currentUser
+    +run()
+    +handleLogin(req Request) Response
+    +handlePlaceBid(req Request) Response
+    +handleApproveAuction(req Request) Response
+    +handleRejectAuction(req Request) Response
+    +handleCreateAuction(req Request) Response
+    +broadcastBidUpdate(auctionId, amount, winner)
+    +sendResponse(resp Response)
+  }
+
+  class NetworkClient {
+    &lt;&lt;singleton&gt;&gt;
+    -Socket socket
+    -static NetworkClient instance
+    -int reconnectAttempts
+    +getInstance() NetworkClient$
+    +sendRequest(req Request) Response
+    +connect(host, port)
+    +disconnect()
+    +autoReconnect()
+  }
+
+  %% ─── RELATIONSHIPS — DAO ───
+  IGenericDAO~T~ <|-- IAuctionDAO  : extends
+  IAuctionDAO ..|> AuctionDAOImpl  : implements
+  IGenericDAO~T~ ..|> UserDAOImpl  : implements
+  AuctionManager --> IAuctionDAO   : uses
+  AuctionManager --> ServerApp     : getAuctionDAO()
+
+  %% ─── RELATIONSHIPS — PROTOCOL ───
+  Request  --> ActionType  : action
+  Response --> StatusType  : status
+  BidPayload --|> Request  : payload type
+  AutoBidPayload --|> Request : payload type
+  LoginResponse --|> Response : data type
+
+  %% ─── RELATIONSHIPS — EXCEPTION ───
+  Exception <|-- AuctionException        : extends
+  Exception <|-- AuthenticationException : extends
+  AuctionException <|-- AuctionClosedException  : extends
+  AuctionException <|-- AuctionFinishedException : extends
+  AuctionException <|-- InvalidBidException      : extends
+  AuctionException <|-- InsufficientBalanceException : extends
+  AuctionException <|-- InvalidAuctionException  : extends
+
+  %% ─── RELATIONSHIPS — SERVER ───
+  ServerApp    "1" o-- "*" ClientHandler : manages
+  ClientHandler --> Request  : receives
+  ClientHandler --> Response : sends
+  ClientHandler --> UserManager   : uses
+  ClientHandler --> AuctionManager : uses
+  NetworkClient --> Request  : sends
+  NetworkClient --> Response : receives
+    </div>
+  </div>
+
+  <div class="pf">
+    <span>BidPrecision — Class Diagram (Full)</span>
+    <span>Trang 2 / 2 · Infrastructure (DAO · Manager · Protocol · Exception · Server)</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+</body>
+</html>

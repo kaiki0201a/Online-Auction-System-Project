@@ -118,8 +118,8 @@ public class BidderDashboardController {
         }
         if ("CONNECTION_FAILED".equals(msg)) {
             showConnectionAlert("❌ Mất kết nối", response.getData() != null
-                    ? response.getData().toString()
-                    : "Không thể kết nối tới server. Vui lòng khởi động lại ứng dụng.",
+                            ? response.getData().toString()
+                            : "Không thể kết nối tới server. Vui lòng khởi động lại ứng dụng.",
                     javafx.scene.control.Alert.AlertType.ERROR);
             return;
         }
@@ -133,8 +133,8 @@ public class BidderDashboardController {
                 updateBalance();
                 showConnectionAlert("💸 Hoàn tiền",
                         "Phiên đấu giá vừa bị Admin hủy.\n"
-                        + "Số tiền đặt cọc đã được hoàn lại vào ví của bạn!\n"
-                        + "Số dư hiện tại: " + com.auction.utils.CurrencyFormatter.format(newBalance),
+                                + "Số tiền đặt cọc đã được hoàn lại vào ví của bạn!\n"
+                                + "Số dư hiện tại: " + com.auction.utils.CurrencyFormatter.format(newBalance),
                         javafx.scene.control.Alert.AlertType.INFORMATION);
                 NetworkClient.getInstance().sendRequest(new Request(ActionType.GET_AUCTION_LIST, null));
             }
@@ -167,13 +167,21 @@ public class BidderDashboardController {
                 try {
                     Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
                     Stage stage = (Stage) rootPane.getScene().getWindow();
-                    stage.setScene(new Scene(root, 900, 600));
+                    double _w = stage.getWidth();
+                    double _h = stage.getHeight();
+                    double _x = stage.getX();
+                    double _y = stage.getY();
+                    stage.setScene(new Scene(root));
+                    stage.setWidth(_w);
+                    stage.setHeight(_h);
+                    stage.setX(_x);
+                    stage.setY(_y);
                     javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-                        javafx.scene.control.Alert.AlertType.WARNING);
+                            javafx.scene.control.Alert.AlertType.WARNING);
                     alert.setTitle("⚠️ Tài khoản bị khóa");
                     alert.setHeaderText(null);
                     alert.setContentText("🚫 Tài khoản của bạn đã bị Admin khóa.\n"
-                        + "Bạn đã được đăng xuất tự động.");
+                            + "Bạn đã được đăng xuất tự động.");
                     alert.show();
                 } catch (IOException ex) { ex.printStackTrace(); }
             }
@@ -191,10 +199,10 @@ public class BidderDashboardController {
 
             // FIX: Đếm RUNNING + APPROVED cho số liệu thị trường
             long activeCount = auctionData.stream()
-                .filter(a -> a.getStatus() == AuctionStatus.RUNNING
-                          || a.getStatus() == AuctionStatus.APPROVED
-                          || a.getStatus() == AuctionStatus.OPEN)
-                .count();
+                    .filter(a -> a.getStatus() == AuctionStatus.RUNNING
+                            || a.getStatus() == AuctionStatus.APPROVED
+                            || a.getStatus() == AuctionStatus.OPEN)
+                    .count();
             if (lblStat != null)
                 lblStat.setText("Thị trường đang hoạt động · " + activeCount + " phiên đấu giá");
 
@@ -258,11 +266,11 @@ public class BidderDashboardController {
         if (tableRecentBids == null) return;
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM HH:mm");
         colItem.setCellValueFactory(d ->
-            new SimpleStringProperty(d.getValue().getAuction().getItem().getNameItem()));
+                new SimpleStringProperty(d.getValue().getAuction().getItem().getNameItem()));
         colDate.setCellValueFactory(d ->
-            new SimpleStringProperty(d.getValue().getTimestamp().format(dtf)));
+                new SimpleStringProperty(d.getValue().getTimestamp().format(dtf)));
         colAmount.setCellValueFactory(d ->
-            new SimpleStringProperty(CurrencyFormatter.format(d.getValue().getBidAmount())));
+                new SimpleStringProperty(CurrencyFormatter.format(d.getValue().getBidAmount())));
         colStatus.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue()));
         colStatus.setCellFactory(tc -> new TableCell<>() {
             @Override protected void updateItem(BidTransaction tx, boolean empty) {
@@ -270,7 +278,7 @@ public class BidderDashboardController {
                 if (empty || tx == null) { setGraphic(null); return; }
                 Auction a = tx.getAuction();
                 boolean win = a.getHighestBidder() != null &&
-                    a.getHighestBidder().getUserName().equals(currentUser.getUserName());
+                        a.getHighestBidder().getUserName().equals(currentUser.getUserName());
                 boolean done = a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID;
                 Label badge = new Label();
                 if (done) {
@@ -302,13 +310,13 @@ public class BidderDashboardController {
 
         // FIX: Include RUNNING + APPROVED + OPEN trong market view
         List<Auction> filtered = auctionData.stream()
-            .filter(a -> a.getStatus() == AuctionStatus.RUNNING
-                      || a.getStatus() == AuctionStatus.OPEN
-                      || a.getStatus() == AuctionStatus.APPROVED)
-            .filter(a -> a.getItem().getNameItem().toLowerCase().contains(kw))
-            .filter(a -> "Tất cả".equals(cat) || a.getItem().getClass().getSimpleName().equals(cat))
-            .limit(3)
-            .collect(Collectors.toList());
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING
+                        || a.getStatus() == AuctionStatus.OPEN
+                        || a.getStatus() == AuctionStatus.APPROVED)
+                .filter(a -> a.getItem().getNameItem().toLowerCase().contains(kw))
+                .filter(a -> "Tất cả".equals(cat) || a.getItem().getClass().getSimpleName().equals(cat))
+                .limit(3)
+                .collect(Collectors.toList());
 
         if (filtered.isEmpty()) {
             Label empty = new Label("Hiện chưa có phiên đấu giá nào đang hoặc sắp diễn ra.");
@@ -361,8 +369,8 @@ public class BidderDashboardController {
         boolean isApproved = auction.getStatus() == AuctionStatus.APPROVED;
         Label badgeLive = new Label(isApproved ? "📅 SẮP DIỄN RA" : "🔴 ĐANG ĐẤU GIÁ");
         badgeLive.setStyle("-fx-background-color:" + (isApproved ? "rgba(52,152,219,0.2)" : "rgba(245,197,24,0.2)") +
-            ";-fx-text-fill:" + (isApproved ? "#3498db" : "#F5C518") +
-            ";-fx-font-size:10px;-fx-padding:3 8;-fx-background-radius:4;-fx-font-weight:bold;");
+                ";-fx-text-fill:" + (isApproved ? "#3498db" : "#F5C518") +
+                ";-fx-font-size:10px;-fx-padding:3 8;-fx-background-radius:4;-fx-font-weight:bold;");
         StackPane.setAlignment(badgeLive, Pos.TOP_LEFT);
         StackPane.setMargin(badgeLive, new Insets(10));
         imgBox.getChildren().add(badgeLive);
@@ -370,7 +378,7 @@ public class BidderDashboardController {
         // Timer đếm ngược
         Label lblTimer = new Label();
         lblTimer.setStyle("-fx-background-color:rgba(0,0,0,0.7);-fx-text-fill:white;" +
-            "-fx-font-size:11px;-fx-padding:3 8;-fx-background-radius:4;-fx-font-weight:bold;");
+                "-fx-font-size:11px;-fx-padding:3 8;-fx-background-radius:4;-fx-font-weight:bold;");
         lblTimer.setUserData(auction);
         timerLabels.add(lblTimer);
         StackPane.setAlignment(lblTimer, Pos.TOP_RIGHT);
@@ -382,12 +390,12 @@ public class BidderDashboardController {
         info.setPadding(new Insets(16));
 
         Label lblId = new Label("LÔ " + auction.getAuctionId().substring(0, 6).toUpperCase() + " · " +
-            auction.getItem().getClass().getSimpleName().toUpperCase());
+                auction.getItem().getClass().getSimpleName().toUpperCase());
         lblId.setStyle("-fx-text-fill:#666;-fx-font-size:10px;-fx-font-weight:bold;");
 
         Label lblTitle = new Label(auction.getItem().getNameItem());
         lblTitle.setStyle("-fx-text-fill:#FFF;-fx-font-weight:bold;-fx-font-size:" +
-            (isBig ? "19" : "14") + "px;");
+                (isBig ? "19" : "14") + "px;");
         lblTitle.setWrapText(true);
 
         Label lblSeller = new Label("Người bán: " + auction.getSeller().getUserName());
@@ -400,7 +408,7 @@ public class BidderDashboardController {
         lp.setStyle("-fx-text-fill:#666;-fx-font-size:9px;");
         Label lv = new Label(CurrencyFormatter.format(auction.getCurrentHighestBid()));
         lv.setStyle("-fx-text-fill:#F5C518;-fx-font-weight:bold;-fx-font-size:" +
-            (isBig ? "20" : "15") + "px;");
+                (isBig ? "20" : "15") + "px;");
         priceCol.getChildren().addAll(lp, lv);
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
 
@@ -441,16 +449,16 @@ public class BidderDashboardController {
                 if (isApproved) {
                     lbl.setText("BẮT ĐẦU");
                     lbl.setStyle("-fx-background-color:rgba(39,174,96,0.8);-fx-text-fill:white;" +
-                        "-fx-font-size:11px;-fx-padding:3 8;-fx-background-radius:4;");
+                            "-fx-font-size:11px;-fx-padding:3 8;-fx-background-radius:4;");
                 } else {
                     lbl.setText("KẾT THÚC");
                     lbl.setStyle("-fx-background-color:rgba(231,76,60,0.8);-fx-text-fill:white;" +
-                        "-fx-font-size:11px;-fx-padding:3 8;-fx-background-radius:4;");
+                            "-fx-font-size:11px;-fx-padding:3 8;-fx-background-radius:4;");
                 }
             } else {
                 String prefix = isApproved ? "BĐ: " : "";
                 lbl.setText(prefix + String.format("%02d:%02d:%02d",
-                    secs / 3600, (secs % 3600) / 60, secs % 60));
+                        secs / 3600, (secs % 3600) / 60, secs % 60));
             }
         }
     }
@@ -469,8 +477,15 @@ public class BidderDashboardController {
             AuctionDetailController ctrl = loader.getController();
             ctrl.setAuctionData(auction);
             Stage stage = (Stage) rootPane.getScene().getWindow();
-            stage.setScene(new Scene(root, 1280, 820));
-            stage.centerOnScreen();
+            double _w2 = stage.getWidth();
+            double _h2 = stage.getHeight();
+            double _x2 = stage.getX();
+            double _y2 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w2);
+            stage.setHeight(_h2);
+            stage.setX(_x2);
+            stage.setY(_y2);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -492,7 +507,15 @@ public class BidderDashboardController {
             NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/AuctionList.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 1280, 800));
+            double _w3 = stage.getWidth();
+            double _h3 = stage.getHeight();
+            double _x3 = stage.getX();
+            double _y3 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w3);
+            stage.setHeight(_h3);
+            stage.setX(_x3);
+            stage.setY(_y3);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -500,7 +523,15 @@ public class BidderDashboardController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/DepositWithdraw.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 900, 650));
+            double _w4 = stage.getWidth();
+            double _h4 = stage.getHeight();
+            double _x4 = stage.getX();
+            double _y4 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w4);
+            stage.setHeight(_h4);
+            stage.setX(_x4);
+            stage.setY(_y4);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -510,7 +541,15 @@ public class BidderDashboardController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Settings.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 600, 530));
+            double _w5 = stage.getWidth();
+            double _h5 = stage.getHeight();
+            double _x5 = stage.getX();
+            double _y5 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w5);
+            stage.setHeight(_h5);
+            stage.setX(_x5);
+            stage.setY(_y5);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -519,7 +558,15 @@ public class BidderDashboardController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Settings.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 600, 530));
+            double _w5 = stage.getWidth();
+            double _h5 = stage.getHeight();
+            double _x5 = stage.getX();
+            double _y5 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w5);
+            stage.setHeight(_h5);
+            stage.setX(_x5);
+            stage.setY(_y5);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -531,7 +578,15 @@ public class BidderDashboardController {
             UserProfileController ctrl = loader.getController();
             ctrl.setUserData(currentUser);
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 860, 670));
+            double _w6 = stage.getWidth();
+            double _h6 = stage.getHeight();
+            double _x6 = stage.getX();
+            double _y6 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w6);
+            stage.setHeight(_h6);
+            stage.setX(_x6);
+            stage.setY(_y6);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -542,8 +597,15 @@ public class BidderDashboardController {
             NetworkClient.getInstance().removeEventListener(LISTENER_KEY);
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/MyAuctions.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 1280, 800));
-            stage.centerOnScreen();
+            double _w7 = stage.getWidth();
+            double _h7 = stage.getHeight();
+            double _x7 = stage.getX();
+            double _y7 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w7);
+            stage.setHeight(_h7);
+            stage.setX(_x7);
+            stage.setY(_y7);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -555,7 +617,15 @@ public class BidderDashboardController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 900, 600));
+            double _w8 = stage.getWidth();
+            double _h8 = stage.getHeight();
+            double _x8 = stage.getX();
+            double _y8 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w8);
+            stage.setHeight(_h8);
+            stage.setX(_x8);
+            stage.setY(_y8);
         } catch (IOException e) { e.printStackTrace(); }
     }
 }
