@@ -4,6 +4,18 @@
 
 ---
 
+
+#👥 Thành viên nhóm
+
+| STT | Họ và tên           | MSSV       | Phần đảm nhiệm |
+|-----|---------------------|------------|----------------|
+| 1 | _Nguyễn Thanh Hiếu_ | _25020153_ | _[Ví dụ: Server, Model, Auto-Bid]_ |
+| 2 | _Hoàng Viết Hoàng_  | _25020160_ | _[Ví dụ: GUI, Controller, CSS]_ |
+| 3 | _Trần Tuấn Điệp_    | _25020123_ | _[Ví dụ: DAO, Tests, Protocol]_ |
+| 4 | _Nguyễn Quang Huy_ | _25020183_ | |
+
+---
+
 ## 📋 Mô tả bài toán
 
 **BidPrecision** là một hệ thống đấu giá trực tuyến đa người dùng hoạt động theo mô hình **Client-Server**. Người dùng có thể đăng ký, đăng sản phẩm đấu giá, tham gia đặt giá theo thời gian thực và thực hiện các giao dịch tài chính trong hệ thống.
@@ -425,16 +437,3 @@ flowchart TD
 |-----------|-----------|
 | 📄 Báo cáo PDF | _[Thêm link Google Drive / GitHub báo cáo PDF tại đây]_ |
 | 🎬 Video demo | _[Thêm link YouTube / Google Drive video demo tại đây]_ |
-
----
-
-## 👥 Thành viên nhóm
-
-| STT | Họ và tên           | MSSV       | Phần đảm nhiệm |
-|-----|---------------------|------------|----------------|
-| 1 | _Nguyễn Thanh Hiếu_ | _25020153_ | _[Ví dụ: Server, Model, Auto-Bid]_ |
-| 2 | _Hoàng Viết Hoàng_  | _25020160_ | _[Ví dụ: GUI, Controller, CSS]_ |
-| 3 | _Trần Tuấn Điệp_    | _25020123_ | _[Ví dụ: DAO, Tests, Protocol]_ |
-| 4 | _Nguyễn Quang Huy_ | _25020183_ | |
-
----
