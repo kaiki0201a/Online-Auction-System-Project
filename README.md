@@ -7,12 +7,12 @@
 
 #👥 Thành viên nhóm
 
-| STT | Họ và tên           | MSSV       | Phần đảm nhiệm |
-|-----|---------------------|------------|----------------|
-| 1 | _Nguyễn Thanh Hiếu_ | _25020153_ | _[Ví dụ: Server, Model, Auto-Bid]_ |
-| 2 | _Hoàng Viết Hoàng_  | _25020160_ | _[Ví dụ: GUI, Controller, CSS]_ |
-| 3 | _Trần Tuấn Điệp_    | _25020123_ | _[Ví dụ: DAO, Tests, Protocol]_ |
-| 4 | _Nguyễn Quang Huy_ | _25020183_ | |
+| STT | Họ và tên           | MSSV       |
+|-----|---------------------|------------|
+| 1 | _Nguyễn Thanh Hiếu_ | _25020153_ | 
+| 2 | _Hoàng Viết Hoàng_  | _25020160_ | 
+| 3 | _Trần Tuấn Điệp_    | _25020123_ | 
+| 4 | _Nguyễn Quang Huy_ | _25020183_ |
 
 ---
 
