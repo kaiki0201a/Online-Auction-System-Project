@@ -91,7 +91,15 @@ public class SettingsController {
                             Stage stage = (Stage) (rootPane.getScene() != null
                                     ? rootPane.getScene().getWindow() : null);
                             if (stage != null) {
-                                stage.setScene(new Scene(root, 900, 600));
+                                double _w = stage.getWidth();
+                                double _h = stage.getHeight();
+                                double _x = stage.getX();
+                                double _y = stage.getY();
+                                stage.setScene(new Scene(root));
+                                stage.setWidth(_w);
+                                stage.setHeight(_h);
+                                stage.setX(_x);
+                                stage.setY(_y);
                                 javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
                                         javafx.scene.control.Alert.AlertType.WARNING);
                                 alert.setTitle("⚠️ Tài khoản bị khóa");
@@ -189,7 +197,15 @@ public class SettingsController {
             // Always go back to UserProfile (which is the hub for account management)
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/UserProfile.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 500, 720));
+            double _w2 = stage.getWidth();
+            double _h2 = stage.getHeight();
+            double _x2 = stage.getX();
+            double _y2 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w2);
+            stage.setHeight(_h2);
+            stage.setX(_x2);
+            stage.setY(_y2);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UML Diagrams — BidPrecision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+
+/* ─────────────────────────────────────────────────────────────
+   PRINT CONFIG
+───────────────────────────────────────────────────────────── */
+@page { size: A4 landscape; margin: 0; }
+
+@media print {
+  html, body { background: white !important; }
+  .page { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
+  .page-break { page-break-before: always; }
+  .print-hide { display: none !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────────────────────────────── */
+:root {
+  --navy:    #0f2744;
+  --navy-2:  #1a3a5c;
+  --blue:    #1d6fa4;
+  --blue-lt: #e8f4fd;
+  --gold:    #d4a017;
+  --gold-lt: #fef9ec;
+  --green:   #1a7a4a;
+  --green-lt:#edfbf3;
+  --red:     #b91c1c;
+  --red-lt:  #fef2f2;
+  --gray:    #64748b;
+  --gray-lt: #f1f5f9;
+  --border:  #cbd5e1;
+  --white:   #ffffff;
+  --text:    #1e293b;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BASE
+───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background: #dde3ed;
+  color: var(--text);
+  font-size: 10pt;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PAGE — Landscape A4 = 297mm × 210mm
+───────────────────────────────────────────────────────────── */
+.page {
+  width: 297mm;
+  height: 210mm;
+  margin: 10px auto;
+  background: var(--white);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── HEADER ── */
+.page-header {
+  background: var(--navy);
+  padding: 0 8mm;
+  height: 14mm;
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  border-bottom: 3px solid var(--gold);
+}
+
+.ph-badge {
+  background: var(--gold);
+  color: var(--navy);
+  font-weight: 800;
+  font-size: 9pt;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+.ph-title {
+  color: var(--white);
+  font-weight: 700;
+  font-size: 13pt;
+  letter-spacing: .3px;
+}
+
+.ph-sub {
+  color: #90aec8;
+  font-size: 8.5pt;
+  margin-left: auto;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* ── BODY ── */
+.page-body {
+  padding: 5mm 7mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.page-body.top { align-items: flex-start; }
+.page-body.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5mm;
+  align-items: stretch;
+}
+.page-body.split3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4mm;
+  align-items: stretch;
+}
+
+/* ── FOOTER ── */
+.page-footer {
+  background: var(--gray-lt);
+  border-top: 1px solid var(--border);
+  height: 7mm;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8mm;
+  font-size: 7.5pt;
+  color: var(--gray);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DIAGRAM PANEL
+───────────────────────────────────────────────────────────── */
+.panel {
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  height: 100%;
+}
+
+.panel-title {
+  background: var(--navy-2);
+  color: var(--white);
+  font-size: 9pt;
+  font-weight: 600;
+  padding: 2.5mm 4mm;
+  letter-spacing: .3px;
+  flex-shrink: 0;
+}
+
+.panel-body {
+  flex: 1;
+  padding: 4mm;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafbff;
+}
+.panel-body.top { align-items: flex-start; }
+
+/* ─────────────────────────────────────────────────────────────
+   MERMAID
+───────────────────────────────────────────────────────────── */
+.mermaid { width: 100%; }
+.mermaid svg { max-width: 100% !important; height: auto !important; }
+
+/* ─────────────────────────────────────────────────────────────
+   SVG WRAPPER
+───────────────────────────────────────────────────────────── */
+.svg-fill { width: 100%; height: 100%; }
+.svg-fill svg { width: 100%; height: 100%; }
+
+/* ─────────────────────────────────────────────────────────────
+   COVER PAGE
+───────────────────────────────────────────────────────────── */
+.cover {
+  width: 297mm;
+  height: 210mm;
+  margin: 10px auto;
+  background: linear-gradient(145deg, #0a1e38 0%, #0f2744 40%, #1a3a5c 80%, #0d3a6e 100%);
+  display: grid;
+  grid-template-columns: 52mm 1fr;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,.25);
+}
+
+.cover-left {
+  border-right: 1px solid rgba(255,255,255,.1);
+  padding: 10mm 7mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3mm;
+  background: rgba(0,0,0,.15);
+}
+
+.cover-icon { font-size: 38pt; }
+
+.cover-proj {
+  font-size: 16pt;
+  font-weight: 900;
+  color: #FFD700;
+  letter-spacing: 2px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.cover-line {
+  width: 32mm;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #FFD700, transparent);
+}
+
+.cover-sub {
+  font-size: 8pt;
+  color: #9cb8d8;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.cover-right {
+  padding: 8mm 10mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4mm;
+}
+
+.cover-doc-label {
+  font-size: 8pt;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.cover-doc-title {
+  font-size: 20pt;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.cover-meta {
+  display: flex;
+  gap: 6mm;
+  margin-top: 2mm;
+}
+
+.cover-meta-chip {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 4px;
+  padding: 2mm 4mm;
+  font-size: 8pt;
+  color: #b8d4f0;
+}
+
+.toc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5mm;
+  margin-top: 3mm;
+}
+
+.toc-row {
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+  padding: 2mm 3mm;
+  background: rgba(255,255,255,.05);
+  border-radius: 4px;
+  border-left: 2.5px solid var(--gold);
+}
+
+.toc-num {
+  font-size: 9pt;
+  font-weight: 800;
+  color: var(--gold);
+  min-width: 5mm;
+}
+
+.toc-text { font-size: 8.5pt; color: #c8ddf0; line-height: 1.35; }
+
+.cover-team {
+  margin-top: 4mm;
+  padding-top: 3mm;
+  border-top: 1px solid rgba(255,255,255,.1);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5mm;
+}
+
+.team-row {
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+  font-size: 8pt;
+  color: #9cb8d8;
+}
+
+.team-name { color: #e0edf8; font-weight: 600; }
+
+</style>
+</head>
+<body>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'base',
+  themeVariables: {
+    background: '#fafbff',
+    primaryColor: '#dbeafe',
+    primaryTextColor: '#1e293b',
+    primaryBorderColor: '#3b82f6',
+    lineColor: '#334155',
+    secondaryColor: '#fef3c7',
+    tertiaryColor: '#ecfdf5',
+    edgeLabelBackground: '#ffffff',
+    clusterBkg: '#f8fafc',
+    clusterBorder: '#cbd5e1',
+    titleColor: '#0f2744',
+    fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
+    fontSize: '13px',
+    labelBackground: '#ffffff',
+  },
+  sequence: {
+    actorMargin: 50,
+    width: 120,
+    height: 44,
+    boxMargin: 8,
+    messageMargin: 28,
+    mirrorActors: false,
+    useMaxWidth: true,
+    diagramMarginX: 10,
+    diagramMarginY: 8,
+    noteMargin: 10,
+    activationWidth: 12,
+  },
+  flowchart: {
+    useMaxWidth: true,
+    htmlLabels: true,
+    curve: 'basis',
+    padding: 12,
+    rankSpacing: 42,
+    nodeSpacing: 28,
+  },
+  classDiagram: { useMaxWidth: true },
+  stateDiagram: { useMaxWidth: true },
+});
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COVER
+═══════════════════════════════════════════════════════════ -->
+<div class="cover page-break">
+  <div class="cover-left">
+    <div class="cover-icon">🏛️</div>
+    <div class="cover-proj">BidPrecision</div>
+    <div class="cover-line"></div>
+    <div class="cover-sub">Online Auction System<br/>Java 17 · JavaFX 21 · TCP Socket</div>
+  </div>
+  <div class="cover-right">
+    <div>
+      <div class="cover-doc-label">Tài liệu kỹ thuật</div>
+      <div class="cover-doc-title">Bộ Sơ Đồ UML<br/>Hệ Thống Đấu Giá</div>
+    </div>
+    <div class="cover-meta">
+      <div class="cover-meta-chip">📚 Môn: Lập Trình Nâng Cao</div>
+      <div class="cover-meta-chip">📅 2025 – 2026</div>
+      <div class="cover-meta-chip">📄 9 diagrams</div>
+    </div>
+    <div class="toc-grid">
+      <div class="toc-row"><span class="toc-num">01</span><span class="toc-text">Use Case Diagram</span></div>
+      <div class="toc-row"><span class="toc-num">02</span><span class="toc-text">Class Diagram</span></div>
+      <div class="toc-row"><span class="toc-num">03</span><span class="toc-text">Sequence — Login</span></div>
+      <div class="toc-row"><span class="toc-num">04</span><span class="toc-text">Sequence — Place Bid</span></div>
+      <div class="toc-row"><span class="toc-num">05</span><span class="toc-text">Sequence — Approve Auction</span></div>
+      <div class="toc-row"><span class="toc-num">06</span><span class="toc-text">Activity — Create Auction</span></div>
+      <div class="toc-row"><span class="toc-num">07</span><span class="toc-text">Activity — Place Bid</span></div>
+      <div class="toc-row"><span class="toc-num">08</span><span class="toc-text">State — Auction Lifecycle</span></div>
+      <div class="toc-row"><span class="toc-num">09</span><span class="toc-text">Deployment Diagram</span></div>
+    </div>
+    <div class="cover-team">
+      <div class="team-row">👤 <span class="team-name">Nguyễn Thanh Hiếu</span>&nbsp;— 25020153</div>
+      <div class="team-row">👤 <span class="team-name">Hoàng Viết Hoàng</span>&nbsp;— 25020160</div>
+      <div class="team-row">👤 <span class="team-name">Trần Tuấn Điệp</span>&nbsp;— 25020123</div>
+      <div class="team-row">👤 <span class="team-name">Nguyễn Quang Huy</span>&nbsp;— 25020183</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     01 — USE CASE DIAGRAM
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="ph-badge">Diagram 01</span>
+    <span class="ph-title">Use Case Diagram</span>
+    <span class="ph-sub">Tổng quan tác nhân và chức năng hệ thống BidPrecision</span>
+  </div>
+  <div class="page-body">
+    <div class="svg-fill">
+<svg viewBox="0 0 820 148" xmlns="http://www.w3.org/2000/svg"
+     font-family="'Inter','Segoe UI',Arial,sans-serif" font-size="9">
+
+  <defs>
+    <marker id="a1" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L7,3z" fill="#64748b"/>
+    </marker>
+    <marker id="a2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L7,3z" fill="#2563eb"/>
+    </marker>
+  </defs>
+
+  <!-- ── SYSTEM BOUNDARY ── -->
+  <rect x="92" y="5" width="636" height="138" rx="8"
+        fill="#f8faff" stroke="#1d4ed8" stroke-width="1.8" stroke-dasharray="5,3"/>
+  <text x="410" y="17" text-anchor="middle" font-size="8.5" font-weight="700" fill="#1d4ed8">
+    «system»  BidPrecision — Online Auction System
+  </text>
+
+  <!-- ══════ ACTOR: GUEST ══════ -->
+  <circle cx="20" cy="40" r="7" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="20" y1="47" x2="20" y2="64" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="20" y1="53" x2="10" y2="61" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="20" y1="53" x2="30" y2="61" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="20" y1="64" x2="13" y2="76" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="20" y1="64" x2="27" y2="76" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="20" y="86" text-anchor="middle" font-size="8" font-weight="600" fill="#64748b">Guest</text>
+
+  <!-- ══════ ACTOR: BIDDER ══════ -->
+  <circle cx="20" cy="100" r="7" fill="none" stroke="#2563eb" stroke-width="1.8"/>
+  <line x1="20" y1="107" x2="20" y2="124" stroke="#2563eb" stroke-width="1.8"/>
+  <line x1="20" y1="113" x2="10" y2="121" stroke="#2563eb" stroke-width="1.8"/>
+  <line x1="20" y1="113" x2="30" y2="121" stroke="#2563eb" stroke-width="1.8"/>
+  <line x1="20" y1="124" x2="13" y2="136" stroke="#2563eb" stroke-width="1.8"/>
+  <line x1="20" y1="124" x2="27" y2="136" stroke="#2563eb" stroke-width="1.8"/>
+  <text x="20" y="146" text-anchor="middle" font-size="8" font-weight="700" fill="#2563eb">Bidder</text>
+
+  <!-- ══════ ACTOR: SELLER ══════ -->
+  <circle cx="56" cy="128" r="7" fill="none" stroke="#059669" stroke-width="1.8"/>
+  <line x1="56" y1="135" x2="56" y2="152" stroke="#059669" stroke-width="1.8"/>
+  <line x1="56" y1="141" x2="46" y2="149" stroke="#059669" stroke-width="1.8"/>
+  <line x1="56" y1="141" x2="66" y2="149" stroke="#059669" stroke-width="1.8"/>
+  <!-- (legs hidden below viewport, ok) -->
+  <text x="56" y="146" text-anchor="middle" font-size="8" font-weight="700" fill="#059669">Seller</text>
+
+  <!-- ══════ ACTOR: ADMIN ══════ -->
+  <circle cx="800" cy="70" r="7" fill="none" stroke="#dc2626" stroke-width="1.8"/>
+  <line x1="800" y1="77" x2="800" y2="94" stroke="#dc2626" stroke-width="1.8"/>
+  <line x1="800" y1="83" x2="790" y2="91" stroke="#dc2626" stroke-width="1.8"/>
+  <line x1="800" y1="83" x2="810" y2="91" stroke="#dc2626" stroke-width="1.8"/>
+  <line x1="800" y1="94" x2="793" y2="106" stroke="#dc2626" stroke-width="1.8"/>
+  <line x1="800" y1="94" x2="807" y2="106" stroke="#dc2626" stroke-width="1.8"/>
+  <text x="800" y="116" text-anchor="middle" font-size="8" font-weight="700" fill="#dc2626">Admin</text>
+
+  <!-- ══════ USE CASE GROUP 1: ACCOUNT (top center) ══════ -->
+  <rect x="98" y="22" width="140" height="118" rx="6" fill="#f0f4ff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="168" y="33" text-anchor="middle" font-size="7.5" font-weight="700" fill="#1d4ed8">Account Management</text>
+
+  <!-- UCs in group 1 -->
+  <ellipse cx="168" cy="48" rx="52" ry="10" fill="white" stroke="#1d4ed8" stroke-width="1.2"/>
+  <text x="168" y="51" text-anchor="middle" font-size="8" fill="#0f172a">Register</text>
+
+  <ellipse cx="168" cy="72" rx="52" ry="10" fill="white" stroke="#1d4ed8" stroke-width="1.2"/>
+  <text x="168" y="75" text-anchor="middle" font-size="8" fill="#0f172a">Login / Logout</text>
+
+  <ellipse cx="168" cy="96" rx="52" ry="10" fill="white" stroke="#1d4ed8" stroke-width="1.2"/>
+  <text x="168" y="99" text-anchor="middle" font-size="8" fill="#0f172a">Update Profile</text>
+
+  <ellipse cx="168" cy="120" rx="52" ry="10" fill="white" stroke="#1d4ed8" stroke-width="1.2"/>
+  <text x="168" y="123" text-anchor="middle" font-size="8" fill="#0f172a">Deposit / Withdraw</text>
+
+  <!-- ══════ USE CASE GROUP 2: BIDDER ══════ -->
+  <rect x="258" y="22" width="145" height="118" rx="6" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="330" y="33" text-anchor="middle" font-size="7.5" font-weight="700" fill="#1d4ed8">Bidder Actions</text>
+
+  <ellipse cx="330" cy="48" rx="58" ry="10" fill="white" stroke="#1d4ed8" stroke-width="1.2"/>
+  <text x="330" y="51" text-anchor="middle" font-size="8" fill="#0f172a">View Auction List</text>
+
+  <ellipse cx="330" cy="72" rx="58" ry="10" fill="white" stroke="#1d4ed8" stroke-width="1.2"/>
+  <text x="330" y="75" text-anchor="middle" font-size="8" fill="#0f172a">Search &amp; Filter</text>
+
+  <ellipse cx="330" cy="96" rx="58" ry="10" fill="#fef9ec" stroke="#d97706" stroke-width="1.8"/>
+  <text x="330" y="99" text-anchor="middle" font-size="8" font-weight="700" fill="#92400e">Place Bid (Manual)</text>
+
+  <ellipse cx="330" cy="120" rx="58" ry="10" fill="#fef9ec" stroke="#d97706" stroke-width="1.8"/>
+  <text x="330" y="123" text-anchor="middle" font-size="8" font-weight="700" fill="#92400e">Setup Auto-Bid</text>
+
+  <!-- ══════ USE CASE GROUP 3: SELLER ══════ -->
+  <rect x="416" y="22" width="145" height="118" rx="6" fill="#f0fdf4" stroke="#6ee7b7" stroke-width="1"/>
+  <text x="488" y="33" text-anchor="middle" font-size="7.5" font-weight="700" fill="#059669">Seller Actions</text>
+
+  <ellipse cx="488" cy="48" rx="58" ry="10" fill="white" stroke="#059669" stroke-width="1.2"/>
+  <text x="488" y="51" text-anchor="middle" font-size="8" fill="#0f172a">Create Auction</text>
+
+  <ellipse cx="488" cy="72" rx="58" ry="10" fill="white" stroke="#059669" stroke-width="1.2"/>
+  <text x="488" y="75" text-anchor="middle" font-size="8" fill="#0f172a">Manage Inventory</text>
+
+  <ellipse cx="488" cy="96" rx="58" ry="10" fill="white" stroke="#059669" stroke-width="1.2"/>
+  <text x="488" y="99" text-anchor="middle" font-size="8" fill="#0f172a">View Earnings</text>
+
+  <ellipse cx="488" cy="120" rx="58" ry="10" fill="white" stroke="#059669" stroke-width="1.2"/>
+  <text x="488" y="123" text-anchor="middle" font-size="8" fill="#0f172a">Cancel Own Auction</text>
+
+  <!-- ══════ USE CASE GROUP 4: ADMIN ══════ -->
+  <rect x="573" y="22" width="150" height="118" rx="6" fill="#fff1f2" stroke="#fca5a5" stroke-width="1"/>
+  <text x="648" y="33" text-anchor="middle" font-size="7.5" font-weight="700" fill="#dc2626">Admin Actions</text>
+
+  <ellipse cx="648" cy="48" rx="60" ry="10" fill="white" stroke="#dc2626" stroke-width="1.2"/>
+  <text x="648" y="51" text-anchor="middle" font-size="8" fill="#0f172a">Approve Auction</text>
+
+  <ellipse cx="648" cy="72" rx="60" ry="10" fill="white" stroke="#dc2626" stroke-width="1.2"/>
+  <text x="648" y="75" text-anchor="middle" font-size="8" fill="#0f172a">Reject Auction</text>
+
+  <ellipse cx="648" cy="96" rx="60" ry="10" fill="white" stroke="#dc2626" stroke-width="1.2"/>
+  <text x="648" y="99" text-anchor="middle" font-size="8" fill="#0f172a">Ban / Unban User</text>
+
+  <ellipse cx="648" cy="120" rx="60" ry="10" fill="white" stroke="#dc2626" stroke-width="1.2"/>
+  <text x="648" y="123" text-anchor="middle" font-size="8" fill="#0f172a">Cancel Any Auction</text>
+
+  <!-- ══════ ASSOCIATIONS ══════ -->
+  <!-- Guest → Register, Login -->
+  <line x1="27" y1="42" x2="116" y2="48" stroke="#94a3b8" stroke-width="1.2"/>
+  <line x1="27" y1="46" x2="116" y2="72" stroke="#94a3b8" stroke-width="1.2"/>
+
+  <!-- Bidder → Group1 -->
+  <line x1="27" y1="102" x2="116" y2="72" stroke="#2563eb" stroke-width="1.4"/>
+  <line x1="27" y1="104" x2="116" y2="96" stroke="#2563eb" stroke-width="1.4"/>
+  <line x1="27" y1="106" x2="116" y2="120" stroke="#2563eb" stroke-width="1.4"/>
+  <!-- Bidder → Group2 -->
+  <line x1="27" y1="100" x2="272" y2="48" stroke="#2563eb" stroke-width="1.4"/>
+  <line x1="27" y1="101" x2="272" y2="72" stroke="#2563eb" stroke-width="1.4"/>
+  <line x1="27" y1="102" x2="272" y2="96" stroke="#2563eb" stroke-width="1.4"/>
+  <line x1="27" y1="103" x2="272" y2="120" stroke="#2563eb" stroke-width="1.4"/>
+
+  <!-- Seller → Group1 -->
+  <line x1="63" y1="130" x2="116" y2="72" stroke="#059669" stroke-width="1.4"/>
+  <line x1="63" y1="131" x2="116" y2="96" stroke="#059669" stroke-width="1.4"/>
+  <line x1="63" y1="132" x2="116" y2="120" stroke="#059669" stroke-width="1.4"/>
+  <!-- Seller → Group3 -->
+  <line x1="63" y1="128" x2="430" y2="48" stroke="#059669" stroke-width="1.4"/>
+  <line x1="63" y1="129" x2="430" y2="72" stroke="#059669" stroke-width="1.4"/>
+  <line x1="63" y1="130" x2="430" y2="96" stroke="#059669" stroke-width="1.4"/>
+  <line x1="63" y1="131" x2="430" y2="120" stroke="#059669" stroke-width="1.4"/>
+
+  <!-- Admin → Group4 -->
+  <line x1="793" y1="72" x2="723" y2="48" stroke="#dc2626" stroke-width="1.4"/>
+  <line x1="793" y1="73" x2="723" y2="72" stroke="#dc2626" stroke-width="1.4"/>
+  <line x1="793" y1="74" x2="723" y2="96" stroke="#dc2626" stroke-width="1.4"/>
+  <line x1="793" y1="75" x2="723" y2="120" stroke="#dc2626" stroke-width="1.4"/>
+  <!-- Admin → Login (shared) -->
+  <line x1="793" y1="70" x2="220" y2="72" stroke="#dc2626" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- LEGEND -->
+  <rect x="98" y="138" width="636" height="7" rx="0" fill="none"/>
+</svg>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>BidPrecision — UML Documentation</span>
+    <span>01 / 09 · Use Case Diagram</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     02 — CLASS DIAGRAM
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="ph-badge">Diagram 02</span>
+    <span class="ph-title">Class Diagram</span>
+    <span class="ph-sub">Domain Model — Quan hệ kế thừa, thành phần và phụ thuộc</span>
+  </div>
+  <div class="page-body top" style="padding:4mm 5mm;">
+    <div class="mermaid" style="width:100%">
+classDiagram
+  direction LR
+
+  class Entity {
+    &lt;&lt;abstract&gt;&gt;
+    #String id
+    +getId() String
+  }
+
+  class User {
+    &lt;&lt;abstract&gt;&gt;
+    -String userName
+    -String passWord
+    -String email
+    -boolean isBanned
+    +login(pass) boolean
+    +logout()
+  }
+
+  class Admin {
+  }
+
+  class Seller {
+    -double balance
+    -List~Item~ inventory
+    -List~AuctionEarning~ earningHistory
+    +createAuction(item,start,end)
+    +addItem(item)
+    +getBalance() double
+    +setBalance(v)
+  }
+
+  class Bidder {
+    -double balance
+    -double heldBalance
+    -List~BidTransaction~ transactionHistory
+    +placeBid(auction, amount)
+    +setupAutoBid(auction, max, step)
+    +holdFunds(amount)
+    +releaseHeldFunds()
+    +update(msg)
+    +onNewBidPlaced(tx)
+  }
+
+  class AuctionObserver {
+    &lt;&lt;interface&gt;&gt;
+    +update(msg)
+    +onNewBidPlaced(tx)
+  }
+
+  class Item {
+    &lt;&lt;abstract&gt;&gt;
+    -String nameItem
+    -double startingPrice
+    -String imagePath
+    +getNameItem() String
+    +getStartingPrice() double
+  }
+
+  class Art { -String artist }
+  class Electronics { -String brand }
+  class Vehicle { -String make }
+
+  class Auction {
+    -Item item
+    -Seller seller
+    -Bidder highestBidder
+    -double currentHighestBid
+    -LocalDateTime startTime
+    -LocalDateTime endTime
+    -AuctionStatus status
+    -List~BidTransaction~ bidHistory
+    -List~AutoBidRule~ autoBidRules
+    +processBid(tx) &#35;synchronized
+    +settleAuction() &#35;synchronized
+    +cancelAuction(user, reason)
+    +registerAutoBid(bidder,max,step)
+    +refundOnCancel()
+    +addObserver(obs)
+  }
+
+  class AuctionStatus {
+    &lt;&lt;enumeration&gt;&gt;
+    PENDING_APPROVAL
+    APPROVED · OPEN
+    RUNNING · FINISHED
+    PAID · REJECTED · CANCELED
+  }
+
+  class AutoBidRule {
+    -Bidder bidder
+    -double maxBid
+    -double increment
+    -boolean isActive
+    -LocalDateTime registerTime
+    +isActive() boolean
+  }
+
+  class BidTransaction {
+    -Auction auction
+    -Bidder bidder
+    -double bidAmount
+    -LocalDateTime timestamp
+  }
+
+  class AuctionEarning {
+    -String auctionId
+    -String itemName
+    -double amount
+    -String status
+  }
+
+  class AuctionManager {
+    &lt;&lt;singleton&gt;&gt;
+    -List~Auction~ auctions
+    +getInstance() AuctionManager
+    +createAuction(item,seller,s,e)
+    +getAuctionById(id) Auction
+  }
+
+  class UserManager {
+    &lt;&lt;singleton&gt;&gt;
+    -List~User~ users
+    +getInstance() UserManager
+    +authenticate(user,pass) User
+    +register(user)
+  }
+
+  Entity <|-- User : extends
+  Entity <|-- Item : extends
+  Entity <|-- Auction : extends
+  User <|-- Admin : extends
+  User <|-- Seller : extends
+  User <|-- Bidder : extends
+  Item <|-- Art : extends
+  Item <|-- Electronics : extends
+  Item <|-- Vehicle : extends
+  Bidder ..|> AuctionObserver : implements
+  Auction --> AuctionStatus
+  Auction "1" *-- "*" BidTransaction
+  Auction "1" *-- "*" AutoBidRule
+  Auction --> Item
+  Auction --> Seller
+  Auction "0..1" --> Bidder : highestBidder
+  AutoBidRule --> Bidder
+  BidTransaction --> Bidder
+  BidTransaction --> Auction
+  Seller "1" o-- "*" AuctionEarning
+  AuctionManager o-- "*" Auction
+  UserManager o-- "*" User
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>BidPrecision — UML Documentation</span>
+    <span>02 / 09 · Class Diagram</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     03 — SEQUENCE: LOGIN
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="ph-badge">Diagram 03</span>
+    <span class="ph-title">Sequence Diagram — Login</span>
+    <span class="ph-sub">Luồng xác thực người dùng · ActionType.LOGIN · SHA-256 password hashing</span>
+  </div>
+  <div class="page-body top">
+    <div class="mermaid" style="width:100%">
+sequenceDiagram
+  autonumber
+  actor U as 👤 User
+  participant LC as LoginController
+  participant NC as NetworkClient
+  participant CH as ClientHandler
+  participant UM as UserManager
+
+  U->>LC: Nhập username + password → click Login
+  LC->>LC: Validate (empty check)
+  LC->>NC: sendRequest(LOGIN, credentials)
+  NC->>CH: TCP Socket — Request object
+  CH->>UM: authenticate(userName, password)
+
+  alt Không tìm thấy tài khoản
+    UM-->>CH: throw AuthenticationException
+    CH-->>NC: Response(ERROR, "Không tìm thấy tài khoản")
+    NC-->>LC: Response nhận được
+    LC-->>U: ❌ Toast thông báo lỗi
+  else Tài khoản bị khóa (isBanned = true)
+    UM-->>CH: throw AuthenticationException("Bị khóa")
+    CH-->>NC: Response(ERROR, "Tài khoản đã bị khóa")
+    LC-->>U: ❌ Toast: Tài khoản bị khóa
+  else Sai mật khẩu (SHA-256 hash không khớp)
+    UM-->>CH: throw AuthenticationException("Sai mật khẩu")
+    CH-->>NC: Response(ERROR, "Sai mật khẩu")
+    LC-->>U: ❌ Toast: Sai mật khẩu
+  else Đăng nhập thành công
+    UM-->>CH: User object (Admin / Seller / Bidder)
+    CH-->>NC: Response(SUCCESS, userObject)
+    NC-->>LC: Response
+    LC->>LC: AppContext.setCurrentUser(user)
+    LC->>LC: Navigate → Dashboard theo role
+    LC-->>U: ✅ Chuyển đến Dashboard
+  end
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>BidPrecision — UML Documentation</span>
+    <span>03 / 09 · Sequence: Login</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     04 — SEQUENCE: PLACE BID
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="ph-badge">Diagram 04</span>
+    <span class="ph-title">Sequence Diagram — Place Bid</span>
+    <span class="ph-sub">Luồng đặt giá thời gian thực + Auto-Bid + Broadcast · ActionType.PLACE_BID</span>
+  </div>
+  <div class="page-body top">
+    <div class="mermaid" style="width:100%">
+sequenceDiagram
+  autonumber
+  actor B as 🔨 Bidder
+  participant DC as AuctionDetailController
+  participant NC as NetworkClient
+  participant CH as ClientHandler
+  participant AU as Auction
+  participant OCH as ClientHandler (Others)
+
+  B->>DC: Nhập amount → click Đặt Giá
+  DC->>DC: Validate: amount > currentHighestBid?
+  DC->>NC: sendRequest(PLACE_BID, BidPayload)
+  NC->>CH: TCP — Request(PLACE_BID)
+  CH->>AU: processBid(BidTransaction) [synchronized]
+  AU->>AU: validateBid() — kiểm tra trạng thái, số dư, giá, anti-self-bid
+  AU->>AU: applyAntiSniping() — gia hạn +60s nếu bid trong 30s cuối
+
+  alt Bid hợp lệ
+    AU->>AU: Hoàn tiền highestBidder cũ (setBalance + old amount)
+    AU->>AU: currentHighestBid = newAmount, highestBidder = bidder
+    AU->>AU: bidHistory.add(tx)
+    AU->>AU: triggerAutoBids() — kích hoạt AutoBidRules nếu có
+    AU-->>CH: processBid() hoàn tất
+    CH-->>NC: Response(SUCCESS, updatedAuction)
+    NC-->>DC: Response
+    DC->>DC: Platform.runLater() — cập nhật UI, LineChart
+    CH->>OCH: broadcastBidUpdate — push đến tất cả clients đang xem phiên
+    OCH-->>B: Giá mới cập nhật realtime ✅
+  else Bid không hợp lệ (giá thấp / hết tiền / phiên đóng)
+    AU-->>CH: throw AuctionException
+    CH-->>NC: Response(ERROR, message)
+    NC-->>DC: Response
+    DC-->>B: ❌ Toast thông báo lỗi cụ thể
+  end
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>BidPrecision — UML Documentation</span>
+    <span>04 / 09 · Sequence: Place Bid</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     05 — SEQUENCE: APPROVE AUCTION
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="ph-badge">Diagram 05</span>
+    <span class="ph-title">Sequence Diagram — Approve Auction</span>
+    <span class="ph-sub">Admin duyệt / từ chối sản phẩm · ActionType.APPROVE_AUCTION / REJECT_AUCTION</span>
+  </div>
+  <div class="page-body top">
+    <div class="mermaid" style="width:100%">
+sequenceDiagram
+  autonumber
+  actor AD as 👑 Admin
+  participant AC as AdminController
+  participant NC as NetworkClient
+  participant CH as ClientHandler
+  participant AU as Auction
+  participant SA as ServerApp (Scheduler)
+  participant SCH as ClientHandler (Seller)
+
+  AD->>AC: Xem danh sách PENDING_APPROVAL
+  AC->>NC: sendRequest(GET_AUCTION_LIST)
+  NC-->>AC: Response — List&lt;Auction&gt;
+  AC->>AC: Lọc hiển thị PENDING_APPROVAL
+
+  alt Admin chọn APPROVE
+    AD->>AC: Click "Duyệt"
+    AC->>NC: sendRequest(APPROVE_AUCTION, auctionId)
+    NC->>CH: TCP — Request(APPROVE_AUCTION)
+    CH->>AU: setStatus(APPROVED)
+    CH->>SA: scheduleAutoLive(auction)
+    Note over SA: Khi đến startTime → startAuction() → RUNNING
+    Note over SA: scheduleAutoClose() → kết thúc đúng endTime
+    CH-->>NC: Response(SUCCESS)
+    NC-->>AC: OK
+    AC-->>AD: ✅ Toast: Duyệt thành công
+    CH->>SCH: broadcast(APPROVED, auctionId)
+    SCH-->>AD: Seller nhận thông báo được duyệt
+
+  else Admin chọn REJECT + nhập lý do
+    AD->>AC: Click "Từ Chối" + nhập lý do
+    AC->>NC: sendRequest(REJECT_AUCTION, RejectPayload)
+    NC->>CH: TCP — Request(REJECT_AUCTION)
+    CH->>AU: setStatus(REJECTED)
+    CH-->>NC: Response(SUCCESS)
+    AC-->>AD: ✅ Toast: Từ chối thành công
+    CH->>SCH: broadcast(REJECTED, reason)
+    SCH-->>AD: Seller nhận thông báo từ chối + lý do
+  end
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>BidPrecision — UML Documentation</span>
+    <span>05 / 09 · Sequence: Approve Auction</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     06 — ACTIVITY: CREATE AUCTION
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="ph-badge">Diagram 06</span>
+    <span class="ph-title">Activity Diagram — Create Auction</span>
+    <span class="ph-sub">Seller tạo phiên → Admin duyệt → Hệ thống kích hoạt → Kết thúc & Thanh toán</span>
+  </div>
+  <div class="page-body">
+    <div class="mermaid" style="width:100%">
+flowchart LR
+  S([🟢 Start]) --> L[Seller đăng nhập]
+  L --> N[Điền thông tin sản phẩm\nLoại: Art / Electronics / Vehicle\nTên, mô tả, giá khởi điểm, ảnh]
+  N --> V1{Thông tin\nhợp lệ?}
+  V1 -->|❌ Thiếu| N
+  V1 -->|✅| T[Đặt thời gian\nstartTime & endTime]
+  T --> V2{startTime &lt; endTime\nvà trong tương lai?}
+  V2 -->|❌| T
+  V2 -->|✅| SUB[Submit → CREATE_AUCTION\nStatus = PENDING_APPROVAL]
+
+  SUB --> AR{Admin\nduyệt?}
+  AR -->|❌ Từ chối + lý do| REJ[Status = REJECTED\nThông báo Seller]
+  REJ --> E1([🔴 End — Từ chối])
+
+  AR -->|✅ Duyệt| APR[Status = APPROVED\nScheduleAutoLive]
+  APR --> W{Đến\nstartTime?}
+  W -->|⏳| W
+  W -->|✅| RUN[Status = RUNNING\nBidder bắt đầu đấu giá]
+
+  RUN --> C{Phiên\nbị hủy?}
+  C -->|✅ Admin/Seller hủy| CAN[Status = CANCELED\nrefundOnCancel → Hoàn tiền]
+  CAN --> E2([🔴 End — Hủy])
+
+  C -->|❌| WE{Hết\nthời gian?}
+  WE -->|⏳| RUN
+  WE -->|✅| FIN[closeAuction → FINISHED]
+  FIN --> SET[settleAuction synchronized\nCộng tiền Seller\nStatus = PAID]
+  SET --> E3([🏁 End — Hoàn tất])
+
+  style S fill:#059669,color:white,stroke:none
+  style E1 fill:#dc2626,color:white,stroke:none
+  style E2 fill:#dc2626,color:white,stroke:none
+  style E3 fill:#059669,color:white,stroke:none
+  style REJ fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+  style APR fill:#dcfce7,stroke:#059669,color:#14532d
+  style RUN fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+  style SET fill:#dcfce7,stroke:#059669,color:#14532d
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>BidPrecision — UML Documentation</span>
+    <span>06 / 09 · Activity: Create Auction</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     07 — ACTIVITY: PLACE BID
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="ph-badge">Diagram 07</span>
+    <span class="ph-title">Activity Diagram — Place Bid</span>
+    <span class="ph-sub">Luồng đặt giá thủ công và Auto-Bid — validation, anti-sniping, broadcast</span>
+  </div>
+  <div class="page-body">
+    <div class="mermaid" style="width:100%">
+flowchart TD
+  S([🟢 Bidder mở AuctionDetail]) --> MODE{Chọn\nchế độ}
+
+  MODE -->|Thủ công| EA[Nhập số tiền]
+  MODE -->|Auto-Bid| AB[Nhập Max Bid\n& Increment]
+
+  %% Manual path
+  EA --> V1{amount >\ncurrentBid?}
+  V1 -->|❌| ERR1[❌ Lỗi: giá quá thấp] --> EA
+  V1 -->|✅| V2{balance ≥\namount?}
+  V2 -->|❌| ERR2[❌ Lỗi: số dư không đủ] --> ENDS([🔴 Hủy])
+  V2 -->|✅| V3{Bidder\n≠ Seller?}
+  V3 -->|❌| ERR3[❌ Lỗi: tự bid] --> ENDS
+  V3 -->|✅| SNIPE{Bid trong\n30s cuối?}
+  SNIPE -->|✅| EXT[Anti-Snipe:\nGia hạn +60s\nNotify tất cả clients]
+  SNIPE -->|❌| PB
+  EXT --> PB
+
+  %% Auto-Bid path
+  AB --> AV1{maxBid > currentBid\n& increment > 0?}
+  AV1 -->|❌| ERR4[❌ Params sai] --> AB
+  AV1 -->|✅| AV2{balance ≥\nmaxBid?}
+  AV2 -->|❌| ERR5[❌ Số dư không đủ] --> ENDS
+  AV2 -->|✅| REG[registerAutoBid\nthêm AutoBidRule]
+  REG --> PB
+
+  %% Common path
+  PB[processBid synchronized\nHoàn tiền bidder cũ\nCập nhật currentHighestBid] --> SAVE[persist — DAOImpl.save]
+  SAVE --> BROAD[broadcastBidUpdate\ngửi tất cả ClientHandlers]
+  BROAD --> UI[✅ Tất cả clients cập nhật\nLineChart · Giá · Countdown]
+  UI --> ENDK([🏁 Kết thúc lượt bid])
+
+  style S fill:#059669,color:white,stroke:none
+  style ENDS fill:#dc2626,color:white,stroke:none
+  style ENDK fill:#059669,color:white,stroke:none
+  style PB fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+  style EXT fill:#fef9ec,stroke:#d97706,color:#78350f
+  style BROAD fill:#dcfce7,stroke:#059669,color:#14532d
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>BidPrecision — UML Documentation</span>
+    <span>07 / 09 · Activity: Place Bid</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     08 — STATE: AUCTION LIFECYCLE
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="ph-badge">Diagram 08</span>
+    <span class="ph-title">State Diagram — Auction Lifecycle</span>
+    <span class="ph-sub">Vòng đời phiên đấu giá · AuctionStatus enum · 8 trạng thái</span>
+  </div>
+  <div class="page-body">
+    <div class="mermaid" style="width:100%">
+stateDiagram-v2
+  direction LR
+
+  [*] --> PENDING_APPROVAL : Seller gọi createAuction()
+
+  PENDING_APPROVAL --> APPROVED  : Admin approveAuction()
+  PENDING_APPROVAL --> REJECTED  : Admin rejectAuction() + lý do
+
+  APPROVED --> RUNNING  : ScheduledExecutor → startAuction()\n(đến startTime)
+  APPROVED --> CANCELED : Admin / Seller cancelAuction()
+
+  RUNNING --> FINISHED  : ScheduledExecutor → closeAuction()\n(đến endTime)
+  RUNNING --> CANCELED  : Admin / Seller cancelAuction()
+
+  FINISHED --> PAID     : settleAuction() synchronized\nCộng tiền Seller · Ghi AuctionEarning
+
+  REJECTED --> [*]
+  CANCELED --> [*] : refundOnCancel()\nHoàn tiền highestBidder
+  PAID     --> [*] : Giao dịch hoàn tất
+
+  note right of PENDING_APPROVAL
+    Trạng thái mặc định khi Auction mới tạo.
+    Chờ Admin xét duyệt.
+  end note
+
+  note right of RUNNING
+    Bidder có thể đặt giá.
+    Auto-Bid & Anti-Sniping hoạt động.
+    Broadcast realtime đến tất cả clients.
+  end note
+
+  note right of PAID
+    settleAuction() được guard bởi synchronized.
+    Không trừ tiền Bidder lần 2 (đã trừ lúc placeBid).
+    Chỉ cộng tiền cho Seller.
+  end note
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>BidPrecision — UML Documentation</span>
+    <span>08 / 09 · State: Auction Lifecycle</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     09 — DEPLOYMENT DIAGRAM
+═══════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="page-header">
+    <span class="ph-badge">Diagram 09</span>
+    <span class="ph-title">Deployment Diagram</span>
+    <span class="ph-sub">Kiến trúc triển khai — Nodes, Components & Communication Paths</span>
+  </div>
+  <div class="page-body">
+<svg viewBox="0 0 780 148" xmlns="http://www.w3.org/2000/svg"
+     font-family="'Inter','Segoe UI',Arial,sans-serif" font-size="8.5">
+  <defs>
+    <marker id="arr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L7,3z" fill="#334155"/>
+    </marker>
+  </defs>
+
+  <!-- ══════ CLIENT NODES (top row) ══════ -->
+
+  <!-- Admin Node -->
+  <rect x="4" y="4" width="140" height="62" rx="6" fill="#fff1f2" stroke="#dc2626" stroke-width="1.8"/>
+  <!-- 3D tab -->
+  <rect x="4" y="4" width="140" height="18" rx="5" fill="#dc2626"/>
+  <text x="74" y="16" text-anchor="middle" font-size="8" font-weight="700" fill="white">«device» Admin Client</text>
+  <!-- component box -->
+  <rect x="12" y="28" width="124" height="32" rx="4" fill="white" stroke="#fca5a5" stroke-width="1"/>
+  <rect x="130" y="32" width="6" height="5" fill="white" stroke="#fca5a5" stroke-width="1"/>
+  <rect x="130" y="40" width="6" height="5" fill="white" stroke="#fca5a5" stroke-width="1"/>
+  <text x="70" y="40" text-anchor="middle" font-size="8" font-weight="600" fill="#7f1d1d">«component»</text>
+  <text x="70" y="50" text-anchor="middle" font-size="7.5" fill="#334155">AdminController.java</text>
+  <text x="70" y="59" text-anchor="middle" font-size="7" fill="#64748b">AdminDashboard.fxml</text>
+  <text x="74" y="73" text-anchor="middle" font-size="7" fill="#94a3b8" font-style="italic">JDK 17 · JavaFX 21 · mvn javafx:run</text>
+
+  <!-- Seller Node -->
+  <rect x="158" y="4" width="140" height="62" rx="6" fill="#f0fdf4" stroke="#059669" stroke-width="1.8"/>
+  <rect x="158" y="4" width="140" height="18" rx="5" fill="#059669"/>
+  <text x="228" y="16" text-anchor="middle" font-size="8" font-weight="700" fill="white">«device» Seller Client</text>
+  <rect x="166" y="28" width="124" height="32" rx="4" fill="white" stroke="#6ee7b7" stroke-width="1"/>
+  <rect x="284" y="32" width="6" height="5" fill="white" stroke="#6ee7b7" stroke-width="1"/>
+  <rect x="284" y="40" width="6" height="5" fill="white" stroke="#6ee7b7" stroke-width="1"/>
+  <text x="224" y="40" text-anchor="middle" font-size="8" font-weight="600" fill="#14532d">«component»</text>
+  <text x="224" y="50" text-anchor="middle" font-size="7.5" fill="#334155">SellerDashboardController</text>
+  <text x="224" y="59" text-anchor="middle" font-size="7" fill="#64748b">SellerDashboard.fxml</text>
+  <text x="228" y="73" text-anchor="middle" font-size="7" fill="#94a3b8" font-style="italic">JDK 17 · JavaFX 21 · mvn javafx:run</text>
+
+  <!-- Bidder Node (N) -->
+  <rect x="312" y="4" width="155" height="62" rx="6" fill="#fef9ec" stroke="#d97706" stroke-width="1.8"/>
+  <rect x="312" y="4" width="155" height="18" rx="5" fill="#d97706"/>
+  <text x="389" y="16" text-anchor="middle" font-size="8" font-weight="700" fill="white">«device» Bidder Client  ×N</text>
+  <rect x="320" y="28" width="139" height="32" rx="4" fill="white" stroke="#fcd34d" stroke-width="1"/>
+  <rect x="453" y="32" width="6" height="5" fill="white" stroke="#fcd34d" stroke-width="1"/>
+  <rect x="453" y="40" width="6" height="5" fill="white" stroke="#fcd34d" stroke-width="1"/>
+  <text x="389" y="40" text-anchor="middle" font-size="8" font-weight="600" fill="#78350f">«component»</text>
+  <text x="389" y="50" text-anchor="middle" font-size="7.5" fill="#334155">BidderDashboardController</text>
+  <text x="389" y="59" text-anchor="middle" font-size="7" fill="#64748b">AuctionDetailController · Auto-Bid UI</text>
+  <text x="389" y="73" text-anchor="middle" font-size="7" fill="#94a3b8" font-style="italic">Nhiều terminal song song · mvn javafx:run</text>
+
+  <!-- NetworkClient shared label -->
+  <rect x="4" y="78" width="463" height="14" rx="3" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="234" y="88" text-anchor="middle" font-size="7.5" font-weight="600" fill="#475569">«shared component» NetworkClient.java (Singleton, auto-reconnect ×5) — ObjectInputStream / ObjectOutputStream</text>
+
+  <!-- TCP arrows down -->
+  <line x1="74" y1="92" x2="74" y2="102" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="228" y1="92" x2="228" y2="102" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="389" y1="92" x2="389" y2="102" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="74" y="100" text-anchor="middle" font-size="6.5" fill="#64748b">TCP</text>
+  <text x="228" y="100" text-anchor="middle" font-size="6.5" fill="#64748b">TCP</text>
+  <text x="389" y="100" text-anchor="middle" font-size="6.5" fill="#64748b">TCP</text>
+
+  <!-- Network label bar -->
+  <rect x="4" y="101" width="463" height="12" rx="3" fill="#e2e8f0" stroke="#cbd5e1"/>
+  <text x="234" y="110" text-anchor="middle" font-size="7.5" font-weight="700" fill="#334155">TCP/IP · port 8888 · Java Object Serialization (Request / Response · ActionType enum)</text>
+
+  <!-- SERVER NODE -->
+  <rect x="4" y="116" width="585" height="29" rx="6" fill="#eff6ff" stroke="#1d4ed8" stroke-width="2"/>
+  <rect x="4" y="116" width="585" height="14" rx="5" fill="#1e40af"/>
+  <text x="40" y="126" font-size="8" font-weight="700" fill="white">«device» Server Node — JDK 17 · port 8888 · mvn exec:java -Dexec.mainClass=ServerApp</text>
+
+  <!-- Server components inline -->
+  <!-- ServerApp -->
+  <rect x="10" y="131" width="80" height="12" rx="3" fill="white" stroke="#3b82f6" stroke-width="1"/>
+  <text x="50" y="140" text-anchor="middle" font-size="7" font-weight="600" fill="#1e3a8a">ServerApp.java</text>
+
+  <!-- ClientHandler -->
+  <rect x="96" y="131" width="100" height="12" rx="3" fill="white" stroke="#3b82f6" stroke-width="1"/>
+  <text x="146" y="140" text-anchor="middle" font-size="7" font-weight="600" fill="#1e3a8a">ClientHandler × N (1 thread/client)</text>
+
+  <!-- ScheduledExecutor -->
+  <rect x="202" y="131" width="110" height="12" rx="3" fill="white" stroke="#3b82f6" stroke-width="1"/>
+  <text x="257" y="140" text-anchor="middle" font-size="7" font-weight="600" fill="#1e3a8a">ScheduledExecutorService (auto-live/close)</text>
+
+  <!-- AuctionManager -->
+  <rect x="318" y="131" width="110" height="12" rx="3" fill="#fef9ec" stroke="#d97706" stroke-width="1.2"/>
+  <text x="373" y="140" text-anchor="middle" font-size="7" font-weight="700" fill="#78350f">AuctionManager «singleton»</text>
+
+  <!-- UserManager -->
+  <rect x="434" y="131" width="100" height="12" rx="3" fill="#fef9ec" stroke="#d97706" stroke-width="1.2"/>
+  <text x="484" y="140" text-anchor="middle" font-size="7" font-weight="700" fill="#78350f">UserManager «singleton»</text>
+
+  <!-- File System -->
+  <rect x="596" y="4" width="180" height="141" rx="6" fill="#f0fdf4" stroke="#059669" stroke-width="2"/>
+  <rect x="596" y="4" width="180" height="18" rx="5" fill="#059669"/>
+  <text x="686" y="16" text-anchor="middle" font-size="8" font-weight="700" fill="white">«artifact» File System</text>
+
+  <!-- DAO components -->
+  <rect x="604" y="26" width="164" height="28" rx="4" fill="white" stroke="#6ee7b7"/>
+  <text x="686" y="36" text-anchor="middle" font-size="7.5" font-weight="600" fill="#14532d">AuctionDAOImpl.java</text>
+  <text x="686" y="47" text-anchor="middle" font-size="7" fill="#334155">implements IAuctionDAO</text>
+
+  <rect x="604" y="60" width="164" height="28" rx="4" fill="white" stroke="#6ee7b7"/>
+  <text x="686" y="70" text-anchor="middle" font-size="7.5" font-weight="600" fill="#14532d">UserDAOImpl.java</text>
+  <text x="686" y="81" text-anchor="middle" font-size="7" fill="#334155">implements IGenericDAO</text>
+
+  <rect x="604" y="94" width="164" height="14" rx="4" fill="#dcfce7" stroke="#059669" stroke-width="1.2"/>
+  <text x="686" y="104" text-anchor="middle" font-size="8" font-weight="700" fill="#14532d">📁 auctions_data.dat</text>
+
+  <rect x="604" y="112" width="164" height="14" rx="4" fill="#dcfce7" stroke="#059669" stroke-width="1.2"/>
+  <text x="686" y="122" text-anchor="middle" font-size="8" font-weight="700" fill="#14532d">📁 users_data.dat</text>
+
+  <text x="686" y="136" text-anchor="middle" font-size="7" fill="#64748b" font-style="italic">Java Object Serialization</text>
+
+  <!-- Server → FileSystem arrow -->
+  <line x1="589" y1="130" x2="596" y2="110" stroke="#059669" stroke-width="1.5" marker-end="url(#arr)" stroke-dasharray="4,2"/>
+  <text x="590" y="124" font-size="7" fill="#059669">I/O</text>
+</svg>
+  </div>
+  <div class="page-footer">
+    <span>BidPrecision — UML Documentation</span>
+    <span>09 / 09 · Deployment Diagram</span>
+    <span>Lập Trình Nâng Cao · 2025–2026</span>
+  </div>
+</div>
+
+</body>
+</html>

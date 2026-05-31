@@ -17,9 +17,9 @@ public class UserManager {
 
     private UserManager() {
         // Tài khoản mặc định để test
-        users.put("bidder", new Bidder("bidder", "123", "bidder@gmail.com", 50000.0));
-        users.put("admin", new Admin("admin", "123", "admin@gmail.com", "admin_code"));
-        users.put("seller", new Seller("seller", "123", "seller@gmail.com"));
+        users.put("bidder", new Bidder("bidder", "123456", "bidder@gmail.com", 50000.0));
+        users.put("admin", new Admin("admin", "123456", "admin@gmail.com", "admin_code"));
+        users.put("seller", new Seller("seller", "123456", "seller@gmail.com"));
     }
 
     public static UserManager getInstance() {

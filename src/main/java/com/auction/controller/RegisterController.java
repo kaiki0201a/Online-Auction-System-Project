@@ -180,7 +180,15 @@ public class RegisterController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/auction/view/Login.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 900, 600));
+            double _w = stage.getWidth();
+            double _h = stage.getHeight();
+            double _x = stage.getX();
+            double _y = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w);
+            stage.setHeight(_h);
+            stage.setX(_x);
+            stage.setY(_y);
         } catch (IOException e) { e.printStackTrace(); }
     }
 

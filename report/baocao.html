@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Báo Cáo — BidPrecision: Hệ Thống Đấu Giá Trực Tuyến</title>
+  <style>
+    /* ========== PRINT + PAGE SETUP ========== */
+    @page {
+      size: A4;
+      margin: 18mm 20mm 18mm 20mm;
+    }
+
+    @media print {
+      .page-break { page-break-before: always; }
+      .no-print { display: none; }
+      body { background: white !important; }
+      .cover { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+               -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    /* ========== BASE ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      line-height: 1.55;
+      color: #1a1a1a;
+      background: #f0f0f0;
+    }
+
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto 20px;
+      background: white;
+      padding: 18mm 20mm;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    /* ========== COVER PAGE ========== */
+    .cover {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 15mm 20mm;
+    }
+
+    .cover-logo {
+      font-size: 52pt;
+      margin-bottom: 6mm;
+      filter: drop-shadow(0 0 12px rgba(255,200,0,0.4));
+    }
+
+    .cover-title {
+      font-family: Arial, sans-serif;
+      font-size: 22pt;
+      font-weight: 900;
+      color: #FFD700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 3mm;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .cover-subtitle {
+      font-size: 13pt;
+      color: #aac8f0;
+      margin-bottom: 10mm;
+      font-style: italic;
+    }
+
+    .cover-divider {
+      width: 60mm;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #FFD700, transparent);
+      margin: 6mm 0;
+    }
+
+    .cover-info-box {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 8px;
+      padding: 8mm 14mm;
+      margin-top: 8mm;
+      text-align: left;
+      width: 100%;
+    }
+
+    .cover-info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 2mm 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-size: 10.5pt;
+    }
+    .cover-info-row:last-child { border-bottom: none; }
+    .cover-info-label { color: #aac8f0; font-weight: bold; }
+    .cover-info-value { color: #fff; }
+
+    .cover-members {
+      margin-top: 8mm;
+      width: 100%;
+    }
+
+    .cover-members-title {
+      font-family: Arial, sans-serif;
+      font-size: 11pt;
+      color: #FFD700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4mm;
+    }
+
+    .member-row {
+      display: flex;
+      align-items: center;
+      padding: 2mm 0;
+      font-size: 10.5pt;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .member-row:last-child { border-bottom: none; }
+    .member-index {
+      width: 8mm;
+      color: #FFD700;
+      font-weight: bold;
+    }
+    .member-name { flex: 1; color: #fff; }
+    .member-id { color: #aac8f0; font-size: 9.5pt; margin: 0 6mm; }
+    .member-role { color: #90d4ff; font-size: 9.5pt; font-style: italic; }
+
+    /* ========== SECTION HEADINGS ========== */
+    h1.section-title {
+      font-family: Arial, sans-serif;
+      font-size: 14pt;
+      font-weight: 900;
+      color: #0f3460;
+      border-bottom: 3px solid #FFD700;
+      padding-bottom: 2mm;
+      margin-bottom: 4mm;
+      margin-top: 6mm;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    h2.subsection-title {
+      font-family: Arial, sans-serif;
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #16213e;
+      margin: 4mm 0 2mm;
+      padding-left: 3mm;
+      border-left: 3px solid #e8b400;
+    }
+
+    h3.subsubsection {
+      font-family: Arial, sans-serif;
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #1a4080;
+      margin: 3mm 0 1.5mm;
+    }
+
+    p { margin-bottom: 2.5mm; text-align: justify; }
+
+    /* ========== ARCHITECTURE DIAGRAM ========== */
+    .arch-container {
+      background: #0d1b2a;
+      border-radius: 8px;
+      padding: 6mm;
+      margin: 4mm 0;
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 4mm;
+    }
+
+    .arch-server-box {
+      background: rgba(15,52,96,0.9);
+      border: 2px solid #0099cc;
+      border-radius: 6px;
+      padding: 4mm;
+      text-align: center;
+    }
+
+    .arch-server-title {
+      font-family: Arial, sans-serif;
+      font-size: 10pt;
+      font-weight: bold;
+      color: #00d4ff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 3mm;
+    }
+
+    .arch-inner-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 3mm;
+    }
+
+    .arch-inner-box {
+      background: rgba(0,153,204,0.15);
+      border: 1px solid rgba(0,212,255,0.4);
+      border-radius: 4px;
+      padding: 3mm;
+      text-align: center;
+    }
+
+    .arch-inner-box .label {
+      font-family: Arial, sans-serif;
+      font-size: 8.5pt;
+      font-weight: bold;
+      color: #00d4ff;
+      display: block;
+    }
+
+    .arch-inner-box .sublabel {
+      font-size: 7.5pt;
+      color: #7ab8cc;
+      display: block;
+      margin-top: 1mm;
+    }
+
+    .arch-arrow {
+      text-align: center;
+      color: #FFD700;
+      font-size: 14pt;
+      line-height: 1;
+    }
+
+    .arch-arrow-label {
+      font-family: Arial, sans-serif;
+      font-size: 8pt;
+      color: #aaa;
+      display: block;
+    }
+
+    .arch-clients-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 3mm;
+    }
+
+    .arch-client-box {
+      border: 1.5px solid;
+      border-radius: 6px;
+      padding: 3mm;
+      text-align: center;
+    }
+
+    .arch-client-box.admin {
+      border-color: #e74c3c;
+      background: rgba(231,76,60,0.1);
+    }
+    .arch-client-box.seller {
+      border-color: #27ae60;
+      background: rgba(39,174,96,0.1);
+    }
+    .arch-client-box.bidder {
+      border-color: #e8b400;
+      background: rgba(232,180,0,0.1);
+    }
+
+    .arch-client-box .role {
+      font-family: Arial, sans-serif;
+      font-size: 9pt;
+      font-weight: bold;
+    }
+    .arch-client-box.admin .role { color: #e74c3c; }
+    .arch-client-box.seller .role { color: #27ae60; }
+    .arch-client-box.bidder .role { color: #e8b400; }
+
+    .arch-client-box .tech {
+      font-size: 8pt;
+      color: #aaa;
+      margin-top: 1mm;
+    }
+
+    .arch-dao-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3mm;
+      margin-top: 3mm;
+    }
+
+    .arch-dao-box {
+      background: rgba(255,215,0,0.08);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 4px;
+      padding: 2mm 3mm;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      font-size: 8pt;
+      color: #FFD700;
+    }
+
+    /* ========== FEATURE TABLE ========== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 3mm 0;
+      font-size: 9.5pt;
+    }
+
+    thead th {
+      background: #0f3460;
+      color: #FFD700;
+      font-family: Arial, sans-serif;
+      font-size: 9.5pt;
+      font-weight: bold;
+      padding: 2.5mm 3mm;
+      text-align: left;
+      border: 1px solid #ccc;
+    }
+
+    tbody tr:nth-child(even) { background: #f5f8ff; }
+    tbody tr:nth-child(odd) { background: #fff; }
+
+    tbody td {
+      padding: 2mm 3mm;
+      border: 1px solid #ddd;
+      vertical-align: top;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 0.5mm 2mm;
+      border-radius: 3px;
+      font-size: 8pt;
+      font-weight: bold;
+      font-family: Arial, sans-serif;
+    }
+
+    .tag-required { background: #d4edda; color: #155724; }
+    .tag-advanced { background: #cce5ff; color: #004085; }
+    .tag-bonus   { background: #fff3cd; color: #856404; }
+
+    /* ========== MEMBER TABLE ========== */
+    .member-table thead th {
+      background: #16213e;
+    }
+
+    /* ========== INFO BOX ========== */
+    .info-box {
+      background: #e8f4fd;
+      border-left: 4px solid #2980b9;
+      padding: 3mm 4mm;
+      margin: 3mm 0;
+      font-size: 10pt;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .info-box.success {
+      background: #d4edda;
+      border-color: #27ae60;
+    }
+
+    /* ========== TECH STACK BOXES ========== */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3mm;
+      margin: 3mm 0;
+    }
+
+    .tech-box {
+      background: #f0f4ff;
+      border: 1px solid #c0cfee;
+      border-radius: 5px;
+      padding: 3mm;
+      text-align: center;
+    }
+
+    .tech-box .tech-name {
+      font-family: Arial, sans-serif;
+      font-size: 9.5pt;
+      font-weight: bold;
+      color: #0f3460;
+      display: block;
+    }
+
+    .tech-box .tech-detail {
+      font-size: 8.5pt;
+      color: #555;
+      display: block;
+      margin-top: 1mm;
+    }
+
+    /* ========== PAGE NUMBER ========== */
+    .page-num {
+      position: absolute;
+      bottom: 10mm;
+      right: 20mm;
+      font-size: 9pt;
+      color: #888;
+      font-family: Arial, sans-serif;
+    }
+
+    .page-header {
+      position: absolute;
+      top: 8mm;
+      right: 20mm;
+      font-size: 8.5pt;
+      color: #aaa;
+      font-family: Arial, sans-serif;
+      font-style: italic;
+    }
+
+    /* ========== FLOW DIAGRAM ========== */
+    .flow-container {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 4mm;
+      margin: 3mm 0;
+      font-family: Arial, sans-serif;
+      font-size: 9pt;
+    }
+
+    .flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3mm;
+      margin: 2mm 0;
+      flex-wrap: wrap;
+    }
+
+    .flow-box {
+      padding: 2mm 4mm;
+      border-radius: 4px;
+      font-size: 8.5pt;
+      font-weight: bold;
+      text-align: center;
+      min-width: 25mm;
+    }
+
+    .flow-start  { background: #0f3460; color: white; border-radius: 20px; }
+    .flow-login  { background: #2980b9; color: white; }
+    .flow-admin  { background: #e74c3c; color: white; }
+    .flow-seller { background: #27ae60; color: white; }
+    .flow-bidder { background: #e8b400; color: #1a1a1a; }
+    .flow-action { background: #f0f4ff; color: #0f3460; border: 1px solid #c0cfee; }
+    .flow-result { background: #d4edda; color: #155724; border: 1px solid #27ae60; }
+    .flow-arrow  { color: #555; font-size: 11pt; }
+
+    ul.feat-list {
+      padding-left: 5mm;
+      margin: 1.5mm 0;
+    }
+    ul.feat-list li {
+      margin-bottom: 1mm;
+      font-size: 9.5pt;
+    }
+
+    .highlight { color: #0f3460; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<!-- ==================== TRANG BÌA ==================== -->
+<div class="a4-page cover">
+  <div class="cover-logo">🏛️</div>
+  <div class="cover-title">BidPrecision</div>
+  <div class="cover-subtitle">Hệ Thống Đấu Giá Trực Tuyến — Online Auction System</div>
+  <div class="cover-divider"></div>
+
+  <div style="font-family: Arial; font-size: 13pt; color: #cde; margin: 4mm 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+    BÁO CÁO ĐỒ ÁN
+  </div>
+  <div style="font-family: Arial; font-size: 11pt; color: #aac8f0; font-style: italic;">
+    Môn: Lập Trình Nâng Cao &nbsp;|&nbsp; Năm học: 2025–2026
+  </div>
+
+  <div class="cover-info-box">
+    <div class="cover-info-row">
+      <span class="cover-info-label">Tên đồ án</span>
+      <span class="cover-info-value">BidPrecision — Hệ thống đấu giá trực tuyến đa người dùng</span>
+    </div>
+    <div class="cover-info-row">
+      <span class="cover-info-label">Kiến trúc</span>
+      <span class="cover-info-value">Client–Server (Java Socket TCP/IP)</span>
+    </div>
+    <div class="cover-info-row">
+      <span class="cover-info-label">Công nghệ</span>
+      <span class="cover-info-value">Java 17 + JavaFX 21 + Maven + JUnit 5</span>
+    </div>
+    <div class="cover-info-row">
+      <span class="cover-info-label">Ngày nộp</span>
+      <span class="cover-info-value">Tháng 5 / 2026</span>
+    </div>
+  </div>
+
+  <div class="cover-members">
+    <div class="cover-members-title">👥 Thành Viên Nhóm</div>
+    <div class="member-row">
+      <span class="member-index">1.</span>
+      <span class="member-name">Nguyễn Thanh Hiếu</span>
+      <span class="member-id">MSSV: 25020153</span>
+      <span class="member-role">Server Core, Model, Auto-Bid</span>
+    </div>
+    <div class="member-row">
+      <span class="member-index">2.</span>
+      <span class="member-name">Hoàng Viết Hoàng</span>
+      <span class="member-id">MSSV: 25020160</span>
+      <span class="member-role">GUI/JavaFX, Controller, CSS Dark Theme</span>
+    </div>
+    <div class="member-row">
+      <span class="member-index">3.</span>
+      <span class="member-name">Trần Tuấn Điệp</span>
+      <span class="member-id">MSSV: 25020123</span>
+      <span class="member-role">DAO, Protocol, Unit Tests</span>
+    </div>
+    <div class="member-row">
+      <span class="member-index">4.</span>
+      <span class="member-name">Nguyễn Quang Huy</span>
+      <span class="member-id">MSSV: 25020183</span>
+      <span class="member-role">Exception Handling, Concurrency, DepositWithdraw</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TRANG 2: GIỚI THIỆU + KIẾN TRÚC ==================== -->
+<div class="a4-page page-break">
+  <div class="page-header">BidPrecision — Hệ Thống Đấu Giá Trực Tuyến</div>
+
+  <!-- PHẦN 1: MỤC TIÊU VÀ PHẠM VI -->
+  <h1 class="section-title">1. Giới Thiệu Mục Tiêu và Phạm Vi</h1>
+
+  <h2 class="subsection-title">1.1 Bối Cảnh và Mục Tiêu</h2>
+  <p>
+    <strong>BidPrecision</strong> là hệ thống đấu giá trực tuyến đa người dùng được xây dựng theo kiến trúc <strong>Client–Server</strong> thuần Java. Đồ án hướng đến mục tiêu vận dụng tổng hợp các kiến thức lập trình nâng cao: lập trình hướng đối tượng, xử lý đồng thời (concurrency), lập trình mạng (socket), phân tầng kiến trúc (DAO pattern), kiểm thử đơn vị (unit testing) và thiết kế giao diện đồ họa (JavaFX).
+  </p>
+  <p>
+    Hệ thống cho phép nhiều người dùng kết nối đồng thời, thực hiện đấu giá thời gian thực, xử lý tranh chấp đặt giá và tự động hoàn tất thanh toán khi phiên kết thúc — không phụ thuộc vào cơ sở dữ liệu bên ngoài.
+  </p>
+
+  <h2 class="subsection-title">1.2 Phạm Vi Thực Hiện</h2>
+  <p>Hệ thống quản lý ba vai trò người dùng với phạm vi chức năng riêng biệt:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:15%">Vai trò</th>
+        <th>Phạm vi chức năng</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Admin</strong></td>
+        <td>Duyệt / từ chối sản phẩm; khóa / mở khóa tài khoản; xem tổng quan thống kê; hủy phiên đấu giá bất kỳ</td>
+      </tr>
+      <tr>
+        <td><strong>Seller</strong></td>
+        <td>Đăng sản phẩm (3 danh mục: Art, Electronics, Vehicle); theo dõi kho hàng; xem lịch sử thu nhập; nạp / rút ví</td>
+      </tr>
+      <tr>
+        <td><strong>Bidder</strong></td>
+        <td>Duyệt & tìm kiếm phiên đấu giá; đặt giá thủ công & tự động (Auto-Bid); theo dõi biểu đồ giá; nạp / rút ví</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="subsection-title">1.3 Công Nghệ Sử Dụng</h2>
+  <div class="tech-grid">
+    <div class="tech-box">
+      <span class="tech-name">Java 17 LTS</span>
+      <span class="tech-detail">Ngôn ngữ lập trình chính</span>
+    </div>
+    <div class="tech-box">
+      <span class="tech-name">JavaFX 21</span>
+      <span class="tech-detail">FXML + CSS Dark Theme (GUI)</span>
+    </div>
+    <div class="tech-box">
+      <span class="tech-name">Java Socket TCP/IP</span>
+      <span class="tech-detail">Kết nối mạng (port 8888)</span>
+    </div>
+    <div class="tech-box">
+      <span class="tech-name">Object Serialization</span>
+      <span class="tech-detail">Truyền dữ liệu Client↔Server</span>
+    </div>
+    <div class="tech-box">
+      <span class="tech-name">Apache Maven 3.6+</span>
+      <span class="tech-detail">Build tool & dependency mgmt</span>
+    </div>
+    <div class="tech-box">
+      <span class="tech-name">JUnit 5 + Mockito</span>
+      <span class="tech-detail">28 unit tests (100% pass)</span>
+    </div>
+  </div>
+
+  <!-- PHẦN 2: KIẾN TRÚC HỆ THỐNG -->
+  <h1 class="section-title" style="margin-top: 6mm;">2. Kiến Trúc Tổng Thể Của Hệ Thống</h1>
+
+  <h2 class="subsection-title">2.1 Sơ Đồ Kiến Trúc</h2>
+
+  <!-- Architecture Diagram -->
+  <div class="arch-container">
+    <div class="arch-grid">
+      <!-- Server Layer -->
+      <div class="arch-server-box">
+        <div class="arch-server-title">⚙️ SERVER LAYER (port 8888)</div>
+        <div class="arch-inner-grid">
+          <div class="arch-inner-box">
+            <span class="label">ServerApp</span>
+            <span class="sublabel">Vòng lặp accept()<br/>Socket listener</span>
+          </div>
+          <div class="arch-inner-box">
+            <span class="label">ClientHandler</span>
+            <span class="sublabel">1 thread / client<br/>Xử lý Request</span>
+          </div>
+          <div class="arch-inner-box">
+            <span class="label">ScheduledExecutor</span>
+            <span class="sublabel">Auto-close phiên<br/>Auto-live scheduler</span>
+          </div>
+        </div>
+        <div class="arch-dao-grid">
+          <div class="arch-dao-box">🗄 AuctionManager (Singleton) — quản lý tất cả phiên đấu giá trong bộ nhớ</div>
+          <div class="arch-dao-box">👤 UserManager (Singleton) — quản lý tài khoản + xác thực</div>
+        </div>
+        <div class="arch-dao-grid">
+          <div class="arch-dao-box">📁 AuctionDAOImpl — đọc/ghi auctions_data.dat</div>
+          <div class="arch-dao-box">📁 UserDAOImpl — đọc/ghi users_data.dat</div>
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div style="text-align:center; color:#FFD700; padding: 2mm 0;">
+        <div style="font-size:16pt;">⇅</div>
+        <div style="font-size:8pt; color:#888; font-family:Arial;">TCP Socket · Java Object Serialization (Request / Response)</div>
+      </div>
+
+      <!-- Client Layer -->
+      <div class="arch-clients-grid">
+        <div class="arch-client-box admin">
+          <div style="font-size:16pt;">👑</div>
+          <div class="role">Admin Client</div>
+          <div class="tech">JavaFX GUI<br/>AdminDashboard.fxml</div>
+        </div>
+        <div class="arch-client-box seller">
+          <div style="font-size:16pt;">🏪</div>
+          <div class="role">Seller Client</div>
+          <div class="tech">JavaFX GUI<br/>SellerDashboard.fxml</div>
+        </div>
+        <div class="arch-client-box bidder">
+          <div style="font-size:16pt;">🔨</div>
+          <div class="role">Bidder Client</div>
+          <div class="tech">JavaFX GUI<br/>BidderDashboard.fxml</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="subsection-title">2.2 Mô Tả Kiến Trúc</h2>
+  <p>
+    Hệ thống theo mô hình <strong>Client–Server đa luồng (Multi-threaded)</strong>. Server chạy một vòng lặp <code>accept()</code> liên tục; mỗi kết nối mới được giao cho một <strong>ClientHandler</strong> chạy trên luồng riêng, đảm bảo nhiều client hoạt động song song không ảnh hưởng nhau.
+  </p>
+  <p>
+    Tầng truyền thông sử dụng <strong>Java Object Serialization</strong> để truyền đối tượng <code>Request</code>/<code>Response</code> qua socket, cho phép gửi dữ liệu phức tạp một cách đơn giản. Hai singleton <strong>AuctionManager</strong> và <strong>UserManager</strong> đóng vai trò tầng nghiệp vụ, tất cả truy cập dữ liệu được bảo vệ bằng <code>synchronized</code> để tránh race condition. Tầng DAO chịu trách nhiệm đọc/ghi file <code>.dat</code>, thay thế hoàn toàn cho CSDL quan hệ.
+  </p>
+
+  <div class="page-num">Trang 2 / 5</div>
+</div>
+
+<!-- ==================== TRANG 3: CHỨC NĂNG (phần 1) ==================== -->
+<div class="a4-page page-break">
+  <div class="page-header">BidPrecision — Hệ Thống Đấu Giá Trực Tuyến</div>
+
+  <h1 class="section-title">3. Các Chức Năng Đạt Được</h1>
+
+  <h2 class="subsection-title">3.1 Chức Năng Bắt Buộc</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%">Chức năng</th>
+        <th style="width:35%">Hướng giải quyết</th>
+        <th>Lý do lựa chọn</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Quản lý người dùng -->
+      <tr>
+        <td>
+          <span class="tag tag-required">Bắt buộc</span><br/>
+          <strong>Quản lý tài khoản</strong><br/>
+          <small>Đăng ký, đăng nhập, chỉnh sửa hồ sơ, Admin ban/unban</small>
+        </td>
+        <td>
+          Class <code>User</code> (abstract) → kế thừa <code>Admin</code>, <code>Seller</code>, <code>Bidder</code>. Mật khẩu hash bằng <strong>SHA-256</strong>. <code>UserManager</code> singleton quản lý danh sách, <code>UserDAOImpl</code> persist file.
+        </td>
+        <td>
+          Kế thừa giúp tái sử dụng code; SHA-256 đảm bảo bảo mật ngay cả khi file .dat bị rò rỉ; singleton tránh nhiều instance gây không đồng bộ.
+        </td>
+      </tr>
+      <!-- Quản lý sản phẩm -->
+      <tr>
+        <td>
+          <span class="tag tag-required">Bắt buộc</span><br/>
+          <strong>Quản lý sản phẩm đấu giá</strong><br/>
+          <small>Seller đăng, Admin duyệt/từ chối, 3 danh mục, badge trạng thái</small>
+        </td>
+        <td>
+          <code>Item</code> (abstract) → <code>Art</code>, <code>Electronics</code>, <code>Vehicle</code>. Workflow trạng thái: <em>DRAFT → PENDING_APPROVAL → APPROVED / REJECTED</em>. Server xử lý duyệt và broadcast kết quả.
+        </td>
+        <td>
+          Factory Pattern (<code>ItemFactory</code>) giảm coupling; luồng duyệt tách bạch quyền Admin và Seller, đảm bảo tính toàn vẹn dữ liệu trước khi phiên được mở.
+        </td>
+      </tr>
+      <!-- Tham gia đấu giá -->
+      <tr>
+        <td>
+          <span class="tag tag-required">Bắt buộc</span><br/>
+          <strong>Tham gia đấu giá thời gian thực</strong><br/>
+          <small>Đặt giá, đồng hồ đếm ngược, biểu đồ giá, lọc/tìm kiếm</small>
+        </td>
+        <td>
+          Server broadcast giá mới đến tất cả <code>ClientHandler</code> đang theo dõi cùng phiên. Client dùng <code>Platform.runLater()</code> cập nhật JavaFX UI thread. <code>LineChart</code> hiển thị lịch sử giá.
+        </td>
+        <td>
+          Broadcast thay vì polling giúp UI cập nhật ngay lập tức, tiết kiệm băng thông; <code>runLater()</code> tránh vi phạm JavaFX single-thread model.
+        </td>
+      </tr>
+      <!-- Kết thúc phiên -->
+      <tr>
+        <td>
+          <span class="tag tag-required">Bắt buộc</span><br/>
+          <strong>Kết thúc & thanh toán phiên</strong><br/>
+          <small>Tự động kết thúc, chuyển tiền, hoàn tiền khi hủy</small>
+        </td>
+        <td>
+          <code>ScheduledExecutorService</code> lên lịch <code>settleAuction()</code> chính xác theo thời gian kết thúc. Guard <code>isSettled</code> ngăn double-settlement. Refund tự động khi phiên bị hủy.
+        </td>
+        <td>
+          Tách biệt logic thanh toán vào một phương thức duy nhất, được bảo vệ bởi <code>synchronized</code>, đảm bảo tính nhất quán tài chính dù có nhiều luồng cùng trigger.
+        </td>
+      </tr>
+      <!-- Xử lý lỗi -->
+      <tr>
+        <td>
+          <span class="tag tag-required">Bắt buộc</span><br/>
+          <strong>Xử lý lỗi & ngoại lệ</strong><br/>
+          <small>7 custom exception, auto-reconnect, thread-safe</small>
+        </td>
+        <td>
+          Phân cấp exception: <code>AuctionException</code> → <code>AuctionClosedException</code>, <code>InvalidBidException</code>, <code>InsufficientBalanceException</code>… <code>NetworkClient</code> tự reconnect tối đa 5 lần.
+        </td>
+        <td>
+          Exception phân cấp giúp bắt lỗi chính xác từng tình huống, hiển thị thông báo phù hợp; auto-reconnect cải thiện UX khi mạng tạm thời gián đoạn.
+        </td>
+      </tr>
+      <!-- GUI -->
+      <tr>
+        <td>
+          <span class="tag tag-required">Bắt buộc</span><br/>
+          <strong>Giao diện đồ họa (GUI)</strong><br/>
+          <small>Dark theme, sidebar, toast notification, toggle password</small>
+        </td>
+        <td>
+          JavaFX MVC: FXML (View) + Controller + Model. Dark theme vàng-đen qua file CSS tập trung. Toast notification dùng <code>Timeline</code> ẩn sau 3 giây.
+        </td>
+        <td>
+          Tách View (FXML) khỏi logic (Controller) giúp dễ bảo trì; CSS tập trung dễ thay đổi theme toàn hệ thống; MVC là pattern chuẩn cho JavaFX.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-num">Trang 3 / 5</div>
+</div>
+
+<!-- ==================== TRANG 4: CHỨC NĂNG NÂNG CAO + LUỒNG NGHIỆP VỤ ==================== -->
+<div class="a4-page page-break">
+  <div class="page-header">BidPrecision — Hệ Thống Đấu Giá Trực Tuyến</div>
+
+  <h2 class="subsection-title">3.2 Chức Năng Nâng Cao</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%">Chức năng</th>
+        <th style="width:35%">Hướng giải quyết</th>
+        <th>Lý do lựa chọn</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Auto-Bid -->
+      <tr>
+        <td>
+          <span class="tag tag-advanced">Nâng cao</span><br/>
+          <strong>Auto-Bidding</strong><br/>
+          <small>Đặt giá tự động theo Max Bid và Increment cài sẵn</small>
+        </td>
+        <td>
+          <code>AutoBid</code> lưu giới hạn Max Bid và bước tăng. Khi Bidder bị vượt giá, <code>ClientHandler</code> kiểm tra danh sách <code>AutoBidRule</code> và tự động đặt giá thay. Xử lý tuần tự để tránh conflict.
+        </td>
+        <td>
+          Auto-bid hoạt động phía server đảm bảo tất cả client nhận cùng trạng thái; xử lý tuần tự (không parallel) tránh race condition khi nhiều auto-bidder cùng kích hoạt.
+        </td>
+      </tr>
+      <!-- Concurrency -->
+      <tr>
+        <td>
+          <span class="tag tag-advanced">Nâng cao</span><br/>
+          <strong>Xử lý đồng thời (Concurrency)</strong><br/>
+          <small>15 luồng đặt giá song song — không race condition</small>
+        </td>
+        <td>
+          <code>synchronized</code> trên <code>placeBid()</code> và <code>settleAuction()</code>. <code>CopyOnWriteArrayList</code> cho danh sách client observers. Stress test (<code>ConcurrencyTest.java</code>) với 15 luồng đồng thời.
+        </td>
+        <td>
+          <code>synchronized</code> đơn giản, phù hợp quy mô đồ án; <code>CopyOnWriteArrayList</code> tránh <code>ConcurrentModificationException</code> khi broadcast; stress test xác nhận tính đúng đắn.
+        </td>
+      </tr>
+      <!-- UI/UX nâng cao -->
+      <tr>
+        <td>
+          <span class="tag tag-advanced">Nâng cao</span><br/>
+          <strong>UI/UX nâng cao</strong><br/>
+          <small>Popup animation, gợi ý định giá, avatar click → Settings</small>
+        </td>
+        <td>
+          Popup chiến thắng dùng JavaFX <code>ScaleTransition</code> tạo hiệu ứng scale-in. Dialog gợi ý giá theo danh mục (Art/Electronics/Vehicle). Avatar click điều hướng đến màn hình Settings.
+        </td>
+        <td>
+          Micro-animation nâng cao trải nghiệm người dùng, tạo cảm giác ứng dụng cao cấp; gợi ý giá giúp Seller mới chưa có kinh nghiệm định giá phù hợp thị trường.
+        </td>
+      </tr>
+      <!-- Admin stats -->
+      <tr>
+        <td>
+          <span class="tag tag-bonus">Bonus</span><br/>
+          <strong>Thống kê Admin</strong><br/>
+          <small>Tổng user, phiên active, tổng doanh thu hệ thống</small>
+        </td>
+        <td>
+          Admin dashboard tổng hợp dữ liệu từ <code>AuctionManager</code> và <code>UserManager</code>: đếm số phiên theo trạng thái, tổng tiền giao dịch, số user đang hoạt động.
+        </td>
+        <td>
+          Cho phép Admin nắm toàn bộ tình trạng hệ thống mà không cần truy cập trực tiếp file dữ liệu; dữ liệu tính toán realtime từ singleton trong memory.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="subsection-title" style="margin-top:5mm;">3.3 Luồng Nghiệp Vụ Chính</h2>
+
+  <div class="flow-container">
+    <div style="text-align:center; font-family:Arial; font-size:9pt; font-weight:bold; color:#0f3460; margin-bottom:3mm;">
+      LUỒNG ĐẶT GIÁ VÀ KẾT THÚC PHIÊN ĐẤU GIÁ
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-box flow-start">Bidder đặt giá</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-action">Client gửi Request<br/>(PLACE_BID)</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-action">Server validate<br/>(số dư, giá hợp lệ)</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-action">Auction.placeBid()<br/><em>synchronized</em></div>
+    </div>
+
+    <div class="flow-row" style="margin: 1.5mm 0;">
+      <span style="color:#aaa; font-size:8pt; font-family:Arial;">↓ thành công</span>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-box flow-action">Trừ balance<br/>Bidder</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-action">Broadcast giá mới<br/>đến tất cả clients</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-action">Kiểm tra Auto-Bid<br/>các Bidder khác</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-result">UI cập nhật<br/>realtime ✓</div>
+    </div>
+
+    <div style="border-top: 1px dashed #ccc; margin: 3mm 0;"></div>
+
+    <div class="flow-row">
+      <div class="flow-box flow-start">Hết thời gian</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-action">ScheduledExecutor<br/>kích hoạt</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-action">settleAuction()<br/><em>synchronized</em></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-action">Trừ tiền winner<br/>Cộng tiền Seller</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box flow-result">Popup 🏆<br/>chiến thắng</div>
+    </div>
+  </div>
+
+  <div class="info-box success" style="margin-top: 3mm;">
+    <strong>Kết quả kiểm thử:</strong> 28 unit tests PASS (17 tests cốt lõi + 11 tests mở rộng) — bao gồm stress test 15 luồng đồng thời, không race condition, không double-settlement.
+  </div>
+
+  <div class="page-num">Trang 4 / 5</div>
+</div>
+
+<!-- ==================== TRANG 5: PHÂN CÔNG + KẾT LUẬN ==================== -->
+<div class="a4-page page-break">
+  <div class="page-header">BidPrecision — Hệ Thống Đấu Giá Trực Tuyến</div>
+
+  <h1 class="section-title">4. Phân Chia Công Việc Giữa Các Thành Viên</h1>
+
+  <table class="member-table">
+    <thead>
+      <tr>
+        <th style="width:5%">STT</th>
+        <th style="width:25%">Họ và tên / MSSV</th>
+        <th style="width:33%">Phần đảm nhiệm</th>
+        <th>Chi tiết công việc</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align:center; font-weight:bold;">1</td>
+        <td>
+          <strong>Nguyễn Thanh Hiếu</strong><br/>
+          <small style="color:#555;">MSSV: 25020153</small>
+        </td>
+        <td>
+          <strong>Server Core, Domain Model, Auto-Bid</strong>
+        </td>
+        <td>
+          <ul class="feat-list">
+            <li>Thiết kế và cài đặt <code>ServerApp.java</code>, <code>ClientHandler.java</code></li>
+            <li>Xây dựng toàn bộ lớp model: <code>User</code>, <code>Auction</code>, <code>Item</code> và các lớp con</li>
+            <li>Cài đặt tính năng Auto-Bid (<code>AutoBid</code>, <code>AutoBidRule</code>)</li>
+            <li>Cài đặt <code>ScheduledExecutorService</code> cho auto-close & auto-live</li>
+            <li>Sửa lỗi Level 1: SHA-256 password hashing</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align:center; font-weight:bold;">2</td>
+        <td>
+          <strong>Hoàng Viết Hoàng</strong><br/>
+          <small style="color:#555;">MSSV: 25020160</small>
+        </td>
+        <td>
+          <strong>GUI/JavaFX, Controller, CSS Dark Theme</strong>
+        </td>
+        <td>
+          <ul class="feat-list">
+            <li>Thiết kế và cài đặt toàn bộ file FXML (8 màn hình)</li>
+            <li>Cài đặt các JavaFX Controller: Admin, Seller, Bidder Dashboard</li>
+            <li>Thiết kế Dark Theme CSS (palette vàng-đen premium)</li>
+            <li>Cài đặt toast notification, popup chiến thắng với <code>ScaleTransition</code></li>
+            <li>Tích hợp <code>LineChart</code> biểu đồ lịch sử giá đấu giá</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align:center; font-weight:bold;">3</td>
+        <td>
+          <strong>Trần Tuấn Điệp</strong><br/>
+          <small style="color:#555;">MSSV: 25020123</small>
+        </td>
+        <td>
+          <strong>DAO, Protocol, Unit Tests</strong>
+        </td>
+        <td>
+          <ul class="feat-list">
+            <li>Thiết kế tầng DAO: <code>IAuctionDAO</code>, <code>IGenericDAO</code> và implementations</li>
+            <li>Cài đặt tầng giao thức: <code>Request</code>, <code>Response</code>, <code>ActionType</code>, <code>StatusType</code></li>
+            <li>Viết 28 unit tests (JUnit 5 + Mockito): AuctionTest, AuctionManagerTest, UserManagerTest, FileDataManagerTest</li>
+            <li>Đảm bảo tỷ lệ pass 100% trên toàn bộ test suite</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align:center; font-weight:bold;">4</td>
+        <td>
+          <strong>Nguyễn Quang Huy</strong><br/>
+          <small style="color:#555;">MSSV: 25020183</small>
+        </td>
+        <td>
+          <strong>Exception Handling, Concurrency, DepositWithdraw</strong>
+        </td>
+        <td>
+          <ul class="feat-list">
+            <li>Thiết kế phân cấp 7 custom exception (AuctionException và các lớp con)</li>
+            <li>Cài đặt thread-safety: <code>synchronized</code>, <code>CopyOnWriteArrayList</code></li>
+            <li>Viết stress test đồng thời (<code>ConcurrencyTest.java</code>) — 15 luồng</li>
+            <li>Cài đặt màn hình <code>DepositWithdraw</code>: nạp / rút ví điện tử</li>
+            <li>Sửa lỗi Level 1: logic <code>placeBid()</code>, <code>updateAuctionDetails()</code>, kiểm tra inventory</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h1 class="section-title" style="margin-top:6mm;">5. Kết Luận</h1>
+
+  <p>
+    Nhóm đã hoàn thành đầy đủ tất cả <strong>6 nhóm chức năng bắt buộc</strong> và <strong>3 nhóm chức năng nâng cao</strong> theo yêu cầu đề bài, cùng với 1 tính năng bonus (thống kê Admin). Hệ thống vượt qua toàn bộ <strong>28 unit test</strong> bao gồm cả stress test đồng thời với 15 luồng.
+  </p>
+
+  <p>
+    Qua đồ án, nhóm đã vận dụng thành thạo các kỹ thuật lập trình nâng cao: <strong>kế thừa và đa hình</strong> (phân cấp User, Item), <strong>lập trình mạng</strong> (TCP socket multi-thread), <strong>xử lý đồng thời</strong> (synchronized, ScheduledExecutor), <strong>phân tầng kiến trúc</strong> (MVC + DAO pattern), và <strong>kiểm thử đơn vị</strong> (JUnit 5 + Mockito). Sản phẩm có thể mở rộng thêm tính năng mới (ví dụ: tích hợp CSDL thực) mà không cần thay đổi kiến trúc cốt lõi.
+  </p>
+
+  <div class="info-box" style="margin-top:4mm;">
+    <strong>🔗 Repository:</strong> <code>github.com/kaiki0201a/Online-Auction-System-Project</code>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>📦 Build:</strong> <code>mvn clean compile</code> &nbsp; <strong>▶️ Run:</strong> <code>mvn exec:java</code> (Server) + <code>mvn javafx:run</code> (Client)
+  </div>
+
+  <div class="page-num">Trang 5 / 5</div>
+</div>
+
+</body>
+</html>

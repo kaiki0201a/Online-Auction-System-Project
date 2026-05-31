@@ -257,8 +257,15 @@ public class AuctionListController {
             AuctionDetailController ctrl = loader.getController();
             ctrl.setAuctionData(auction);
             Stage stage = (Stage) rootPane.getScene().getWindow();
-            stage.setScene(new Scene(root, 1280, 820));
-            stage.centerOnScreen();
+            double _w = stage.getWidth();
+            double _h = stage.getHeight();
+            double _x = stage.getX();
+            double _y = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w);
+            stage.setHeight(_h);
+            stage.setX(_x);
+            stage.setY(_y);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -269,7 +276,15 @@ public class AuctionListController {
             String path = (u instanceof com.auction.model.Seller) ? "/com/auction/view/SellerDashboard.fxml" : "/com/auction/view/BidderDashboard.fxml";
             Parent root = FXMLLoader.load(getClass().getResource(path));
             Stage stage = (Stage) ((Node)event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 1280, 800));
+            double _w2 = stage.getWidth();
+            double _h2 = stage.getHeight();
+            double _x2 = stage.getX();
+            double _y2 = stage.getY();
+            stage.setScene(new Scene(root));
+            stage.setWidth(_w2);
+            stage.setHeight(_h2);
+            stage.setX(_x2);
+            stage.setY(_y2);
         } catch (IOException e) { e.printStackTrace(); }
     }
 }

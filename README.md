@@ -4,6 +4,18 @@
 
 ---
 
+
+#👥 Thành viên nhóm
+
+| STT | Họ và tên           | MSSV       | Phần đảm nhiệm |
+|-----|---------------------|------------|----------------|
+| 1 | _Nguyễn Thanh Hiếu_ | _25020153_ | _[Ví dụ: Server, Model, Auto-Bid]_ |
+| 2 | _Hoàng Viết Hoàng_  | _25020160_ | _[Ví dụ: GUI, Controller, CSS]_ |
+| 3 | _Trần Tuấn Điệp_    | _25020123_ | _[Ví dụ: DAO, Tests, Protocol]_ |
+| 4 | _Nguyễn Quang Huy_ | _25020183_ | |
+
+---
+
 ## 📋 Mô tả bài toán
 
 **BidPrecision** là một hệ thống đấu giá trực tuyến đa người dùng hoạt động theo mô hình **Client-Server**. Người dùng có thể đăng ký, đăng sản phẩm đấu giá, tham gia đặt giá theo thời gian thực và thực hiện các giao dịch tài chính trong hệ thống.
@@ -197,9 +209,9 @@ Kết quả mong đợi: **28 tests PASS**, 0 failures.
 
 | Vai trò | Username | Password |
 |---------|----------|----------|
-| Admin | `admin` | `admin123` |
-| Seller (mẫu) | `seller1` | `123456` |
-| Bidder (mẫu) | `bidder1` | `123456` |
+| Admin | `admin` | `123456` |
+| Seller (mẫu) | `seller` | `123456` |
+| Bidder (mẫu) | `bidder` | `123456` |
 
 > Có thể đăng ký thêm tài khoản Seller/Bidder mới trực tiếp trong giao diện ứng dụng.
 
@@ -425,46 +437,3 @@ flowchart TD
 |-----------|-----------|
 | 📄 Báo cáo PDF | _[Thêm link Google Drive / GitHub báo cáo PDF tại đây]_ |
 | 🎬 Video demo | _[Thêm link YouTube / Google Drive video demo tại đây]_ |
-
----
-
-## 👥 Thành viên nhóm
-
-| STT | Họ và tên           | MSSV       | Phần đảm nhiệm |
-|-----|---------------------|------------|----------------|
-| 1 | _Nguyễn Thanh Hiếu_ | _25020153_ | _[Ví dụ: Server, Model, Auto-Bid]_ |
-| 2 | _Hoàng Viết Hoàng_  | _25020160_ | _[Ví dụ: GUI, Controller, CSS]_ |
-| 3 | _Trần Tuấn Điệp_    | _25020123_ | _[Ví dụ: DAO, Tests, Protocol]_ |
-| 4 | _Nguyễn Quang Huy_ | _25020183_ | |
-
----
-
-## 🔧 Khắc phục sự cố thường gặp
-
-**❌ Lỗi `Connection refused` khi chạy client**
-> Server chưa được khởi động. Chạy `mvn exec:java -Dexec.mainClass="com.auction.server.ServerApp"` ở terminal riêng trước.
-
-**❌ Lỗi `JavaFX runtime components are missing`**
-> Không chạy file `.jar` trực tiếp. Dùng `mvn javafx:run` để Maven tự nạp JavaFX runtime.
-
-**❌ Build fail: `source release 17 requires target release 17`**
-> Kiểm tra `java -version`. Phải là JDK 17 trở lên. Nếu có nhiều JDK, đặt `JAVA_HOME` đúng:
-> ```bash
-> # macOS/Linux
-> export JAVA_HOME=$(/usr/libexec/java_home -v 17)
-> # Windows (PowerShell)
-> $env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
-> ```
-
-**❌ Đăng nhập thành công nhưng không mở được màn hình Dashboard**
-> Lỗi FXML load (kiểm tra console). Xóa `target/` và build lại:
-> ```bash
-> mvn clean compile && mvn javafx:run
-> ```
-
-**❌ Dữ liệu bị lỗi sau khi cập nhật code (NotSerializableException)**
-> Xóa file dữ liệu cũ để reset về trạng thái ban đầu:
-> ```bash
-> rm auctions_data.dat users_data.dat   # macOS/Linux
-> del auctions_data.dat users_data.dat  # Windows
-> ```
