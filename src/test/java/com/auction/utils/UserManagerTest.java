@@ -21,8 +21,8 @@ class UserManagerTest {
     @Test
     void testAuthenticate_Success() throws AuthenticationException {
         // Kiểm tra tài khoản có sẵn trong constructor
-        assertTrue(userManager.authenticate("bidder", "123"));
-        assertTrue(userManager.authenticate("admin", "123"));
+        assertTrue(userManager.authenticate("bidder", "123456"));
+        assertTrue(userManager.authenticate("admin", "123456"));
     }
 
     @Test
@@ -44,7 +44,7 @@ class UserManagerTest {
     @Test
     void testRegister_Success() {
         // Đăng ký tài khoản mới hợp lệ
-        boolean result = userManager.register("newuser_test_" + System.currentTimeMillis(), "pass", "new@gmail.com");
+        boolean result = userManager.register("newuser_test_" + System.currentTimeMillis(), "pass24", "new@gmail.com");
         assertTrue(result);
     }
 
